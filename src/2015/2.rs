@@ -6,8 +6,8 @@ use rayon::prelude::*;
 use crate::types::Problem;
 
 pub const I_WAS_TOLD_THERE_WOULD_BE_NO_MATH: Problem = Problem {
-    part_1: Some(|input| part_1(input).to_string()),
-    part_2: Some(|input| part_2(input).to_string()),
+    part1: Some(|input| part_1(input).to_string()),
+    part2: Some(|input| part_2(input).to_string()),
 };
 
 struct Dimensions([usize; 3]);

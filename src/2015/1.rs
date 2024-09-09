@@ -6,8 +6,8 @@ use wide::u8x16;
 use crate::types::Problem;
 
 pub const NOT_QUITE_LISP: Problem = Problem {
-    part_1: Some(|input| part_1(input).to_string()),
-    part_2: Some(|input| part_2(input).to_string()),
+    part1: Some(|input| part_1(input).to_string()),
+    part2: Some(|input| part_2(input).to_string()),
 };
 
 const UP: u8 = b'(';

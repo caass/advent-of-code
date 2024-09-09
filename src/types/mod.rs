@@ -55,8 +55,8 @@ impl Index<Day> for ProblemSet {
 
 #[derive(Debug)]
 pub struct Problem {
-    pub(crate) part_1: Option<ProblemPart>,
-    pub(crate) part_2: Option<ProblemPart>,
+    pub(crate) part1: Option<ProblemPart>,
+    pub(crate) part2: Option<ProblemPart>,
 }
 
 impl Index<Part> for Problem {
@@ -64,8 +64,8 @@ impl Index<Part> for Problem {
 
     fn index(&self, index: Part) -> &Self::Output {
         match index {
-            Part::ONE => &self.part_1,
-            Part::TWO => &self.part_2,
+            Part::ONE => &self.part1,
+            Part::TWO => &self.part2,
         }
     }
 }
