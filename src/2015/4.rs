@@ -1,4 +1,3 @@
-use hex_literal::hex;
 use md5::{digest::Output, Digest, Md5};
 use rayon::prelude::*;
 
@@ -15,7 +14,7 @@ fn part_1(input: &str) -> usize {
 }
 
 fn part_2(input: &str) -> usize {
-    find(input, |hash| hash.starts_with(&hex!("000000")))
+    find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] == 0)
         .expect("to find at least one number that starts with 6 zeroes")
 }
 

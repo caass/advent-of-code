@@ -15,7 +15,6 @@ eyre = "0.6.12"
 nohash-hasher = "0.2.0"
 md-5 = { version = "0.10.6", features = ["asm"] }
 itoa = "1.0"
-hex-literal = "0.4.1"
 
 
 [dev-dependencies]
