@@ -15,7 +15,7 @@ eyre = "0.6.12"
 nohash-hasher = "0.2.0"
 md-5 = { version = "0.10.6", features = ["asm"] }
 itoa = "1.0"
-ndarray = { version = "0.16.1", features = ["rayon"] }
+winnow = { version = "0.6.18", features = ["simd"] }
 
 
 [dev-dependencies]
