@@ -55,7 +55,6 @@ impl Index<Day> for ProblemSet {
 
 #[derive(Debug)]
 pub struct Problem {
-    pub name: &'static str,
     pub(crate) part_1: Option<ProblemPart>,
     pub(crate) part_2: Option<ProblemPart>,
 }
