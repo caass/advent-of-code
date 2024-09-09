@@ -3,4 +3,15 @@ name = "advent-of-code"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+
 [dependencies]
+enum-iterator = "2.1.0"
+paste = "1.0.15"
+rayon = "1.10.0"
+thiserror = "1.0.63"
+wide = "0.7.28"
+
+[dev-dependencies]
+eyre = "0.6.12"
+pretty_assertions = "1.4.0"
