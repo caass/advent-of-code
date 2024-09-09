@@ -12,11 +12,11 @@ macro_rules! mod_days {
     };
 }
 
-mod_days!(1);
+mod_days!(1, 2);
 
 pub const PROBLEMS: ProblemSet = ProblemSet([
     Some(NOT_QUITE_LISP),
-    None,
+    Some(I_WAS_TOLD_THERE_WOULD_BE_NO_MATH),
     None,
     None,
     None,
