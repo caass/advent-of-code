@@ -3,12 +3,9 @@ use std::string::ToString;
 use rayon::prelude::*;
 use wide::u8x16;
 
-use crate::types::Problem;
+use crate::types::{problem, Problem};
 
-pub const NOT_QUITE_LISP: Problem = Problem {
-    part1: Some(|input| part_1(input).to_string()),
-    part2: Some(|input| part_2(input).to_string()),
-};
+pub const NOT_QUITE_LISP: Problem = problem!(part_1, part_2);
 
 const UP: u8 = b'(';
 const DOWN: u8 = b')';
@@ -121,27 +118,4 @@ fn part_2(input: &str) -> usize {
         })
         .expect("Santa to visit the basement at least once")
         + 1
-}
-
-#[test]
-fn part_1_examples() {
-    assert_eq!(part_1("(())"), 0);
-    assert_eq!(part_1("()()"), 0);
-
-    assert_eq!(part_1("((("), 3);
-    assert_eq!(part_1("(()(()("), 3);
-
-    assert_eq!(part_1("))((((("), 3);
-
-    assert_eq!(part_1("())"), -1);
-    assert_eq!(part_1("))("), -1);
-
-    assert_eq!(part_1(")))"), -3);
-    assert_eq!(part_1(")())())"), -3);
-}
-
-#[test]
-fn part_2_examples() {
-    assert_eq!(part_2(")"), 1);
-    assert_eq!(part_2("()())"), 5)
 }

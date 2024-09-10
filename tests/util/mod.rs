@@ -17,10 +17,8 @@ macro_rules! aoc {
         let day = <::advent_of_code::types::Day as ::std::convert::TryFrom<u8>>::try_from($day)?;
         let part = <::advent_of_code::types::Part as ::std::convert::TryFrom<u8>>::try_from($part)?;
 
-        let problem = ::advent_of_code::AOC[year][day]
-            .as_ref()
-            .ok_or_else(|| ::eyre::eyre!("Haven't solved {year} day {day} yet"))?;
-        let f = problem[part]
+        let f = ::advent_of_code::AOC
+            .get(year, day, part)
             .ok_or_else(|| ::eyre::eyre!("Haven't solved part {part} of {year} day {day} yet."))?;
 
         let output = (f)(input.trim());

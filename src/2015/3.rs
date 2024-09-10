@@ -6,12 +6,9 @@ use std::{
 use nohash_hasher::IntMap;
 use rayon::prelude::*;
 
-use crate::types::Problem;
+use crate::types::{problem, Problem};
 
-pub const PERFECTLY_SPHERICAL_HOUSES_IN_A_VACUUM: Problem = Problem {
-    part1: Some(|input| part_1(input).to_string()),
-    part2: Some(|input| part_2(input).to_string()),
-};
+pub const PERFECTLY_SPHERICAL_HOUSES_IN_A_VACUUM: Problem = problem!(part_1, part_2);
 
 fn part_1(input: &str) -> usize {
     let mut grid = HouseGrid::default();

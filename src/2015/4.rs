@@ -1,12 +1,9 @@
 use md5::{digest::Output, Digest, Md5};
 use rayon::prelude::*;
 
-use crate::types::Problem;
+use crate::types::{problem, Problem};
 
-pub const THE_IDEAL_STOCKING_STUFFER: Problem = Problem {
-    part1: Some(|input| part_1(input).to_string()),
-    part2: Some(|input| part_2(input).to_string()),
-};
+pub const THE_IDEAL_STOCKING_STUFFER: Problem = problem!(part_1, part_2);
 
 fn part_1(input: &str) -> usize {
     find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] < 0x10)

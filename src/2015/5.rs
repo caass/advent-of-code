@@ -1,16 +1,13 @@
 use rayon::prelude::*;
 
-use crate::types::Problem;
+use crate::types::{problem, Problem};
 
-pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = Problem {
-    part1: Some(|input| part1(input).to_string()),
-    part2: Some(|input| part2(input).to_string()),
-};
+pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = problem!(part_1, part_2);
 
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 const BANNED_PAIRS: [&[u8]; 4] = [b"ab", b"cd", b"pq", b"xy"];
 
-fn part1(input: &str) -> usize {
+fn part_1(input: &str) -> usize {
     // A nice string is one with all of the following properties:
     //
     // - It contains at least three vowels (aeiou only), like aei, xazegov, or aeiouaeiouaeiou.
@@ -40,7 +37,7 @@ fn part1(input: &str) -> usize {
         .count()
 }
 
-fn part2(input: &str) -> usize {
+fn part_2(input: &str) -> usize {
     input
         .par_lines()
         .filter(|line| {

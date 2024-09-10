@@ -5,14 +5,11 @@ use winnow::{
     prelude::*,
 };
 
-use crate::types::Problem;
+use crate::types::{problem, Problem};
 
-pub const PROBABLY_A_FIRE_HAZARD: Problem = Problem {
-    part1: Some(|input| part1(input).to_string()),
-    part2: Some(|input| part2(input).to_string()),
-};
+pub const PROBABLY_A_FIRE_HAZARD: Problem = problem!(part_1, part_2);
 
-fn part1(input: &str) -> usize {
+fn part_1(input: &str) -> usize {
     let mut grid = Grid::<Light>::default();
     input
         .lines()
@@ -24,7 +21,7 @@ fn part1(input: &str) -> usize {
     grid.into_par_iter().filter(|light| light.on).count()
 }
 
-fn part2(input: &str) -> usize {
+fn part_2(input: &str) -> usize {
     let mut grid = Grid::<AdjustableLight>::default();
     input
         .lines()

@@ -3,12 +3,9 @@ use std::str::FromStr;
 use eyre::{bail, OptionExt, Report};
 use rayon::prelude::*;
 
-use crate::types::Problem;
+use crate::types::{problem, Problem};
 
-pub const I_WAS_TOLD_THERE_WOULD_BE_NO_MATH: Problem = Problem {
-    part1: Some(|input| part_1(input).to_string()),
-    part2: Some(|input| part_2(input).to_string()),
-};
+pub const I_WAS_TOLD_THERE_WOULD_BE_NO_MATH: Problem = problem!(part_1, part_2);
 
 struct Dimensions([usize; 3]);
 
