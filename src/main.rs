@@ -31,7 +31,7 @@ fn main() -> eyre::Result<()> {
         .get(year, day, part)
         .ok_or_eyre("haven't solved part {part} of day {day} of {year} yet")?;
 
-    let output = (f)(input.trim());
+    let output = (f)(input.trim())?;
     println!("{}", output);
 
     Ok(())

@@ -1,3 +1,6 @@
+use std::str::FromStr;
+
+use eyre::{eyre, Report, Result};
 use rayon::{iter::Flatten, prelude::*};
 use winnow::{
     ascii::digit1,
@@ -9,28 +12,24 @@ use crate::types::{problem, Problem};
 
 pub const PROBABLY_A_FIRE_HAZARD: Problem = problem!(part_1, part_2);
 
-fn part_1(input: &str) -> usize {
+fn part_1(input: &str) -> Result<usize> {
     let mut grid = Grid::<Light>::default();
-    input
-        .lines()
-        .map(Instruction::parse)
-        .for_each(|Instruction { action, range }| {
-            grid.range_mut(range).for_each(|light| light.act(action));
-        });
+    for line in input.lines() {
+        let Instruction { action, range } = line.parse()?;
+        grid.range_mut(range).for_each(|light| light.act(action));
+    }
 
-    grid.into_par_iter().filter(|light| light.on).count()
+    Ok(grid.into_par_iter().filter(|light| light.on).count())
 }
 
-fn part_2(input: &str) -> usize {
+fn part_2(input: &str) -> Result<usize> {
     let mut grid = Grid::<AdjustableLight>::default();
-    input
-        .lines()
-        .map(Instruction::parse)
-        .for_each(|Instruction { action, range }| {
-            grid.range_mut(range).for_each(|light| light.act(action));
-        });
+    for line in input.lines() {
+        let Instruction { action, range } = line.parse()?;
+        grid.range_mut(range).for_each(|light| light.act(action));
+    }
 
-    grid.into_par_iter().map(|light| light.brightness).sum()
+    Ok(grid.into_par_iter().map(|light| light.brightness).sum())
 }
 
 struct Grid<T> {
@@ -69,12 +68,14 @@ struct Instruction {
     range: InstructionRange,
 }
 
-impl Instruction {
-    fn parse(line: &str) -> Self {
+impl FromStr for Instruction {
+    type Err = Report;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         separated_pair(Action::parse, ' ', InstructionRange::parse)
             .map(|(action, range)| Instruction { action, range })
-            .parse(line)
-            .unwrap()
+            .parse(s)
+            .map_err(|e| eyre!("{e}"))
     }
 }
 

@@ -1,3 +1,4 @@
+use eyre::{OptionExt, Result};
 use md5::{digest::Output, Digest, Md5};
 use rayon::prelude::*;
 
@@ -5,14 +6,18 @@ use crate::types::{problem, Problem};
 
 pub const THE_IDEAL_STOCKING_STUFFER: Problem = problem!(part_1, part_2);
 
-fn part_1(input: &str) -> usize {
-    find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] < 0x10)
-        .expect("to find at least one number that starts with 5 zeroes")
+fn part_1(input: &str) -> Result<usize> {
+    find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] < 0x10).ok_or_eyre(format!(
+        "No hashes in u{} start with 5 zeros",
+        size_of::<usize>() * 8
+    ))
 }
 
-fn part_2(input: &str) -> usize {
-    find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] == 0)
-        .expect("to find at least one number that starts with 6 zeroes")
+fn part_2(input: &str) -> Result<usize> {
+    find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] == 0).ok_or_eyre(format!(
+        "no hashes in u{} start with 6 zeros",
+        size_of::<usize>() * 8
+    ))
 }
 
 #[inline(always)]

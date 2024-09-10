@@ -3,6 +3,7 @@ use std::{
     ops::{AddAssign, Index, IndexMut},
 };
 
+use eyre::{eyre, Report, Result};
 use nohash_hasher::IntMap;
 use rayon::prelude::*;
 
@@ -10,47 +11,61 @@ use crate::types::{problem, Problem};
 
 pub const PERFECTLY_SPHERICAL_HOUSES_IN_A_VACUUM: Problem = problem!(part_1, part_2);
 
-fn part_1(input: &str) -> usize {
+fn part_1(input: &str) -> Result<usize> {
     let mut grid = HouseGrid::default();
     let mut sleigh = Sleigh::default();
 
-    let first_stop = std::iter::once(sleigh.position());
+    let first_stop = std::iter::once(Ok(sleigh.position()));
     let directions = input.bytes().map(|byte| match byte {
-        b'^' => (0, 1),
-        b'>' => (1, 0),
-        b'v' => (0, -1),
-        b'<' => (-1, 0),
-        _ => unreachable!("invalid direction for Santa"),
+        b'^' => Ok((0, 1)),
+        b'>' => Ok((1, 0)),
+        b'v' => Ok((0, -1)),
+        b'<' => Ok((-1, 0)),
+        other => Err(eyre!(
+            "Unknown direction '{}'",
+            char::from_u32(other.into()).unwrap_or(char::REPLACEMENT_CHARACTER)
+        )),
     });
 
-    first_stop.chain(directions).for_each(|(x, y)| {
+    first_stop.chain(directions).try_for_each(|result| {
+        let (x, y) = result?;
+
         sleigh += (x, y);
         grid[sleigh.position()] += 1;
-    });
 
-    grid._into_par_iter()
+        Ok::<_, Report>(())
+    })?;
+
+    Ok(grid
+        ._into_par_iter()
         .filter(|(_coords, presents)| *presents > 0)
-        .count()
+        .count())
 }
 
-fn part_2(input: &str) -> usize {
+fn part_2(input: &str) -> Result<usize> {
     let mut grid = HouseGrid::default();
     let mut santa = Sleigh::default();
     let mut robo_santa = Sleigh::default();
 
-    let first_stops = [santa.position(), robo_santa.position()].into_iter();
+    let first_stops = [santa.position(), robo_santa.position()]
+        .into_iter()
+        .map(Ok);
     let directions = input.bytes().map(|byte| match byte {
-        b'^' => (0, 1),
-        b'>' => (1, 0),
-        b'v' => (0, -1),
-        b'<' => (-1, 0),
-        _ => unreachable!("invalid direction for Santa"),
+        b'^' => Ok((0, 1)),
+        b'>' => Ok((1, 0)),
+        b'v' => Ok((0, -1)),
+        b'<' => Ok((-1, 0)),
+        other => Err(eyre!(
+            "Unknown direction : {}",
+            char::from_u32(other.into()).unwrap_or(char::REPLACEMENT_CHARACTER)
+        )),
     });
 
     first_stops
         .chain(directions)
         .enumerate()
-        .for_each(|(i, (x, y))| {
+        .try_for_each(|(i, result)| {
+            let (x, y) = result?;
             let sleigh = if i % 2 == 0 {
                 &mut santa
             } else {
@@ -59,11 +74,14 @@ fn part_2(input: &str) -> usize {
 
             *sleigh += (x, y);
             grid[sleigh.position()] += 1;
-        });
 
-    grid._into_par_iter()
+            Ok::<_, Report>(())
+        })?;
+
+    Ok(grid
+        ._into_par_iter()
         .filter(|(_coords, presents)| *presents > 0)
-        .count()
+        .count())
 }
 
 #[derive(Default)]

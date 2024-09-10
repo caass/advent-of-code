@@ -3,6 +3,7 @@ mod part;
 mod year;
 
 pub use day::{Day, ParseDayErr};
+use eyre::Result;
 pub use part::{ParsePartError, Part};
 pub use year::{ParseYearError, Year};
 
@@ -35,7 +36,7 @@ pub struct Problem(Option<ProblemPart>, Option<ProblemPart>);
 
 impl Problem {
     #[inline(always)]
-    pub fn part(&self, part: Part) -> Option<fn(&str) -> String> {
+    pub fn part(&self, part: Part) -> Option<ProblemPart> {
         match part {
             Part::ONE => self.0,
             Part::TWO => self.1,
@@ -47,17 +48,29 @@ impl Problem {
     }
 }
 
-pub type ProblemPart = fn(&str) -> String;
+pub type ProblemPart = fn(&str) -> Result<String>;
 
 macro_rules! problem {
     ($part1:ident) => {
-        Problem::new(Some(|input| $part1(input).to_string()), None)
+        Problem::new(
+            Some(|input| {
+                let output = $part1(input)?;
+                Ok(output.to_string())
+            }),
+            None,
+        )
     };
 
     ($part1:ident, $part2:ident) => {
         Problem::new(
-            Some(|input| $part1(input).to_string()),
-            Some(|input| $part2(input).to_string()),
+            Some(|input| {
+                let output = $part1(input)?;
+                Ok(output.to_string())
+            }),
+            Some(|input| {
+                let output = $part2(input)?;
+                Ok(output.to_string())
+            }),
         )
     };
 }

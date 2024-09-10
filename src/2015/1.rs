@@ -1,5 +1,6 @@
 use std::string::ToString;
 
+use eyre::{OptionExt, Result};
 use rayon::prelude::*;
 use wide::u8x16;
 
@@ -36,7 +37,7 @@ const DOWN: u8 = b')';
 /// - `)))` and `)())())` both result in floor `-3`.
 ///
 /// To _what floor_ do the instructions take Santa?
-fn part_1(input: &str) -> isize {
+fn part_1(input: &str) -> Result<isize> {
     // The naive approach to solve this would be to iterate through the string and check each character;
     // if it's equal to `'('`, add one. If it's equal to `')'`, subtract one. Something like:
     // ```
@@ -86,11 +87,11 @@ fn part_1(input: &str) -> isize {
         }
     }
 
-    input
+    Ok(input
         .as_bytes()
         .par_chunks(u8x16::LANES.into())
         .map(sum_chunk)
-        .sum()
+        .sum())
 }
 
 /// Now, given the same instructions, find the position of the first character that causes him to enter the basement
@@ -102,7 +103,7 @@ fn part_1(input: &str) -> isize {
 /// - `()())` causes him to enter the basement at character position `5`.
 ///
 /// What is the position of the character that causes Santa to first enter the basement?
-fn part_2(input: &str) -> usize {
+fn part_2(input: &str) -> Result<usize> {
     // Similarly, we could easily just iterate over the characters and find the index of the one
     // that leads Santa to the basement. But we should be able to parallelize the process. In theory...
     // TODO: Parallelize.
@@ -116,6 +117,6 @@ fn part_2(input: &str) -> usize {
             floor += if byte == UP { 1 } else { -1 };
             floor == -1
         })
-        .expect("Santa to visit the basement at least once")
-        + 1
+        .map(|n| n + 1)
+        .ok_or_eyre("Santa never visited the basement")
 }

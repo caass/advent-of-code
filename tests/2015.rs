@@ -71,3 +71,15 @@ mod day6 {
         crate::util::aoc!(2015/6-2: 17836115)
     }
 }
+
+mod day7 {
+    #[test]
+    fn part1() -> ::eyre::Result<()> {
+        crate::util::aoc!(2015/7-1: 16076)
+    }
+
+    #[test]
+    fn part2() -> ::eyre::Result<()> {
+        crate::util::aoc!(2015/7-2: 2797)
+    }
+}

@@ -1,3 +1,4 @@
+use eyre::Result;
 use rayon::prelude::*;
 
 use crate::types::{problem, Problem};
@@ -7,14 +8,14 @@ pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = problem!(part_1, part_
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 const BANNED_PAIRS: [&[u8]; 4] = [b"ab", b"cd", b"pq", b"xy"];
 
-fn part_1(input: &str) -> usize {
+fn part_1(input: &str) -> Result<usize> {
     // A nice string is one with all of the following properties:
     //
     // - It contains at least three vowels (aeiou only), like aei, xazegov, or aeiouaeiouaeiou.
     // - It contains at least one letter that appears twice in a row, like xx, abcdde (dd), or aabbccdd (aa, bb, cc, or dd).
     // - It does not contain the strings ab, cd, pq, or xy, even if they are part of one of the other requirements.
 
-    input
+    Ok(input
         .par_lines()
         .filter(|line| {
             std::thread::scope(|s| {
@@ -27,18 +28,18 @@ fn part_1(input: &str) -> usize {
                         .any(|w| BANNED_PAIRS.contains(&w))
                 });
 
-                let has_three_vowels = vowels_handle.join().unwrap();
-                let has_paired_letter = pairs_handle.join().unwrap();
-                let has_banned_pair = banned_handle.join().unwrap();
+                let has_three_vowels = vowels_handle.join().expect("thread not to panic");
+                let has_paired_letter = pairs_handle.join().expect("thread not to panic");
+                let has_banned_pair = banned_handle.join().expect("thread not to panic");
 
                 has_three_vowels && has_paired_letter && !has_banned_pair
             })
         })
-        .count()
+        .count())
 }
 
-fn part_2(input: &str) -> usize {
-    input
+fn part_2(input: &str) -> Result<usize> {
+    Ok(input
         .par_lines()
         .filter(|line| {
             std::thread::scope(|s| {
@@ -51,11 +52,11 @@ fn part_2(input: &str) -> usize {
                 let sandwich_handle =
                     s.spawn(|| line.as_bytes().windows(3).any(|slice| slice[0] == slice[2]));
 
-                let has_nonoverlapping_pair = pair_handle.join().unwrap();
-                let has_sandwich_pair = sandwich_handle.join().unwrap();
+                let has_nonoverlapping_pair = pair_handle.join().expect("thread not to panic");
+                let has_sandwich_pair = sandwich_handle.join().expect("thread not to panic");
 
                 has_nonoverlapping_pair && has_sandwich_pair
             })
         })
-        .count()
+        .count())
 }
