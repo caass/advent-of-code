@@ -14,8 +14,8 @@ use winnow::{
 use crate::types::{problem, Problem};
 
 pub const SOME_ASSEMBLY_REQUIRED: Problem = problem!(part1, part2);
-type WireName = TinyAsciiStr<4>;
 
+type WireName = TinyAsciiStr<4>;
 const A: WireName = unsafe { WireName::from_bytes_unchecked(*b"a\0\0\0") };
 const B: WireName = unsafe { WireName::from_bytes_unchecked(*b"b\0\0\0") };
 
