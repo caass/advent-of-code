@@ -3,7 +3,7 @@ use phf::phf_map;
 use crate::types::ProblemSet;
 use crate::util::mod_days;
 
-mod_days!(1, 2, 3, 4, 5, 6, 7);
+mod_days!(1, 2, 3, 4, 5, 6, 7, 8);
 
 pub const PROBLEMS: ProblemSet = ProblemSet(phf_map! {
     1u8 => NOT_QUITE_LISP,
