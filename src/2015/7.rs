@@ -1,45 +1,148 @@
-use std::{
-    cell::UnsafeCell, collections::HashMap, hint::unreachable_unchecked, str::FromStr, sync::Once,
-};
+use std::{collections::HashMap, str::FromStr, sync::OnceLock};
 
-use dashmap::{DashMap, Entry};
-use eyre::{bail, eyre, OptionExt, Report, Result};
+use eyre::{eyre, OptionExt, Report, Result};
 use fnv::FnvBuildHasher;
-use rayon::{iter::ParallelIterator, str::ParallelString};
+use rayon::prelude::*;
 use tinystr::TinyAsciiStr;
 use winnow::{
     ascii::{alpha1, digit1},
-    combinator::{alt, fail, separated_pair},
+    combinator::{alt, separated_pair},
     error::StrContext,
     prelude::*,
 };
 
 use crate::types::{problem, Problem};
 
-pub const SOME_ASSEMBLY_REQUIRED: Problem = problem!(part1);
+pub const SOME_ASSEMBLY_REQUIRED: Problem = problem!(part1, part2);
 type WireName = TinyAsciiStr<4>;
-type WireKit = DashMap<WireName, Input, FnvBuildHasher>;
 
 const A: WireName = unsafe { WireName::from_bytes_unchecked(*b"a\0\0\0") };
+const B: WireName = unsafe { WireName::from_bytes_unchecked(*b"b\0\0\0") };
 
 fn part1(input: &str) -> Result<u16> {
-    let num_wires = input.par_lines().count();
-    let kit =
-        WireKit::with_capacity_and_hasher_and_shard_amount(num_wires, FnvBuildHasher::default(), 2);
-    input.par_lines().try_for_each(|line| {
-        let Connection { input, output } = line.trim().parse()?;
-        if let Some(previous) = kit.insert(output, input) {
-            Err(eyre!("Found duplicate value for {output}: {previous:#?}"))
-        } else {
-            Ok(())
-        }
-    })?;
+    let kit = input
+        .par_lines()
+        .map(|line| line.trim().parse())
+        .collect::<Result<WireKit, _>>()?;
 
-    todo!()
+    kit.measure(&A).ok_or_eyre("failed to measure wire A")
 }
 
-fn part2(input: &str) -> usize {
-    todo!()
+fn part2(input: &str) -> Result<u16> {
+    let mut kit = input
+        .par_lines()
+        .map(|line| line.trim().parse())
+        .collect::<Result<WireKit, _>>()?;
+
+    let a = kit.measure(&A).ok_or_eyre("failed to measure wire A")?;
+    kit.reset();
+    kit.set(B, a)?;
+
+    kit.measure(&A).ok_or_eyre("failed to measure wire A")
+}
+
+#[derive(Debug)]
+struct WireKit(HashMap<WireName, MeasuredInput, FnvBuildHasher>);
+
+impl WireKit {
+    fn measure(&self, wire: &WireName) -> Option<u16> {
+        self.0.get(wire)?.measure(self)
+    }
+
+    fn reset(&mut self) {
+        self.0.par_iter_mut().for_each(|(_, input)| input.reset());
+    }
+
+    fn set(&mut self, wire: WireName, voltage: u16) -> Result<MeasuredInput> {
+        self.0
+            .insert(
+                wire,
+                MeasuredInput::new(Input::Constant(Source::Constant(voltage))),
+            )
+            .ok_or_else(|| eyre!("wire {wire} didn't exist in kit"))
+    }
+}
+
+impl FromParallelIterator<Connection> for WireKit {
+    fn from_par_iter<I>(par_iter: I) -> Self
+    where
+        I: IntoParallelIterator<Item = Connection>,
+    {
+        let inner = par_iter
+            .into_par_iter()
+            .map(|Connection { input, output }| (output, MeasuredInput::new(input)))
+            .collect();
+        Self(inner)
+    }
+}
+
+#[derive(Debug)]
+struct MeasuredInput {
+    input: Input,
+    measured: OnceLock<Option<u16>>,
+}
+
+impl MeasuredInput {
+    fn measure(&self, kit: &WireKit) -> Option<u16> {
+        self.measured
+            .get_or_init(|| match self.input {
+                Input::Constant(Source::Constant(n)) => Some(n),
+                Input::Constant(Source::Wire(ref w)) => kit.measure(w),
+                Input::Not(Source::Constant(n)) => Some(!n),
+                Input::Not(Source::Wire(ref w)) => kit.measure(w).map(|n| !n),
+                Input::And(Source::Constant(n), Source::Constant(m)) => Some(n & m),
+                Input::And(Source::Constant(n), Source::Wire(ref w))
+                | Input::And(Source::Wire(ref w), Source::Constant(n)) => {
+                    kit.measure(w).map(move |m| m & n)
+                }
+                Input::And(Source::Wire(ref w1), Source::Wire(ref w2)) => std::thread::scope(|s| {
+                    let m_handle = s.spawn(move || kit.measure(w1));
+                    let n_handle = s.spawn(move || kit.measure(w2));
+
+                    let m = m_handle.join().expect("thread not to panic")?;
+                    let n = n_handle.join().expect("thread not to panic")?;
+
+                    Some(m & n)
+                }),
+                Input::Or(Source::Constant(n), Source::Constant(m)) => Some(n | m),
+                Input::Or(Source::Constant(n), Source::Wire(ref w))
+                | Input::Or(Source::Wire(ref w), Source::Constant(n)) => {
+                    kit.measure(w).map(move |m| m | n)
+                }
+                Input::Or(Source::Wire(ref w1), Source::Wire(ref w2)) => std::thread::scope(|s| {
+                    let m_handle = s.spawn(move || kit.measure(w1));
+                    let n_handle = s.spawn(move || kit.measure(w2));
+
+                    let m = m_handle.join().expect("thread not to panic")?;
+                    let n = n_handle.join().expect("thread not to panic")?;
+
+                    Some(m | n)
+                }),
+                Input::LShift(Source::Constant(n), shift) => Some(n << shift),
+                Input::LShift(Source::Wire(ref w), shift) => {
+                    kit.measure(w).map(move |n| n << shift)
+                }
+                Input::RShift(Source::Constant(n), shift) => Some(n >> shift),
+                Input::RShift(Source::Wire(ref w), shift) => {
+                    kit.measure(w).map(move |n| n >> shift)
+                }
+            })
+            .as_ref()
+            .copied()
+    }
+
+    fn reset(&mut self) {
+        self.measured.take();
+    }
+}
+
+impl MeasuredInput {
+    fn new(input: Input) -> Self {
+        Self {
+            input,
+            measured: OnceLock::new(),
+        }
+    }
 }
 
 #[derive(Debug)]

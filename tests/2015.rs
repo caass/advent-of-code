@@ -78,7 +78,6 @@ mod day7 {
         crate::util::aoc!(2015/7-1: 16076)
     }
 
-    #[ignore = "unimplemented"]
     #[test]
     fn part2() -> ::eyre::Result<()> {
         crate::util::aoc!(2015/7-2: 2797)
