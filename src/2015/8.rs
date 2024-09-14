@@ -3,19 +3,18 @@ use std::{
     str::FromStr,
 };
 
-use eyre::{eyre, Report, Result};
+use eyre::{bail, eyre, Report, Result};
 use rayon::prelude::*;
 use winnow::{
-    ascii::hex_uint,
-    combinator::{alt, delimited, preceded, repeat},
+    combinator::{alt, preceded, repeat},
     error::StrContext,
     prelude::*,
-    token::{any, none_of, take},
+    token::{any, take},
 };
 
 use crate::types::{problem, Problem};
 
-pub const MATCHSTICKS: Problem = problem!(part1);
+pub const MATCHSTICKS: Problem = problem!(part1, part2);
 
 fn part1(input: &str) -> Result<usize> {
     input
@@ -23,6 +22,20 @@ fn part1(input: &str) -> Result<usize> {
         .map(|s| {
             let line = s.trim().parse::<Line>()?;
             Ok(line.code_len() - line.data_len())
+        })
+        .try_reduce(|| 0, |a, b| Ok(a + b))
+}
+
+fn part2(input: &str) -> Result<usize> {
+    input
+        .par_lines()
+        .map(|s| {
+            let line = s.trim().parse::<Line>()?;
+
+            let code_len = line.code_len();
+            let re_encoded_len = line.re_encoded_len();
+
+            Ok(re_encoded_len - code_len)
         })
         .try_reduce(|| 0, |a, b| Ok(a + b))
 }
@@ -40,35 +53,42 @@ impl Line {
     fn data_len(&self) -> usize {
         self.chars.len()
     }
+
+    fn re_encoded_len(&self) -> usize {
+        self.chars
+            .par_iter()
+            .map(Char::re_encoded_len)
+            .sum::<usize>()
+            + 6 // + 2 for the opening and closing `"\"`s
+    }
 }
 
 impl FromStr for Line {
     type Err = Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.starts_with('"') && s.ends_with('"') {
-            let input = &s[1..(s.len() - 1)];
+        if !(s.starts_with('"') && s.ends_with('"')) {
+            bail!("Missing opening and/or closing quotes");
+        };
 
-            repeat(1.., char)
-                .context(StrContext::Label("line"))
-                .map(|chars| Line { chars })
-                .parse(input)
-                .map_err(|e| {
-                    eyre!(
-                        "Error parsing {}: {} at index {} ({})",
-                        e.input(),
-                        e.inner(),
-                        e.offset(),
-                        if e.offset() == s.len() {
-                            "<EOF>"
-                        } else {
-                            &s[e.offset()..]
-                        }
-                    )
-                })
-        } else {
-            Err(eyre!("Missing opening and/or closing quotes"))
-        }
+        let unquoted = &s[1..(s.len() - 1)];
+        repeat(1.., char)
+            .context(StrContext::Label("line"))
+            .map(|chars| Line { chars })
+            .parse(unquoted)
+            .map_err(|e| {
+                eyre!(
+                    "Error parsing {}: {} at index {} ({})",
+                    e.input(),
+                    e.inner(),
+                    e.offset(),
+                    if e.offset() == s.len() {
+                        "<EOF>"
+                    } else {
+                        &s[e.offset()..]
+                    }
+                )
+            })
     }
 }
 
@@ -156,6 +176,16 @@ impl Char {
             Char::Backslash => 2,
             Char::Quote => 2,
             Char::Hex(_) => 4,
+        }
+    }
+
+    #[inline]
+    const fn re_encoded_len(&self) -> usize {
+        match self {
+            Char::Literal(_) => 1,
+            Char::Backslash => 4,
+            Char::Quote => 4,
+            Char::Hex(_) => 5,
         }
     }
 }

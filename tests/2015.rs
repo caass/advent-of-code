@@ -90,7 +90,6 @@ mod day8 {
         crate::util::aoc!(2015/8-1: 1371);
     }
 
-    #[ignore = "todo"]
     #[test]
     fn part2() {
         crate::util::aoc!(2015/8-2: 2117);
