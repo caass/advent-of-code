@@ -1,252 +1,301 @@
-use std::{hash::Hash, iter::FusedIterator, sync::mpsc, usize};
+use std::collections::HashMap;
+use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
+use std::sync::OnceLock;
 
-use eyre::{eyre, Report, Result};
-use petgraph::{
-    algo,
-    csr::IndexType,
-    data::DataMap,
-    graph::{NodeIndex, NodeIndices},
-    EdgeType, Graph, IntoWeightedEdge, Undirected,
-};
+use eyre::{eyre, OptionExt, Result};
+use fnv::FnvBuildHasher;
+use itertools::Itertools;
+use petgraph::algo::min_spanning_tree;
+use petgraph::{graph::NodeIndex, Graph, Undirected};
 use rayon::prelude::*;
-use winnow::{
-    ascii::{alpha1, digit1},
-    combinator::seq,
-    error::{ContextError, ErrMode, ParseError, StrContext},
-    PResult, Parser,
-};
+
+use winnow::ascii::{alpha1, digit1};
+use winnow::combinator::seq;
+use winnow::error::{ContextError, ErrMode, ParseError, StrContext};
+use winnow::prelude::*;
 
 use crate::types::{problem, Problem};
 
 pub const ALL_IN_A_SINGLE_NIGHT: Problem = problem!(part1);
 
 fn part1(input: &str) -> Result<usize> {
-    let map = input
+    let stops = input
         .lines()
         .map(Distance::try_from)
-        .collect::<Result<Map, _>>()
-        .unwrap();
+        .collect::<Result<Locations, _>>()
+        .map_err(|e| eyre!("{e}"))?;
 
-    Ok(0)
+    let routes = Routes::new(&stops);
+    let route = routes
+        .route_for(&stops)
+        .ok_or_eyre("route list didn't have a route for the full stop list")?;
+    Ok(route.distance)
 }
 
-#[derive(Debug)]
-struct Map<'s>(Graph<&'s str, usize, Undirected, u8>);
+/// A list of routes that minimize distance between locations.
+struct Routes<'s>(HashMap<Locations<'s>, OnceLock<Route<'s>>, FnvBuildHasher>);
 
-// fn par_node_indices<N, E, Ty: EdgeType, Ix: IndexType + Send>(
-//     graph: &Graph<N, E, Ty, Ix>,
-// ) -> impl IndexedParallelIterator<Item = NodeIndex<Ix>> {
-//     (0..graph.node_count())
-//         .into_par_iter()
-//         .map(NodeIndex::<Ix>::new)
-// }
+impl<'s> Routes<'s> {
+    /// Construct a list of routes for a given list of locations and all of its sub-lists.
+    fn new(stops: &Locations<'s>) -> Routes<'s> {
+        #[allow(
+            clippy::mutable_key_type,
+            reason = "hash is based on `.stops()`, which is ordered and immutable"
+        )]
+        let inner = stops.subgraphs().map(|sg| (sg, OnceLock::new())).collect();
+        Routes(inner)
+    }
 
-impl<'s> Map<'s> {
-    fn shortest_route<'m: 's>(&'m self) -> Route<'s, 'm> {
+    /// Get the shortest route for a list of stops. Returns `None` if the given `Locations` doesn't
+    /// exist in the map.
+    fn route_for(&self, stops: &Locations<'s>) -> Option<&Route<'s>> {
         self.0
+            .get(stops)
+            .map(|once| once.get_or_init(|| stops.shortest_route(self)))
+    }
+}
+
+/// A list of locations Santa has to visit and how far apart they are from each other.
+struct Locations<'s> {
+    graph: Graph<&'s str, usize, Undirected, u8>,
+    stops: OnceLock<Vec<&'s str>>,
+}
+
+impl<'s> Locations<'s> {
+    /// Construct a new list of stops
+    fn new(graph: Graph<&'s str, usize, Undirected, u8>) -> Self {
+        Locations {
+            graph,
+            stops: OnceLock::new(),
+        }
+    }
+
+    /// Get a sorted slice of all the stops in this list.
+    fn stops(&self) -> &[&'s str] {
+        self.stops.get_or_init(|| {
+            let mut stops = Vec::with_capacity(self.graph.node_count());
+            self.graph
+                .raw_nodes()
+                .iter()
+                .for_each(|node| stops.push(node.weight));
+            stops.par_sort_unstable();
+            stops
+        })
+    }
+
+    /// Get the number of stops in this list.
+    #[inline]
+    fn num_stops(&self) -> usize {
+        self.stops().len()
+    }
+
+    /// Return a subgraph of this list with the given stop removed.
+    fn subgraph(&self, except: &str) -> Locations<'s> {
+        let mut sg = self.graph.clone();
+        if let Some(node) = sg
             .node_indices()
-            .par_bridge()
-            .map(|start| self.shortest_route_from(start))
-            .reduce(
-                || Route {
-                    map: self,
-                    stops: vec![],
-                    distance: usize::MAX,
-                },
-                |a, b| a.shorter(b),
-            )
+            .find(|ix| sg.node_weight(*ix).is_some_and(|&s| s == except))
+        {
+            sg.remove_node(node);
+        }
+
+        Locations::new(sg)
     }
 
-    fn shortest_route_from(&self, start: NodeIndex<u8>) -> Route {
-        let stops = Stops::new(start, self.0.node_indices());
-        self.shortest_route_through(start, stops)
+    /// Get all combinations of stops (n choose k for k in 1..=self.num_stops()) in this list.
+    fn subgraphs(&self) -> impl ParallelIterator<Item = Locations<'s>> + '_ {
+        (1..=self.num_stops())
+            .into_par_iter()
+            .flat_map_iter(|k| self.graph.raw_nodes().iter().combinations(k))
+            .map(|nodes| {
+                let mut stops: Vec<&str> = nodes.into_iter().map(|node| node.weight).collect();
+                stops.sort_unstable();
+
+                let mut subgraph = self.graph.clone();
+                subgraph.retain_nodes(|g, n| stops.binary_search(&g[n]).is_ok());
+
+                Locations {
+                    graph: subgraph,
+                    stops: stops.into(),
+                }
+            })
     }
 
-    fn shortest_route_through<I: ExactSizeIterator<Item = NodeIndex<u8>> + Clone>(
-        &self,
-        start: NodeIndex<u8>,
-        mut stops: I,
-    ) -> Route {
-        let graph = &self.0;
-        // TODO: cache already visited segments in a map to de-duplicate work
+    /// Find the shortest route through this list of stops, using the given cache to store results for subgraphs.
+    fn shortest_route(&self, cache: &Routes<'s>) -> Route<'s> {
+        self.stops()
+            .into_par_iter()
+            .map(|&start| self.shortest_route_from(start, cache))
+            .reduce(|| Route::MAX, |a, b| a.min(b))
+    }
 
-        match stops.len() {
-            // The shortest distance through 0 stops is the identity route
-            0 => Route {
-                map: self,
-                stops: vec![start],
-                distance: 0,
-            },
-
-            // The shortest distance through 1 stop is from `start` to `end`.
-            1 => {
-                let end = {
-                    let end_maybe = stops.next();
-                    debug_assert!(end_maybe.is_some());
-                    // Safety: `.len()` said there's 1 stop left
-                    unsafe { end_maybe.unwrap_unchecked() }
+    /// Find the shortest route through this list of stops, starting at a given stop,
+    /// using the given cache to store results for subgraphs.
+    fn shortest_route_from(&self, start: &'s str, cache: &Routes<'s>) -> Route<'s> {
+        match self.num_stops() {
+            // Base case: compute the shortest route starting at `start` through 2 other stops
+            3 => {
+                // Find nodes `s` (start), `a`, and `b`
+                let s = self
+                    .graph
+                    .node_indices()
+                    .find(|i| self.graph[*i] == start)
+                    .expect("graph to contain `start`");
+                let (a, b) = match s.index() {
+                    0 => (NodeIndex::<u8>::new(1), NodeIndex::<u8>::new(2)),
+                    1 => (NodeIndex::<u8>::new(0), NodeIndex::<u8>::new(2)),
+                    2 => (NodeIndex::<u8>::new(0), NodeIndex::<u8>::new(1)),
+                    _ => unreachable!("the list only contains 3 locations"),
                 };
-                debug_assert!(stops.next().is_none());
 
-                let distance_ix = graph.find_edge(start, end).unwrap_or_else(|| {
-                    let start_name = graph[start];
-                    let end_name = graph[end];
-                    panic!("Couldn't find a distance between {start_name} and {end_name}")
-                });
-                let distance = graph[distance_ix];
+                // Find edges `s -> a`, `s -> b`, and `a -> b`.
+                let s_a = self
+                    .graph
+                    .find_edge(s, a)
+                    .expect("`start` and `a` to be connected");
+                let s_b = self
+                    .graph
+                    .find_edge(s, b)
+                    .expect("`start` and `b` to be connected");
+                let a_b = self
+                    .graph
+                    .find_edge(a, b)
+                    .expect("`a` and `b` to be connected");
 
-                Route {
-                    map: self,
-                    stops: vec![start, end],
-                    distance,
+                // The shortest route is either `s -> a -> b` or `s -> b -> a`.
+                // We can determine which by comparing `s -> a` with `s -> b`,
+                // because `a -> b` and `b -> a` are the same distance.
+                if self.graph[s_a] < self.graph[s_b] {
+                    // Shortest route: s -> a -> b
+                    let next = self.graph[a];
+                    let last = self.graph[b];
+
+                    let distance = self.graph[s_a] + self.graph[a_b];
+
+                    Route {
+                        stops: vec![start, next, last],
+                        distance,
+                    }
+                } else {
+                    // Shortest route: s -> b -> a
+                    let next = self.graph[b];
+                    let last = self.graph[a];
+
+                    let distance = self.graph[s_b] + self.graph[a_b];
+
+                    Route {
+                        stops: vec![start, next, last],
+                        distance,
+                    }
                 }
             }
 
-            // The shortest distance through 2 stops is either `start -> a -> b` or `start -> b -> a`
-            2 => {
-                let a = {
-                    let a_maybe = stops.next();
-                    debug_assert!(a_maybe.is_some());
-                    // Safety: `.len()` said there's 2 stops left.
-                    unsafe { a_maybe.unwrap_unchecked() }
-                };
-                let b = {
-                    let b_maybe = stops.next();
-                    debug_assert!(b_maybe.is_some());
-                    // Safety: `.len()` said there's 2 stops left.
-                    unsafe { b_maybe.unwrap_unchecked() }
-                };
-                debug_assert!(stops.next().is_none());
+            // For anything over length 3, we're in the recursive case.
+            4.. => {
+                // First, find the shortest route through all stops except `start`.
+                let subgraph = self.subgraph(start);
+                let subgraph_route = cache
+                    .route_for(&subgraph)
+                    .expect("cache to contain subgraph");
 
-                let start_to_a = graph.find_edge(start, a).unwrap_or_else(|| {
-                    let start_name = graph[start];
-                    let a_name = graph[a];
-                    panic!("Couldn't find a distance between {start_name} and {a_name}");
-                });
-                let start_to_b = graph.find_edge(start, b).unwrap_or_else(|| {
-                    let start_name = graph[start];
-                    let b_name = graph[b];
-                    panic!("Couldn't find a distance between {start_name} and {b_name}");
-                });
+                // The shortest route that starts with `start`
 
-                let a_to_b = graph.find_edge(a, b).unwrap_or_else(|| {
-                    let a_name = graph[a];
-                    let b_name = graph[b];
-                    panic!("Couldn't find a distance between {a_name} and {b_name}");
-                });
-
-                let mut route = Route {
-                    map: self,
-                    stops: Vec::with_capacity(3),
-                    distance: graph[a_to_b],
-                };
-                route.stops.push(start);
-
-                if graph[start_to_a] < graph[start_to_b] {
-                    route.distance += graph[start_to_a];
-
-                    route.stops.push(a);
-                    route.stops.push(b);
-                } else {
-                    route.distance += graph[start_to_b];
-
-                    route.stops.push(b);
-                    route.stops.push(a);
-                };
-
-                route
+                todo!()
             }
-            3.. => {
-                let
-            }
+
+            0..=2 => unreachable!("the base case is a list with 3 stops"),
         }
     }
 }
 
-#[derive(Debug, Clone)]
-struct Stops<I> {
-    indices: I,
-    start: Option<NodeIndex<u8>>,
-}
-
-impl<I: Iterator<Item = NodeIndex<u8>>> Stops<I> {
-    fn new(start: NodeIndex<u8>, indices: I) -> Self {
-        Self {
-            indices,
-            start: Some(start),
-        }
-    }
-
-    fn skip_start(&mut self, next: NodeIndex<u8>) -> Option<NodeIndex<u8>> {
-        if self.start.is_some_and(|ix| ix == next) {
-            self.start = None;
-            None
-        } else {
-            Some(next)
-        }
+impl Hash for Locations<'_> {
+    /// Hash a list of locations based on the stops it contains.
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.stops().hash(state);
     }
 }
 
-impl<I: Iterator<Item = NodeIndex<u8>>> Iterator for Stops<I> {
-    type Item = NodeIndex<u8>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.indices.next().and_then(|ix| self.skip_start(ix))
+impl PartialEq for Locations<'_> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.stops().eq(other.stops())
     }
 }
 
-impl<I: ExactSizeIterator + Iterator<Item = NodeIndex<u8>>> ExactSizeIterator for Stops<I> {
-    #[inline(always)]
-    fn len(&self) -> usize {
-        self.indices.len() - (self.start.is_some() as u8 as usize)
-    }
-}
+impl Eq for Locations<'_> {}
 
-impl<I: DoubleEndedIterator + Iterator<Item = NodeIndex<u8>>> DoubleEndedIterator for Stops<I> {
-    fn next_back(&mut self) -> Option<Self::Item> {
-        self.indices.next_back().and_then(|ix| self.skip_start(ix))
-    }
-}
-
-impl<I: FusedIterator + Iterator<Item = NodeIndex<u8>>> FusedIterator for Stops<I> {}
-
-impl<'s> FromIterator<Distance<'s>> for Map<'s> {
+impl<'s> FromIterator<Distance<'s>> for Locations<'s> {
     fn from_iter<T: IntoIterator<Item = Distance<'s>>>(iter: T) -> Self {
         let mut graph = Graph::default();
+        iter.into_iter()
+            .for_each(|Distance { from, to, distance }| {
+                let from_idx = graph
+                    .node_weights()
+                    .position(|&weight| weight == from)
+                    .map(NodeIndex::<u8>::new)
+                    .unwrap_or_else(|| graph.add_node(from));
 
-        for Distance { from, to, distance } in iter {
-            let a = graph
-                .node_weights()
-                .position(|&location| location == from)
-                .map(|ix| (ix as u8).into())
-                .unwrap_or_else(|| graph.add_node(from));
+                let to_idx = graph
+                    .node_weights()
+                    .position(|&weight| weight == to)
+                    .map(NodeIndex::<u8>::new)
+                    .unwrap_or_else(|| graph.add_node(to));
 
-            let b = graph
-                .node_weights()
-                .position(|&location| location == to)
-                .map(|ix| (ix as u8).into())
-                .unwrap_or_else(|| graph.add_node(to));
-            graph.add_edge(a, b, distance);
-        }
+                graph.add_edge(from_idx, to_idx, distance);
+            });
 
-        Self(graph)
+        Locations::new(graph)
     }
 }
 
 #[derive(Debug)]
-struct Route<'s, 'm> {
-    map: &'m Map<'s>,
-    stops: Vec<NodeIndex<u8>>,
+struct Route<'s> {
+    stops: Vec<&'s str>,
     distance: usize,
 }
 
-impl<'s, 'm> Route<'s, 'm> {
-    fn shorter(self, other: Route<'s, 'm>) -> Route<'s, 'm> {
-        if self.distance < other.distance {
-            self
-        } else {
-            other
-        }
+impl Route<'_> {
+    const MAX: Route<'static> = Route {
+        stops: vec![],
+        distance: usize::MAX,
+    };
+}
+
+impl Display for Route<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        #[allow(unstable_name_collisions, reason = "Once it errors, I'll change it")]
+        self.stops
+            .iter()
+            .copied()
+            .intersperse(" -> ")
+            .try_for_each(|s| f.write_str(s))?;
+
+        write!(f, " = {}", self.distance)
+    }
+}
+
+impl PartialEq for Route<'_> {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        self.distance.eq(&other.distance)
+    }
+}
+
+impl Eq for Route<'_> {}
+
+impl PartialOrd for Route<'_> {
+    #[inline]
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Route<'_> {
+    #[inline]
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.distance.cmp(&other.distance)
     }
 }
 
@@ -261,7 +310,7 @@ impl<'s> TryFrom<&'s str> for Distance<'s> {
     type Error = ParseError<&'s str, ErrMode<ContextError>>;
 
     fn try_from(input: &'s str) -> Result<Self, Self::Error> {
-        seq! {Distance {
+        seq! { Distance {
             from: alpha1.context(StrContext::Label("from")),
             _: " to ",
             to: alpha1.context(StrContext::Label("to")),
@@ -269,14 +318,5 @@ impl<'s> TryFrom<&'s str> for Distance<'s> {
             distance: digit1.context(StrContext::Label("distance")).parse_to()
         }}
         .parse(input.trim())
-    }
-}
-
-impl<'s> IntoWeightedEdge<usize> for Distance<'s> {
-    type NodeId = &'s str;
-
-    fn into_weighted_edge(self) -> (Self::NodeId, Self::NodeId, usize) {
-        let Distance { from, to, distance } = self;
-        (from, to, distance)
     }
 }
