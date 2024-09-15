@@ -1,17 +1,25 @@
 macro_rules! aoc {
     ($year:literal/$day:literal-$part:literal: $answer:literal) => {
-        let input_file = {
-            let mut crate_dir: ::std::path::PathBuf =
-                ::std::env!("CARGO_MANIFEST_DIR").parse().unwrap();
+        // Read input from ENV in CI, or from disk locally.
+        let input = if ::std::env::var("CI").ok().as_deref() == Some("true") {
+            let input_var = concat!("INPUT_", stringify!($year), "_", stringify!($day));
+            ::std::env::var(input_var)
+                .unwrap_or_else(|e| ::std::panic!("Error reading {input_var}: {e}"))
+        } else {
+            let input_file = {
+                let mut crate_dir: ::std::path::PathBuf =
+                    ::std::env!("CARGO_MANIFEST_DIR").parse().unwrap();
 
-            crate_dir.push("tests");
-            crate_dir.push("fixtures");
-            crate_dir.push($year.to_string());
-            crate_dir.push($day.to_string());
-            crate_dir
+                crate_dir.push("tests");
+                crate_dir.push("fixtures");
+                crate_dir.push($year.to_string());
+                crate_dir.push($day.to_string());
+
+                crate_dir
+            };
+
+            ::std::fs::read_to_string(input_file).unwrap()
         };
-
-        let input = ::std::fs::read_to_string(input_file).unwrap();
 
         let year = <::advent_of_code::types::Year as ::std::convert::TryFrom<u16>>::try_from($year)
             .unwrap();
