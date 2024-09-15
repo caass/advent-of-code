@@ -95,3 +95,10 @@ mod day8 {
         crate::util::aoc!(2015/8-2: 2117);
     }
 }
+
+mod day9 {
+    #[test]
+    fn part1() {
+        crate::util::aoc!(2015/9-1: 0);
+    }
+}
