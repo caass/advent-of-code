@@ -17,8 +17,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: cargo-bins/cargo-binstall@v1
-      - name: Install `cargo-nextest`
-        run: cargo binstall cargo-nextest --secure --no-confirm
-      - name: Run tests
-        run: cargo nextest run --release --verbose
+      - uses: cargo-bins/cargo-binstall@v1.10.5
+      - run: cargo binstall cargo-nextest --secure --no-confirm
+      - run: cargo nextest run --release --verbose
