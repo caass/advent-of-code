@@ -99,6 +99,11 @@ mod day8 {
 mod day9 {
     #[test]
     fn part1() {
-        crate::util::aoc!(2015/9-1: 0);
+        crate::util::aoc!(2015/9-1: 251);
+    }
+
+    #[test]
+    fn part2() {
+        crate::util::aoc!(2015/9-2: 898);
     }
 }
