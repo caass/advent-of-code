@@ -12,11 +12,22 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+      - run: cargo build --release --verbose
       - uses: cargo-bins/cargo-binstall@v1.10.5
       - run: cargo binstall cargo-nextest --secure --no-confirm
-      - run: cargo nextest run --release --verbose
+      - run: cargo nextest run --release --verbose --no-fail-fast
+    env:
+      INPUT_2015_1: ${{ secrets.INPUT_2015_1 }}
+      INPUT_2015_2: ${{ secrets.INPUT_2015_2 }}
+      INPUT_2015_3: ${{ secrets.INPUT_2015_3 }}
+      INPUT_2015_4: ${{ secrets.INPUT_2015_4 }}
+      INPUT_2015_5: ${{ secrets.INPUT_2015_5 }}
+      INPUT_2015_6: ${{ secrets.INPUT_2015_6 }}
+      INPUT_2015_7: ${{ secrets.INPUT_2015_7 }}
+      INPUT_2015_8: ${{ secrets.INPUT_2015_8 }}
+      INPUT_2015_9: ${{ secrets.INPUT_2015_9 }}
