@@ -17,10 +17,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - run: cargo build --release --verbose
-      - uses: cargo-bins/cargo-binstall@v1.10.5
-      - run: cargo binstall cargo-nextest --secure --no-confirm
-      - run: cargo nextest run --release --verbose --no-fail-fast
+      - name: Install `cargo-binstall`
+        uses: cargo-bins/cargo-binstall@v1.10.5
+      - name: Install `cargo-nextest`
+        run: cargo binstall cargo-nextest --secure --no-confirm
+      - name: Build
+        run: cargo build --release --verbose
+      - name: Test
+        run: cargo nextest run --release --verbose --no-fail-fast
     env:
       INPUT_2015_1: ${{ secrets.INPUT_2015_1 }}
       INPUT_2015_2: ${{ secrets.INPUT_2015_2 }}
