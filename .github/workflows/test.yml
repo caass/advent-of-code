@@ -13,6 +13,7 @@ env:
 
 jobs:
   test:
+    name: Test AoC Solutions
     runs-on: ubuntu-latest
 
     steps:
@@ -35,3 +36,4 @@ jobs:
       INPUT_2015_7: ${{ secrets.INPUT_2015_7 }}
       INPUT_2015_8: ${{ secrets.INPUT_2015_8 }}
       INPUT_2015_9: ${{ secrets.INPUT_2015_9 }}
+      INPUT_2015_10: ${{ secrets.INPUT_2015_10 }}
