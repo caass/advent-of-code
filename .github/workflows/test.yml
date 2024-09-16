@@ -27,14 +27,16 @@ jobs:
       - name: Test
         run: cargo nextest run --release --verbose --no-fail-fast
     env:
-      INPUT_2015_1: ${{ secrets.INPUT_2015_1 }}
-      INPUT_2015_2: ${{ secrets.INPUT_2015_2 }}
-      INPUT_2015_3: ${{ secrets.INPUT_2015_3 }}
-      INPUT_2015_4: ${{ secrets.INPUT_2015_4 }}
-      INPUT_2015_5: ${{ secrets.INPUT_2015_5 }}
-      INPUT_2015_6: ${{ secrets.INPUT_2015_6 }}
-      INPUT_2015_7: ${{ secrets.INPUT_2015_7 }}
-      INPUT_2015_8: ${{ secrets.INPUT_2015_8 }}
-      INPUT_2015_9: ${{ secrets.INPUT_2015_9 }}
+      INPUT_2015_01: ${{ secrets.INPUT_2015_01 }}
+      INPUT_2015_02: ${{ secrets.INPUT_2015_02 }}
+      INPUT_2015_03: ${{ secrets.INPUT_2015_03 }}
+      INPUT_2015_04: ${{ secrets.INPUT_2015_04 }}
+      INPUT_2015_05: ${{ secrets.INPUT_2015_05 }}
+      INPUT_2015_06: ${{ secrets.INPUT_2015_06 }}
+      INPUT_2015_07: ${{ secrets.INPUT_2015_07 }}
+      INPUT_2015_08: ${{ secrets.INPUT_2015_08 }}
+      INPUT_2015_09: ${{ secrets.INPUT_2015_09 }}
       INPUT_2015_10: ${{ secrets.INPUT_2015_10 }}
       INPUT_2015_11: ${{ secrets.INPUT_2015_11 }}
+      INPUT_2015_12: ${{ secrets.INPUT_2015_12 }}
+      INPUT_2015_13: ${{ secrets.INPUT_2015_13 }}

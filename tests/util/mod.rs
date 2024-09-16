@@ -4,10 +4,17 @@
 /// variable `INPUT_$year_$day`. Otherwise, input will be read from `fixtures/$year/$day`.
 macro_rules! aoc {
     ($year:literal/$day:literal-$part:literal: $answer:literal) => {
+        let two_digit_day = if $day < 10 {
+            concat!("0", stringify!($day))
+        } else {
+            stringify!($day)
+        };
+
         // Read input from ENV in CI, or from disk locally.
         let input = if ::std::env::var("CI").ok().as_deref() == Some("true") {
-            let input_var = concat!("INPUT_", stringify!($year), "_", stringify!($day));
-            ::std::env::var(input_var)
+            let input_var = format!("INPUT_{}_{}", $year, two_digit_day);
+
+            ::std::env::var(&input_var)
                 .unwrap_or_else(|e| ::std::panic!("Error reading {input_var}: {e}"))
         } else {
             let input_file = {
@@ -16,8 +23,8 @@ macro_rules! aoc {
 
                 crate_dir.push("tests");
                 crate_dir.push("fixtures");
-                crate_dir.push($year.to_string());
-                crate_dir.push($day.to_string());
+                crate_dir.push(stringify!($year));
+                crate_dir.push(two_digit_day);
 
                 crate_dir
             };
