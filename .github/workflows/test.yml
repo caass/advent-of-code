@@ -37,3 +37,4 @@ jobs:
       INPUT_2015_8: ${{ secrets.INPUT_2015_8 }}
       INPUT_2015_9: ${{ secrets.INPUT_2015_9 }}
       INPUT_2015_10: ${{ secrets.INPUT_2015_10 }}
+      INPUT_2015_11: ${{ secrets.INPUT_2015_11 }}
