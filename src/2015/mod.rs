@@ -3,7 +3,7 @@ use phf::phf_map;
 use crate::types::ProblemSet;
 use crate::util::mod_days;
 
-mod_days!(1, 2, 3, 4, 5, 6, 7, 8, 9);
+mod_days!(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 
 pub const PROBLEMS: ProblemSet = ProblemSet(phf_map! {
     1u8 => NOT_QUITE_LISP,
@@ -14,5 +14,6 @@ pub const PROBLEMS: ProblemSet = ProblemSet(phf_map! {
     6u8 => PROBABLY_A_FIRE_HAZARD,
     7u8 => SOME_ASSEMBLY_REQUIRED,
     8u8 => MATCHSTICKS,
-    9u8 => ALL_IN_A_SINGLE_NIGHT
+    9u8 => ALL_IN_A_SINGLE_NIGHT,
+    10u8 => ELVES_LOOK_ELVES_SAY
 });
