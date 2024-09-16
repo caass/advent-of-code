@@ -26,17 +26,17 @@ jobs:
         run: cargo build --release --verbose
       - name: Test
         run: cargo nextest run --release --verbose --no-fail-fast
-    env:
-      INPUT_2015_01: ${{ secrets.INPUT_2015_01 }}
-      INPUT_2015_02: ${{ secrets.INPUT_2015_02 }}
-      INPUT_2015_03: ${{ secrets.INPUT_2015_03 }}
-      INPUT_2015_04: ${{ secrets.INPUT_2015_04 }}
-      INPUT_2015_05: ${{ secrets.INPUT_2015_05 }}
-      INPUT_2015_06: ${{ secrets.INPUT_2015_06 }}
-      INPUT_2015_07: ${{ secrets.INPUT_2015_07 }}
-      INPUT_2015_08: ${{ secrets.INPUT_2015_08 }}
-      INPUT_2015_09: ${{ secrets.INPUT_2015_09 }}
-      INPUT_2015_10: ${{ secrets.INPUT_2015_10 }}
-      INPUT_2015_11: ${{ secrets.INPUT_2015_11 }}
-      INPUT_2015_12: ${{ secrets.INPUT_2015_12 }}
-      INPUT_2015_13: ${{ secrets.INPUT_2015_13 }}
+        env:
+          INPUT_2015_01: ${{ secrets.INPUT_2015_01 }}
+          INPUT_2015_02: ${{ secrets.INPUT_2015_02 }}
+          INPUT_2015_03: ${{ secrets.INPUT_2015_03 }}
+          INPUT_2015_04: ${{ secrets.INPUT_2015_04 }}
+          INPUT_2015_05: ${{ secrets.INPUT_2015_05 }}
+          INPUT_2015_06: ${{ secrets.INPUT_2015_06 }}
+          INPUT_2015_07: ${{ secrets.INPUT_2015_07 }}
+          INPUT_2015_08: ${{ secrets.INPUT_2015_08 }}
+          INPUT_2015_09: ${{ secrets.INPUT_2015_09 }}
+          INPUT_2015_10: ${{ secrets.INPUT_2015_10 }}
+          INPUT_2015_11: ${{ secrets.INPUT_2015_11 }}
+          INPUT_2015_12: ${{ secrets.INPUT_2015_12 }}
+          INPUT_2015_13: ${{ secrets.INPUT_2015_13 }}
