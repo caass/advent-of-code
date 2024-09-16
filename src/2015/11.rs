@@ -1,5 +1,6 @@
 use std::{
     fmt::{self, Display, Formatter, Write},
+    iter::FusedIterator,
     ops::{Add, AddAssign, Sub, SubAssign},
     str::FromStr,
 };
@@ -17,14 +18,115 @@ fn part1(input: &str) -> Result<Password> {
     todo!()
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 struct Password([Letter; 8]);
 
+#[derive(Debug)]
+struct PasswordIter {
+    /// The password to start iterating from, inclusive
+    from: Password,
+
+    /// The password to stop iterating at, exclusive
+    to: Password,
+
+    /// Whether or not we're done iterating
+    done: bool,
+}
+
+impl PasswordIter {
+    /// Create a `PasswordIter` that iterates over all possible passwords, starting with `start`.
+    fn new(start: Password) -> Self {
+        PasswordIter {
+            from: start,
+            to: start,
+            done: false,
+        }
+    }
+
+    /// Create a `PasswordIter` that iterates over all possible passwords between `from` (inclusive)
+    /// and `to` (exclusive).
+    fn new_range(from: Password, to: Password) -> Self {
+        PasswordIter {
+            from,
+            to,
+            done: false,
+        }
+    }
+}
+
+impl Iterator for PasswordIter {
+    type Item = Password;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+
+        let next = self.from;
+        self.from.increment();
+
+        if self.from == self.to {
+            self.done = true;
+        }
+
+        Some(next)
+    }
+
+    #[inline(always)]
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.len(), Some(self.len()))
+    }
+}
+
+impl ExactSizeIterator for PasswordIter {
+    #[inline(always)]
+    fn len(&self) -> usize {
+        match self.from.distance(&self.to) {
+            // We're done iterating, we've hit every password
+            0 if self.done => 0,
+
+            // We just started iterating, we need to hit every password
+            0 => Password::ZZZZZZZZ.value(),
+
+            // We're in the middle of iterating
+            n => n,
+        }
+    }
+}
+
+impl DoubleEndedIterator for PasswordIter {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.done {
+            return None;
+        }
+
+        self.to.decrement();
+        let next = self.to;
+
+        if self.from == self.to {
+            self.done = true;
+        }
+
+        Some(next)
+    }
+}
+
+impl FusedIterator for PasswordIter {}
+
 impl Password {
+    const AAAAAAAA: Password = Password([Letter::A; 8]);
+    const ZZZZZZZZ: Password = Password([Letter::Z; 8]);
+
     /// Returns an iterator over the `Letter`s in this password.
     #[inline(always)]
     fn iter(&self) -> std::slice::Iter<Letter> {
         self.0.iter()
+    }
+
+    /// Returns an iterator over mutable references to the `Letter`s in this password.
+    #[inline(always)]
+    fn iter_mut(&mut self) -> std::slice::IterMut<Letter> {
+        self.0.iter_mut()
     }
 
     /// Returns the slice of `Letter`s that make up this password.
@@ -33,8 +135,67 @@ impl Password {
         &self.0
     }
 
-    fn next<V: FnMut(&Password) -> bool>(&self, validator: V) -> Password {
+    /// Increment this `Password`, wrapping at `ZZZZZZZZ`.
+    fn increment(&mut self) {
+        for letter in self.iter_mut().rev() {
+            let wrapped = letter.increment();
+
+            if !wrapped {
+                return;
+            }
+        }
+    }
+
+    /// Decrement this `Password`, wrapping at `AAAAAAAA`.
+    fn decrement(&mut self) {
+        for letter in self.iter_mut().rev() {
+            let wrapped = letter.decrement();
+
+            if !wrapped {
+                return;
+            }
+        }
+    }
+
+    /// Returns the next password that passes validation from `validator`.
+    fn next_valid<V: FnMut(&Password) -> bool>(&self, validator: V) -> Password {
         todo!()
+    }
+
+    /// Check if this `Password` is valid according to the given `validator`.
+    #[inline(always)]
+    fn is_valid<V: FnOnce(&Password) -> bool>(&self, validator: V) -> bool {
+        validator(self)
+    }
+
+    /// Returns the numerical `value` of this password, where `AAAAAAAA.value() == 0`.
+    const fn value(&self) -> usize {
+        let mut exp = 7;
+        let mut i = 0;
+        let mut out = 0;
+
+        loop {
+            let val = self.0[i].value() as usize;
+            out += val * 26usize.pow(exp);
+
+            if exp == 0 {
+                break out;
+            }
+
+            i += 1;
+            exp -= 1;
+        }
+    }
+
+    /// Returns the numerical `distance` between this password and `other`, representing the number of passwords
+    /// needed to increment from `self` to `other`.
+    fn distance(&self, other: &Password) -> usize {
+        const BASE: usize = Password::ZZZZZZZZ.value();
+
+        let lhs = other.value();
+        let rhs = self.value();
+
+        (lhs + BASE - rhs) % BASE
     }
 }
 
@@ -305,11 +466,14 @@ impl_letter_math!(u8, u16, u32, u64, usize, u128, i8, i16, i32, i64, isize, i128
 
 #[cfg(test)]
 mod test {
+    use pretty_assertions::assert_eq;
+
     use super::*;
 
     mod letter_math {
-        use super::*;
         use pretty_assertions::assert_eq;
+
+        use super::*;
 
         #[test]
         fn add() {
@@ -340,5 +504,77 @@ mod test {
             assert_eq!(Letter::C - 3, Letter::Z);
             assert_eq!(Letter::G - 26, Letter::G);
         }
+    }
+
+    #[test]
+    fn password_distance() {
+        let a: Password = "aaaaaaaa".parse().unwrap();
+        let b: Password = "aaaaaaaa".parse().unwrap();
+
+        assert_eq!(a.distance(&b), 0);
+        assert_eq!(b.distance(&a), 0);
+
+        let c: Password = "aaaaaaab".parse().unwrap();
+        assert_eq!(a.distance(&c), 1);
+        assert_eq!(c.distance(&a), Password::ZZZZZZZZ.value() - 1);
+
+        let d: Password = "aaaaaaaz".parse().unwrap();
+        assert_eq!(a.distance(&d), 25);
+        assert_eq!(d.distance(&a), Password::ZZZZZZZZ.value() - 25);
+
+        let e: Password = "aaaaaaba".parse().unwrap();
+        assert_eq!(a.distance(&e), 26);
+        assert_eq!(e.distance(&a), Password::ZZZZZZZZ.value() - 26);
+    }
+
+    #[test]
+    fn password_iter() {
+        let mut iter = PasswordIter {
+            from: "aaaaaaaa".parse().unwrap(),
+            to: "aaaaaaba".parse().unwrap(),
+            done: false,
+        };
+
+        assert_eq!(iter.len(), 26);
+
+        for i in 0..26 {
+            let mut expected = [Letter::A; 8];
+            expected[7] += i;
+
+            let actual = iter
+                .next()
+                .unwrap_or_else(|| panic!("No {i}th item in iterator"));
+            assert_eq!(actual.letters(), expected);
+            assert_eq!(iter.len(), 25 - i, "wrong len at i = {i}");
+        }
+
+        let next = iter.next();
+        assert_eq!(None, next);
+    }
+
+    #[test]
+    fn password_iter_rev() {
+        let mut iter = PasswordIter {
+            from: "aaaaaaaa".parse().unwrap(),
+            to: "aaaaaaba".parse().unwrap(),
+            done: false,
+        }
+        .rev();
+
+        assert_eq!(iter.len(), 26);
+
+        for i in 0..26 {
+            let mut expected = [Letter::A; 8];
+            expected[7] += 25 - i;
+
+            let actual = iter
+                .next()
+                .unwrap_or_else(|| panic!("No {i}th item in iterator"));
+            assert_eq!(actual.letters(), expected);
+            assert_eq!(iter.len(), 25 - i, "wrong len at i = {i}");
+        }
+
+        let next = iter.next();
+        assert_eq!(None, next);
     }
 }
