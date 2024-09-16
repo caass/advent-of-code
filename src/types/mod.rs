@@ -51,6 +51,10 @@ impl Problem {
 pub type ProblemPart = fn(&str) -> Result<String>;
 
 macro_rules! problem {
+    () => {
+        Problem::new(None, None)
+    };
+
     ($part1:ident) => {
         Problem::new(
             Some(|input| {
