@@ -6,6 +6,7 @@ use std::{
 };
 
 use eyre::{bail, eyre, Report, Result};
+use rayon::iter::plumbing::Producer;
 
 use crate::types::{problem, Problem};
 
@@ -113,6 +114,37 @@ impl DoubleEndedIterator for PasswordIter {
 
 impl FusedIterator for PasswordIter {}
 
+#[derive(Debug)]
+struct PasswordProducer {
+    from: Password,
+    to: Password,
+}
+
+impl Producer for PasswordProducer {
+    type Item = Password;
+
+    type IntoIter = PasswordIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PasswordIter::new_range(self.from, self.to)
+    }
+
+    fn split_at(self, index: usize) -> (Self, Self) {
+        let mid = self.from + index;
+
+        (
+            PasswordProducer {
+                from: self.from,
+                to: mid,
+            },
+            PasswordProducer {
+                from: mid,
+                to: self.to,
+            },
+        )
+    }
+}
+
 impl Password {
     const AAAAAAAA: Password = Password([Letter::A; 8]);
     const ZZZZZZZZ: Password = Password([Letter::Z; 8]);
@@ -196,6 +228,66 @@ impl Password {
         let rhs = self.value();
 
         (lhs + BASE - rhs) % BASE
+    }
+
+    /// Construct a password from its `value`
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the given value is too big to represent a password.
+    fn from_value(value: usize) -> Result<Password> {
+        if value > Password::ZZZZZZZZ.value() {
+            Err(eyre!("value must be <= `ZZZZZZZZ.value()`"))
+        } else {
+            // Safety: validated password is less than `Password::ZZZZZZZZ.value()`
+            Ok(unsafe { Password::from_value_unchecked(value) })
+        }
+    }
+
+    /// Construct a password from its `value`
+    ///
+    /// # Safety
+    ///
+    /// The given value must not be greater than `Password::ZZZZZZZZ.value()`.
+    unsafe fn from_value_unchecked(mut value: usize) -> Password {
+        Password(std::array::from_fn(|i| {
+            // Safety: `i` is between 0-7, so `7 - i` is between `7-0`, i.e. it fits in a `u32`.
+            let exp = unsafe { (7 - i).try_into().unwrap_unchecked() };
+
+            let this_place_value = {
+                let this_place_value_usize = value / 26usize.pow(exp);
+                let this_place_value_maybe = this_place_value_usize.try_into();
+
+                debug_assert!(this_place_value_maybe.is_ok());
+                // Safety: we mod-assign value by 26 ^ exp every iteration, so dividing by 26 ^ exp
+                // will always yield a number between 0-25 as long as the caller upholds their contract.
+                unsafe { this_place_value_maybe.unwrap_unchecked() }
+            };
+            value %= 26usize.pow(exp);
+
+            // Safety: same as above
+            unsafe { Letter::from_value_unchecked(this_place_value) }
+        }))
+    }
+}
+
+impl Add<usize> for Password {
+    type Output = Password;
+
+    #[inline(always)]
+    fn add(self, rhs: usize) -> Self::Output {
+        let lhs = self.value();
+        let value = (lhs + rhs) % const { Password::ZZZZZZZZ.value() + 1 };
+
+        // Safety: value is between 0 and the maximum allowed by virtue of the % operator.
+        unsafe { Password::from_value_unchecked(value) }
+    }
+}
+
+impl AddAssign<usize> for Password {
+    #[inline(always)]
+    fn add_assign(&mut self, rhs: usize) {
+        *self = *self + rhs;
     }
 }
 
@@ -576,5 +668,55 @@ mod test {
 
         let next = iter.next();
         assert_eq!(None, next);
+    }
+
+    #[test]
+    fn password_math() {
+        assert_eq!(Password::AAAAAAAA + 1, "aaaaaaab".parse().unwrap());
+        assert_eq!(Password::AAAAAAAA + 2 * 26, "aaaaaaca".parse().unwrap());
+        assert_eq!(
+            Password::AAAAAAAA + 25 * 26usize.pow(3),
+            "aaaazaaa".parse().unwrap()
+        );
+    }
+
+    #[test]
+    fn password_math_wrap() {
+        assert_eq!(Password::ZZZZZZZZ + 1, Password::AAAAAAAA);
+        assert_eq!(Password::ZZZZZZZZ + 2 * 26, "aaaaaabz".parse().unwrap());
+    }
+
+    #[test]
+    fn password_producer() {
+        let producer = PasswordProducer {
+            from: Password::AAAAAAAA,
+            to: Password::ZZZZZZZZ,
+        };
+        let (left, right) = producer.split_at(Password::ZZZZZZZZ.value() / 2);
+        let mid = "mzzzzzzz".parse().unwrap();
+
+        assert_eq!(left.from, Password::AAAAAAAA);
+        assert_eq!(left.to, mid);
+
+        assert_eq!(right.from, mid);
+        assert_eq!(right.to, Password::ZZZZZZZZ);
+    }
+
+    #[test]
+    fn password_producer_wrap() {
+        let to = "aaaaaaaz".parse().unwrap();
+        let producer = PasswordProducer {
+            from: Password::ZZZZZZZZ,
+            to,
+        };
+
+        let (left, right) = producer.split_at(13);
+        let mid = "aaaaaaam".parse().unwrap();
+
+        assert_eq!(left.from, Password::ZZZZZZZZ);
+        assert_eq!(left.to, mid);
+
+        assert_eq!(right.from, mid);
+        assert_eq!(right.to, to);
     }
 }
