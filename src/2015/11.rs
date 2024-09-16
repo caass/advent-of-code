@@ -6,21 +6,78 @@ use std::{
 };
 
 use eyre::{bail, eyre, Report, Result};
-use rayon::iter::plumbing::Producer;
+use rayon::iter::plumbing::{bridge, Producer};
+use rayon::prelude::*;
 
 use crate::types::{problem, Problem};
 
-pub const CORPORATE_POLICY: Problem = problem!(part1);
+pub const CORPORATE_POLICY: Problem = problem!(part1, part2);
 const ASCII_LETTER_OFFSET: u8 = b'a';
 
 fn part1(input: &str) -> Result<Password> {
-    let current_password = input.parse::<Password>()?;
+    input.parse::<Password>().map(Password::next_valid)
+}
 
-    todo!()
+fn part2(input: &str) -> Result<Password> {
+    input
+        .parse::<Password>()
+        .map(|pwd| pwd.next_valid().next_valid())
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 struct Password([Letter; 8]);
+
+impl IntoIterator for Password {
+    type Item = Password;
+
+    type IntoIter = PasswordIter;
+
+    fn into_iter(self) -> Self::IntoIter {
+        PasswordIter::new(self)
+    }
+}
+
+impl IntoParallelIterator for Password {
+    type Iter = PasswordIter;
+
+    type Item = Password;
+
+    fn into_par_iter(self) -> Self::Iter {
+        PasswordIter::new(self)
+    }
+}
+
+impl ParallelIterator for PasswordIter {
+    type Item = Password;
+
+    #[inline(always)]
+    fn drive_unindexed<C>(self, consumer: C) -> C::Result
+    where
+        C: rayon::iter::plumbing::UnindexedConsumer<Self::Item>,
+    {
+        bridge(self, consumer)
+    }
+}
+
+impl IndexedParallelIterator for PasswordIter {
+    #[inline(always)]
+    fn len(&self) -> usize {
+        ExactSizeIterator::len(self)
+    }
+
+    #[inline(always)]
+    fn drive<C: rayon::iter::plumbing::Consumer<Self::Item>>(self, consumer: C) -> C::Result {
+        bridge(self, consumer)
+    }
+
+    #[inline(always)]
+    fn with_producer<CB: rayon::iter::plumbing::ProducerCallback<Self::Item>>(
+        self,
+        callback: CB,
+    ) -> CB::Output {
+        callback.callback(self)
+    }
+}
 
 #[derive(Debug)]
 struct PasswordIter {
@@ -46,6 +103,7 @@ impl PasswordIter {
 
     /// Create a `PasswordIter` that iterates over all possible passwords between `from` (inclusive)
     /// and `to` (exclusive).
+    #[cfg(test)]
     fn new_range(from: Password, to: Password) -> Self {
         PasswordIter {
             from,
@@ -75,7 +133,10 @@ impl Iterator for PasswordIter {
 
     #[inline(always)]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        (self.len(), Some(self.len()))
+        (
+            ExactSizeIterator::len(self),
+            Some(ExactSizeIterator::len(self)),
+        )
     }
 }
 
@@ -114,38 +175,36 @@ impl DoubleEndedIterator for PasswordIter {
 
 impl FusedIterator for PasswordIter {}
 
-#[derive(Debug)]
-struct PasswordProducer {
-    from: Password,
-    to: Password,
-}
-
-impl Producer for PasswordProducer {
+impl Producer for PasswordIter {
     type Item = Password;
 
     type IntoIter = PasswordIter;
 
+    #[inline(always)]
     fn into_iter(self) -> Self::IntoIter {
-        PasswordIter::new_range(self.from, self.to)
+        self
     }
 
     fn split_at(self, index: usize) -> (Self, Self) {
         let mid = self.from + index;
 
         (
-            PasswordProducer {
+            PasswordIter {
                 from: self.from,
                 to: mid,
+                done: index == 0,
             },
-            PasswordProducer {
+            PasswordIter {
                 from: mid,
                 to: self.to,
+                done: index == ExactSizeIterator::len(&self),
             },
         )
     }
 }
 
 impl Password {
+    #[cfg(test)]
     const AAAAAAAA: Password = Password([Letter::A; 8]);
     const ZZZZZZZZ: Password = Password([Letter::Z; 8]);
 
@@ -189,15 +248,30 @@ impl Password {
         }
     }
 
-    /// Returns the next password that passes validation from `validator`.
-    fn next_valid<V: FnMut(&Password) -> bool>(&self, validator: V) -> Password {
-        todo!()
+    /// Returns the next password that passes validation, if one exists.
+    fn next_valid(mut self) -> Password {
+        if self.is_valid() {
+            self.increment();
+        }
+
+        self.into_par_iter()
+            .find_first(Password::is_valid)
+            .expect("to find a valid password")
     }
 
-    /// Check if this `Password` is valid according to the given `validator`.
-    #[inline(always)]
-    fn is_valid<V: FnOnce(&Password) -> bool>(&self, validator: V) -> bool {
-        validator(self)
+    fn is_valid(&self) -> bool {
+        let has_increasing_straight = self.letters().windows(3).any(|window| {
+            window[0] <= Letter::X && window[0] + 1 == window[1] && window[1] + 1 == window[2]
+        });
+        let has_forbidden_letter = self
+            .iter()
+            .any(|&letter| letter == Letter::I || letter == Letter::O || letter == Letter::L);
+        let has_nonoverlapping_pairs = (0..5).any(|i| {
+            self.letters()[i] == self.letters()[i + 1]
+                && ((i + 2)..7).any(|j| self.letters()[j] == self.letters()[j + 1])
+        });
+
+        has_increasing_straight && !has_forbidden_letter && has_nonoverlapping_pairs
     }
 
     /// Returns the numerical `value` of this password, where `AAAAAAAA.value() == 0`.
@@ -228,20 +302,6 @@ impl Password {
         let rhs = self.value();
 
         (lhs + BASE - rhs) % BASE
-    }
-
-    /// Construct a password from its `value`
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the given value is too big to represent a password.
-    fn from_value(value: usize) -> Result<Password> {
-        if value > Password::ZZZZZZZZ.value() {
-            Err(eyre!("value must be <= `ZZZZZZZZ.value()`"))
-        } else {
-            // Safety: validated password is less than `Password::ZZZZZZZZ.value()`
-            Ok(unsafe { Password::from_value_unchecked(value) })
-        }
     }
 
     /// Construct a password from its `value`
@@ -319,6 +379,7 @@ impl FromStr for Password {
     }
 }
 
+#[allow(dead_code, reason = "incorrectly detecting variants as unused")]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 #[repr(u8)]
 enum Letter {
@@ -627,7 +688,7 @@ mod test {
             done: false,
         };
 
-        assert_eq!(iter.len(), 26);
+        assert_eq!(ExactSizeIterator::len(&iter), 26);
 
         for i in 0..26 {
             let mut expected = [Letter::A; 8];
@@ -637,7 +698,11 @@ mod test {
                 .next()
                 .unwrap_or_else(|| panic!("No {i}th item in iterator"));
             assert_eq!(actual.letters(), expected);
-            assert_eq!(iter.len(), 25 - i, "wrong len at i = {i}");
+            assert_eq!(
+                ExactSizeIterator::len(&iter),
+                25 - i,
+                "wrong len at i = {i}"
+            );
         }
 
         let next = iter.next();
@@ -646,12 +711,11 @@ mod test {
 
     #[test]
     fn password_iter_rev() {
-        let mut iter = PasswordIter {
+        let mut iter = Iterator::rev(PasswordIter {
             from: "aaaaaaaa".parse().unwrap(),
             to: "aaaaaaba".parse().unwrap(),
             done: false,
-        }
-        .rev();
+        });
 
         assert_eq!(iter.len(), 26);
 
@@ -688,10 +752,7 @@ mod test {
 
     #[test]
     fn password_producer() {
-        let producer = PasswordProducer {
-            from: Password::AAAAAAAA,
-            to: Password::ZZZZZZZZ,
-        };
+        let producer = PasswordIter::new_range(Password::AAAAAAAA, Password::ZZZZZZZZ);
         let (left, right) = producer.split_at(Password::ZZZZZZZZ.value() / 2);
         let mid = "mzzzzzzz".parse().unwrap();
 
@@ -705,10 +766,7 @@ mod test {
     #[test]
     fn password_producer_wrap() {
         let to = "aaaaaaaz".parse().unwrap();
-        let producer = PasswordProducer {
-            from: Password::ZZZZZZZZ,
-            to,
-        };
+        let producer = PasswordIter::new_range(Password::ZZZZZZZZ, to);
 
         let (left, right) = producer.split_at(13);
         let mid = "aaaaaaam".parse().unwrap();

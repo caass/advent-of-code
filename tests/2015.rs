@@ -123,11 +123,11 @@ mod day10 {
 mod day11 {
     #[test]
     fn part1() {
-        crate::util::aoc!(2015/11-1: 0);
+        crate::util::aoc!(2015/11-1: "vzbxxyzz");
     }
 
     #[test]
     fn part2() {
-        crate::util::aoc!(2015/11-2: 0);
+        crate::util::aoc!(2015/11-2: "vzcaabcc");
     }
 }
