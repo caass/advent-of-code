@@ -131,3 +131,15 @@ mod day11 {
         crate::util::aoc!(2015/11-2: "vzcaabcc");
     }
 }
+
+mod day12 {
+    #[test]
+    fn part1() {
+        crate::util::aoc!(2015/12-1: 111754);
+    }
+
+    #[test]
+    fn part2() {
+        crate::util::aoc!(2015/12-2: 65402);
+    }
+}

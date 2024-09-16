@@ -1,24 +1,14 @@
 use eyre::Result;
 use itertools::Itertools;
+use void::Void;
 
 use crate::types::{problem, Problem};
 
-pub const ELVES_LOOK_ELVES_SAY: Problem = problem!(part1, part2);
+pub const ELVES_LOOK_ELVES_SAY: Problem = problem!(look_and_say_n::<40>, look_and_say_n::<50>);
 
-fn part1(input: &str) -> Result<usize> {
-    let mut n = input.to_string();
-    dbg!(&n);
-    for _ in 0..40 {
-        n = look_and_say(&n);
-        dbg!(&n);
-    }
-
-    Ok(n.len())
-}
-
-fn part2(input: &str) -> Result<usize> {
-    let mut n = input.to_string();
-    for _ in 0..50 {
+fn look_and_say_n<const N: usize>(n: &str) -> Result<usize, Void> {
+    let mut n = n.to_string();
+    for _ in 0..N {
         n = look_and_say(&n);
     }
 

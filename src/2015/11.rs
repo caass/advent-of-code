@@ -11,18 +11,12 @@ use rayon::prelude::*;
 
 use crate::types::{problem, Problem};
 
-pub const CORPORATE_POLICY: Problem = problem!(part1, part2);
+pub const CORPORATE_POLICY: Problem = problem!(
+    |input: &str| input.parse::<Password>().map(Password::next),
+    |input: &str| input.parse::<Password>().map(|pwd| pwd.next().next())
+);
+
 const ASCII_LETTER_OFFSET: u8 = b'a';
-
-fn part1(input: &str) -> Result<Password> {
-    input.parse::<Password>().map(Password::next_valid)
-}
-
-fn part2(input: &str) -> Result<Password> {
-    input
-        .parse::<Password>()
-        .map(|pwd| pwd.next_valid().next_valid())
-}
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 struct Password([Letter; 8]);
@@ -249,7 +243,7 @@ impl Password {
     }
 
     /// Returns the next password that passes validation, if one exists.
-    fn next_valid(mut self) -> Password {
+    fn next(mut self) -> Password {
         self.increment();
         self.into_par_iter()
             .find_first(Password::is_valid)

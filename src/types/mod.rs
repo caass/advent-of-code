@@ -55,7 +55,7 @@ macro_rules! problem {
         Problem::new(None, None)
     };
 
-    ($part1:ident) => {
+    ($part1:expr) => {
         Problem::new(
             Some(|input| {
                 let output = $part1(input)?;
@@ -65,7 +65,7 @@ macro_rules! problem {
         )
     };
 
-    ($part1:ident, $part2:ident) => {
+    ($part1:expr, $part2:expr) => {
         Problem::new(
             Some(|input| {
                 let output = $part1(input)?;

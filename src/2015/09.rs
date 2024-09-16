@@ -1,4 +1,4 @@
-use eyre::{eyre, Result};
+use eyre::{eyre, Report, Result};
 use itertools::Itertools;
 use petgraph::{graph::NodeIndex, Graph, Undirected};
 use rayon::prelude::*;
@@ -10,31 +10,26 @@ use winnow::prelude::*;
 
 use crate::types::{problem, Problem};
 
-pub const ALL_IN_A_SINGLE_NIGHT: Problem = problem!(part1, part2);
-
-fn part1(input: &str) -> Result<usize> {
-    let stops = input
-        .lines()
-        .map(Leg::try_from)
-        .collect::<Result<Locations, _>>()
-        .map_err(|e| eyre!("{e}"))?;
-
-    Ok(stops.shortest_distance())
-}
-
-fn part2(input: &str) -> Result<usize> {
-    let stops = input
-        .lines()
-        .map(Leg::try_from)
-        .collect::<Result<Locations, _>>()
-        .map_err(|e| eyre!("{e}"))?;
-
-    Ok(stops.longest_distance())
-}
+pub const ALL_IN_A_SINGLE_NIGHT: Problem = problem!(
+    |input| Locations::try_from(input).map(|locs| locs.shortest_distance()),
+    |input| Locations::try_from(input).map(|locs| locs.longest_distance())
+);
 
 /// A list of locations Santa has to visit and how far apart they are from each other.
 #[derive(Debug)]
 struct Locations<'s>(Graph<&'s str, usize, Undirected, u8>);
+
+impl<'s> TryFrom<&'s str> for Locations<'s> {
+    type Error = Report;
+
+    fn try_from(input: &'s str) -> std::result::Result<Self, Self::Error> {
+        input
+            .lines()
+            .map(Leg::try_from)
+            .collect::<Result<Locations, _>>()
+            .map_err(|e| eyre!("{e}"))
+    }
+}
 
 impl<'s> Locations<'s> {
     /// Construct a new list of stops.
