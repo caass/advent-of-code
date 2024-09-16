@@ -1,3 +1,7 @@
+/// `proc-macro` to reduce boilerplate in writing tests.
+///
+/// if the `CI` environment variable is set to `true`, test input will be read from the environment
+/// variable `INPUT_$year_$day`. Otherwise, input will be read from `fixtures/$year/$day`.
 macro_rules! aoc {
     ($year:literal/$day:literal-$part:literal: $answer:literal) => {
         // Read input from ENV in CI, or from disk locally.
