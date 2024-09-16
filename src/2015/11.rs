@@ -11,8 +11,59 @@ use crate::types::{problem, Problem};
 pub const CORPORATE_POLICY: Problem = problem!(part1);
 const ASCII_LETTER_OFFSET: u8 = b'a';
 
-fn part1(input: &str) -> Result<String> {
+fn part1(input: &str) -> Result<Password> {
+    let current_password = input.parse::<Password>()?;
+
     todo!()
+}
+
+#[derive(Debug)]
+struct Password([Letter; 8]);
+
+impl Password {
+    /// Returns an iterator over the `Letter`s in this password.
+    #[inline(always)]
+    fn iter(&self) -> std::slice::Iter<Letter> {
+        self.0.iter()
+    }
+
+    /// Returns the slice of `Letter`s that make up this password.
+    #[inline(always)]
+    fn letters(&self) -> &[Letter] {
+        &self.0
+    }
+
+    fn next<V: FnMut(&Password) -> bool>(&self, validator: V) -> Password {
+        todo!()
+    }
+}
+
+impl Display for Password {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.iter().try_for_each(|letter| Display::fmt(letter, f))
+    }
+}
+
+impl FromStr for Password {
+    type Err = Report;
+
+    fn from_str(s: &str) -> Result<Self> {
+        if !s.is_ascii() {
+            bail!("passwords must be ascii");
+        }
+
+        if s.len() != 8 {
+            bail!("passwords must be 8 ascii characters");
+        }
+
+        let mut letters = [Letter::A; 8];
+
+        for (i, ch) in s.chars().enumerate() {
+            letters[i] = ch.try_into()?;
+        }
+
+        Ok(Password(letters))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -166,6 +217,13 @@ impl FromStr for Letter {
     }
 }
 
+impl Display for Letter {
+    #[inline(always)]
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_char(self.char())
+    }
+}
+
 macro_rules! impl_letter_math {
     ($($ty:ty),+) => {$(
         impl Add<$ty> for Letter {
@@ -244,13 +302,6 @@ macro_rules! impl_letter_math {
 }
 
 impl_letter_math!(u8, u16, u32, u64, usize, u128, i8, i16, i32, i64, isize, i128);
-
-impl Display for Letter {
-    #[inline]
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        f.write_char(self.char())
-    }
-}
 
 #[cfg(test)]
 mod test {
