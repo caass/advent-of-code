@@ -250,10 +250,7 @@ impl Password {
 
     /// Returns the next password that passes validation, if one exists.
     fn next_valid(mut self) -> Password {
-        if self.is_valid() {
-            self.increment();
-        }
-
+        self.increment();
         self.into_par_iter()
             .find_first(Password::is_valid)
             .expect("to find a valid password")
