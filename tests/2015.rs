@@ -171,11 +171,11 @@ mod day14 {
 mod day15 {
     #[test]
     fn part1() {
-        crate::util::aoc!(2015/15-1: 2696);
+        crate::util::aoc!(2015/15-1: 222870);
     }
 
     #[test]
     fn part2() {
-        crate::util::aoc!(2015/15-2: 1084);
+        crate::util::aoc!(2015/15-2: 117936);
     }
 }

@@ -1,8 +1,8 @@
 use std::{
     collections::{HashMap, HashSet},
+    fmt::{self, Display, Formatter},
     hash::{Hash, Hasher},
     ops::{Add, AddAssign},
-    sync::OnceLock,
 };
 
 use eyre::{eyre, OptionExt, Report, Result};
@@ -18,17 +18,20 @@ use winnow::{
 
 use crate::types::{problem, Problem};
 
-pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem = problem!(best_cookie);
+pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem = problem!(
+    |input| best_cookie(input, None),
+    |input| best_cookie(input, Some(500))
+);
+const NUM_TABLESPOONS: usize = 100;
 
-fn best_cookie(input: &str) -> Result<usize> {
-    let kitchen = input
-        .lines()
-        .map(|line| line.try_into())
-        .collect::<Result<Kitchen, _>>()?;
-    let cookie = kitchen.bake()?;
+fn best_cookie(input: &str, calorie_restriction: Option<usize>) -> Result<usize> {
+    let kitchen = Kitchen::from_input(input)?;
+
+    let cookie = kitchen.best_cookie(calorie_restriction)?;
     Ok(cookie.score())
 }
 
+#[derive(Debug, PartialEq)]
 struct Kitchen<'s> {
     ingredients: HashSet<Ingredient<'s>, FnvBuildHasher>,
 }
@@ -42,51 +45,76 @@ impl<'s> FromIterator<Ingredient<'s>> for Kitchen<'s> {
 }
 
 impl<'s> Kitchen<'s> {
-    fn bake(&self) -> Result<Cookie<'s>> {
-        // bake `self.ingredients.len() choose 100 with replacement` cookies
+    fn from_input(input: &'s str) -> Result<Self> {
+        input.lines().map(|line| line.trim().try_into()).collect()
+    }
+
+    fn best_cookie(&self, calorie_restriction: Option<usize>) -> Result<Cookie<'s>> {
         self.ingredients
             .iter()
             .copied()
-            .combinations_with_replacement(100)
+            .combinations_with_replacement(NUM_TABLESPOONS)
             .par_bridge()
-            .map(|tablespoons| {
-                debug_assert_eq!(tablespoons.len(), 100);
-                tablespoons.into_iter().collect()
+            .map(Cookie::bake)
+            .filter(|cookie| {
+                if let Some(cal_limit) = calorie_restriction {
+                    cookie.calories() == cal_limit
+                } else {
+                    true
+                }
             })
-            .max_by_key(|cookie: &Cookie| cookie.score())
-            .ok_or_eyre("baked with 0 ingredients")
+            .max_by_key(Cookie::score)
+            .ok_or_eyre("didn't bake any cookies")
     }
 }
 
+#[derive(Debug)]
 struct Cookie<'s> {
     ingredients: HashMap<Ingredient<'s>, u8, FnvBuildHasher>,
-    score: OnceLock<usize>,
+    qualities: Qualities,
+}
+
+impl Display for Cookie<'_> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.ingredients
+            .iter()
+            .try_for_each(|(Ingredient { name, .. }, n)| writeln!(f, "- {n} tbsp {name}"))
+    }
+}
+
+impl<'s> Cookie<'s> {
+    fn bake<I: IntoIterator<Item = Ingredient<'s>>>(ingredients: I) -> Self {
+        Self::from_iter(ingredients)
+    }
 }
 
 impl<'s> FromIterator<Ingredient<'s>> for Cookie<'s> {
     fn from_iter<T: IntoIterator<Item = Ingredient<'s>>>(iter: T) -> Self {
-        let mut map: HashMap<Ingredient<'s>, u8, FnvBuildHasher> = HashMap::default();
+        let mut ingredients: HashMap<Ingredient<'s>, u8, FnvBuildHasher> = HashMap::default();
         for ingredient in iter {
-            map.entry(ingredient).or_default().add_assign(1);
+            ingredients.entry(ingredient).or_default().add_assign(1);
         }
 
+        let qualities = ingredients
+            .iter()
+            .map(|(ingredient, n)| ingredient.tbsp(*n))
+            .reduce(|a, b| a + b)
+            .unwrap_or_default();
+
         Self {
-            ingredients: map,
-            score: OnceLock::new(),
+            ingredients,
+            qualities,
         }
     }
 }
 
 impl Cookie<'_> {
     fn score(&self) -> usize {
-        *self.score.get_or_init(|| {
-            self.ingredients
-                .iter()
-                .map(|(ingredient, n)| ingredient.tbsp(*n))
-                .reduce(|a, b| a + b)
-                .map(|q| q.score())
-                .unwrap_or_default()
-        })
+        self.qualities.score()
+    }
+
+    fn calories(&self) -> usize {
+        self.qualities.calories.try_into().unwrap_or_default()
     }
 }
 
@@ -136,7 +164,7 @@ impl Hash for Ingredient<'_> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
 struct Qualities {
     capacity: isize,
     durability: isize,
@@ -147,8 +175,16 @@ struct Qualities {
 
 impl Qualities {
     fn score(&self) -> usize {
-        let sum = self.capacity + self.durability + self.flavor + self.texture;
-        sum.try_into().unwrap_or_default()
+        if [self.capacity, self.durability, self.flavor, self.texture]
+            .iter()
+            .any(|quality| (isize::MIN..0).contains(quality))
+        {
+            0
+        } else {
+            (self.capacity * self.durability * self.flavor * self.texture)
+                .try_into()
+                .unwrap_or_default()
+        }
     }
 }
 
@@ -195,4 +231,83 @@ impl<'s> TryFrom<&'s str> for Ingredient<'s> {
         .parse(value)
         .map_err(|e| eyre!("{e}"))
     }
+}
+
+#[test]
+fn example() {
+    let butterscotch = Ingredient {
+        name: "Butterscotch",
+        qualities: Qualities {
+            capacity: -1,
+            durability: -2,
+            flavor: 6,
+            texture: 3,
+            calories: 8,
+        },
+    };
+    let cinnamon = Ingredient {
+        name: "Cinnamon",
+        qualities: Qualities {
+            capacity: 2,
+            durability: 3,
+            flavor: -2,
+            texture: -1,
+            calories: 3,
+        },
+    };
+
+    let mut ingredients = HashSet::with_hasher(FnvBuildHasher::default());
+    ingredients.insert(butterscotch);
+    ingredients.insert(cinnamon);
+
+    let expected_kitchen = Kitchen { ingredients };
+    let actual_kitchen = Kitchen::from_input(
+        "Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8
+         Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3",
+    )
+    .unwrap();
+
+    assert_eq!(actual_kitchen, expected_kitchen);
+
+    assert_eq!(
+        butterscotch.tbsp(44),
+        Qualities {
+            #[allow(clippy::neg_multiply)]
+            capacity: 44 * -1,
+            durability: 44 * -2,
+            flavor: 44 * 6,
+            texture: 44 * 3,
+            calories: 44 * 8
+        }
+    );
+
+    assert_eq!(
+        cinnamon.tbsp(56),
+        Qualities {
+            capacity: 56 * 2,
+            durability: 56 * 3,
+            flavor: 56 * -2,
+            #[allow(clippy::neg_multiply)]
+            texture: 56 * -1,
+            calories: 3 * 56
+        }
+    );
+
+    let sum = butterscotch.tbsp(44) + cinnamon.tbsp(56);
+    assert_eq!(
+        sum,
+        Qualities {
+            capacity: 68,
+            durability: 80,
+            flavor: 152,
+            texture: 76,
+            calories: 520
+        }
+    );
+
+    let expected_score = sum.score();
+    assert_eq!(expected_score, 62842880);
+
+    let actual_score = actual_kitchen.best_cookie(None).unwrap().score();
+    assert_eq!(actual_score, expected_score);
 }
