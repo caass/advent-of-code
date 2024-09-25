@@ -1,5 +1,5 @@
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::HashMap,
     hash::{Hash, Hasher},
     ops::AddAssign,
 };
@@ -94,12 +94,7 @@ impl<'s> Roster<'s> {
                 HashMap::<&str, usize, FnvBuildHasher>::default,
                 |mut map, leaders| {
                     for (name, _distance) in leaders {
-                        match map.entry(name) {
-                            Entry::Occupied(mut occ) => occ.get_mut().add_assign(1),
-                            Entry::Vacant(vac) => {
-                                vac.insert(1);
-                            }
-                        };
+                        map.entry(name).or_default().add_assign(1);
                     }
 
                     map
@@ -107,12 +102,7 @@ impl<'s> Roster<'s> {
             )
             .reduce(HashMap::default, |a, mut b| {
                 for (name, points) in a {
-                    match b.entry(name) {
-                        Entry::Occupied(mut occ) => occ.get_mut().add_assign(points),
-                        Entry::Vacant(vac) => {
-                            vac.insert(points);
-                        }
-                    }
+                    b.entry(name).or_default().add_assign(points);
                 }
 
                 b

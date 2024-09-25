@@ -1,7 +1,4 @@
-use std::{
-    collections::hash_map::Entry,
-    ops::{AddAssign, Index, IndexMut},
-};
+use std::ops::{AddAssign, Index, IndexMut};
 
 use eyre::{eyre, Report, Result};
 use nohash_hasher::IntMap;
@@ -37,7 +34,7 @@ fn part_1(input: &str) -> Result<usize> {
     })?;
 
     Ok(grid
-        ._into_par_iter()
+        .into_par_iter()
         .filter(|(_coords, presents)| *presents > 0)
         .count())
 }
@@ -79,7 +76,7 @@ fn part_2(input: &str) -> Result<usize> {
         })?;
 
     Ok(grid
-        ._into_par_iter()
+        .into_par_iter()
         .filter(|(_coords, presents)| *presents > 0)
         .count())
 }
@@ -97,20 +94,12 @@ impl Index<(i32, i32)> for HouseGrid {
 
 impl IndexMut<(i32, i32)> for HouseGrid {
     fn index_mut(&mut self, (a, b): (i32, i32)) -> &mut Self::Output {
-        let inner = match self.0.entry(a) {
-            Entry::Occupied(occ) => occ.into_mut(),
-            Entry::Vacant(vac) => vac.insert(IntMap::default()),
-        };
-
-        match inner.entry(b) {
-            Entry::Occupied(occ) => occ.into_mut(),
-            Entry::Vacant(vac) => vac.insert(0),
-        }
+        self.0.entry(a).or_default().entry(b).or_default()
     }
 }
 
 impl HouseGrid {
-    fn _into_par_iter(self) -> impl ParallelIterator<Item = ((i32, i32), usize)> {
+    fn into_par_iter(self) -> impl ParallelIterator<Item = ((i32, i32), usize)> {
         self.0
             .into_par_iter()
             .flat_map(|(x, inner)| inner.into_par_iter().map(move |(y, count)| ((x, y), count)))

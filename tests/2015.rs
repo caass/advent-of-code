@@ -167,3 +167,15 @@ mod day14 {
         crate::util::aoc!(2015/14-2: 1084);
     }
 }
+
+mod day15 {
+    #[test]
+    fn part1() {
+        crate::util::aoc!(2015/15-1: 2696);
+    }
+
+    #[test]
+    fn part2() {
+        crate::util::aoc!(2015/15-2: 1084);
+    }
+}
