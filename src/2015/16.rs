@@ -9,7 +9,7 @@ use winnow::ascii::alpha1;
 use winnow::combinator::{delimited, separated, separated_pair};
 use winnow::{ascii::dec_uint, prelude::*};
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 const READOUT: MfcsamReadout = MfcsamReadout {
     children: 3,

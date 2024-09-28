@@ -4,7 +4,7 @@ use eyre::{OptionExt, Result};
 use rayon::prelude::*;
 use wide::u8x16;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const NOT_QUITE_LISP: Problem = problem!(part_1, part_2);
 

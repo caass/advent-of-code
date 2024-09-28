@@ -3,7 +3,7 @@ use std::{cmp::Ordering, str::FromStr};
 use eyre::{OptionExt, Result};
 use rayon::prelude::*;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 const LITERS_OF_EGGNOG: u8 = 150;
 

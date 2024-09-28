@@ -8,7 +8,7 @@ use winnow::combinator::{alt, eof, preceded, separated_pair, seq};
 use winnow::error::{ContextError, ParseError};
 use winnow::prelude::*;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const KNIGHTS_OF_THE_DINNER_TABLE: Problem =
     problem!(optimize_happiness, optimize_happiness_with_self);

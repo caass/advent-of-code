@@ -9,7 +9,7 @@ use eyre::{bail, eyre, Report, Result};
 use rayon::iter::plumbing::{bridge, Producer};
 use rayon::prelude::*;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const CORPORATE_POLICY: Problem = problem!(
     |input: &str| input.parse::<Password>().map(Password::next),

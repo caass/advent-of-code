@@ -1,7 +1,7 @@
 use rayon::prelude::*;
 use serde_json::Value;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const JS_ABACUS_FRAMEWORK_DOT_IO: Problem = problem!(
     |input| serde_json::from_str(input).map(|root| sum_numbers(root, false)),

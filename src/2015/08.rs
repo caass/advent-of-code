@@ -12,7 +12,7 @@ use winnow::{
     token::{any, take},
 };
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const MATCHSTICKS: Problem = problem!(part1, part2);
 

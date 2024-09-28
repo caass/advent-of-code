@@ -1,7 +1,7 @@
 use eyre::Result;
 use rayon::prelude::*;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = problem!(part_1, part_2);
 

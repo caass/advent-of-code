@@ -15,7 +15,7 @@ use winnow::{
     Parser,
 };
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 const RACE_DURATION: usize = 2503;
 pub const REINDEER_OLYMPICS: Problem = problem!(race, tick_race);

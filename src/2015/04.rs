@@ -2,7 +2,7 @@ use eyre::{OptionExt, Result};
 use md5::{digest::Output, Digest, Md5};
 use rayon::prelude::*;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const THE_IDEAL_STOCKING_STUFFER: Problem = problem!(part_1, part_2);
 

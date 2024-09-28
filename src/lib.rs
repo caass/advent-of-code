@@ -1,9 +1,9 @@
 use phf::phf_map;
 
-pub mod types;
+pub mod meta;
 pub(crate) mod util;
 
-use types::AdventOfCode;
+use meta::AdventOfCode;
 
 #[path = "2015/mod.rs"]
 mod _2015;

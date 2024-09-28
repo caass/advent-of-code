@@ -8,7 +8,7 @@ use winnow::combinator::seq;
 use winnow::error::{ContextError, ErrMode, ParseError, StrContext};
 use winnow::prelude::*;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const ALL_IN_A_SINGLE_NIGHT: Problem = problem!(
     |input| Locations::try_from(input).map(|locs| locs.shortest_distance()),

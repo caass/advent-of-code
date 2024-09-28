@@ -8,7 +8,7 @@ use winnow::{
     prelude::*,
 };
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const PROBABLY_A_FIRE_HAZARD: Problem = problem!(part_1, part_2);
 

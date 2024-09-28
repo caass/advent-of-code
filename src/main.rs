@@ -3,7 +3,7 @@ use std::io::{stdin, IsTerminal, Read};
 use clap::Parser;
 use eyre::{bail, OptionExt, Result};
 
-use advent_of_code::types::{Day, Part, Year};
+use advent_of_code::meta::{Day, Part, Year};
 use advent_of_code::AOC;
 
 #[derive(Debug, Parser)]

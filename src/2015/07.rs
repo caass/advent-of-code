@@ -11,7 +11,7 @@ use winnow::{
     prelude::*,
 };
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const SOME_ASSEMBLY_REQUIRED: Problem = problem!(part1, part2);
 

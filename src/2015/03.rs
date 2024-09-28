@@ -4,7 +4,7 @@ use eyre::{eyre, Report, Result};
 use nohash_hasher::IntMap;
 use rayon::prelude::*;
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const PERFECTLY_SPHERICAL_HOUSES_IN_A_VACUUM: Problem = problem!(part_1, part_2);
 

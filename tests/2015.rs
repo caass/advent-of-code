@@ -203,3 +203,17 @@ mod day17 {
         crate::util::aoc!(2015/17-2: 57);
     }
 }
+
+mod day18 {
+    #[ignore = "unimplemented"]
+    #[test]
+    fn part1() {
+        crate::util::aoc!(2015/18-1: 0);
+    }
+
+    #[ignore = "unimplemented"]
+    #[test]
+    fn part2() {
+        crate::util::aoc!(2015/18-2: 0);
+    }
+}

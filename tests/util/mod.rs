@@ -32,12 +32,12 @@ macro_rules! aoc {
             ::std::fs::read_to_string(input_file).unwrap()
         };
 
-        let year = <::advent_of_code::types::Year as ::std::convert::TryFrom<u16>>::try_from($year)
+        let year = <::advent_of_code::meta::Year as ::std::convert::TryFrom<u16>>::try_from($year)
             .unwrap();
         let day =
-            <::advent_of_code::types::Day as ::std::convert::TryFrom<u8>>::try_from($day).unwrap();
-        let part = <::advent_of_code::types::Part as ::std::convert::TryFrom<u8>>::try_from($part)
-            .unwrap();
+            <::advent_of_code::meta::Day as ::std::convert::TryFrom<u8>>::try_from($day).unwrap();
+        let part =
+            <::advent_of_code::meta::Part as ::std::convert::TryFrom<u8>>::try_from($part).unwrap();
 
         let f = ::advent_of_code::AOC
             .get(year, day, part)

@@ -16,7 +16,7 @@ use winnow::{
     Parser,
 };
 
-use crate::types::{problem, Problem};
+use crate::meta::{problem, Problem};
 
 pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem = problem!(
     |input| best_cookie(input, None),
