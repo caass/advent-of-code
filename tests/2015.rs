@@ -205,15 +205,13 @@ mod day17 {
 }
 
 mod day18 {
-    #[ignore = "unimplemented"]
     #[test]
     fn part1() {
-        crate::util::aoc!(2015/18-1: 0);
+        crate::util::aoc!(2015/18-1: 821);
     }
 
-    #[ignore = "unimplemented"]
     #[test]
     fn part2() {
-        crate::util::aoc!(2015/18-2: 0);
+        crate::util::aoc!(2015/18-2: 886);
     }
 }

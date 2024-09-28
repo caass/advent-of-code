@@ -21,7 +21,8 @@ fn part_1(input: &str) -> Result<usize> {
     let mut grid = Grid::<SIDE_LENGTH, Light>::default();
     for line in input.lines() {
         let Instruction { action, range } = line.parse()?;
-        grid.range_mut(range).for_each(|light| light.act(action));
+        grid.par_range_mut(range)
+            .for_each(|(_, light)| light.act(action));
     }
 
     Ok(grid.into_par_iter().filter(|light| light.on).count())
@@ -31,7 +32,8 @@ fn part_2(input: &str) -> Result<usize> {
     let mut grid = Grid::<SIDE_LENGTH, AdjustableLight>::default();
     for line in input.lines() {
         let Instruction { action, range } = line.parse()?;
-        grid.range_mut(range).for_each(|light| light.act(action));
+        grid.par_range_mut(range)
+            .for_each(|(_, light)| light.act(action));
     }
 
     Ok(grid.into_par_iter().map(|light| light.brightness).sum())
