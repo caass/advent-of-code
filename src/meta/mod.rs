@@ -1,3 +1,6 @@
+//! Types and functions related to the advent of code format and structure,
+//! rather than individual problems.
+
 mod day;
 mod part;
 mod year;
