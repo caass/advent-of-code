@@ -36,7 +36,7 @@ impl<const N: usize> LightSet<N> {
         self.grid[Coordinate { x: 99, y: 99 }].turn_on();
     }
 
-    fn calc_next(&self) {
+    fn compute_next_frame(&self) {
         self.grid.par_range(..).for_each(|(coordinate, light)| {
             light.next.get_or_init(|| {
                 if self.is_broken
@@ -65,10 +65,8 @@ impl<const N: usize> LightSet<N> {
     }
 
     fn step(&mut self) -> Result<()> {
-        self.calc_next();
-        self.grid
-            .par_range_mut(..)
-            .try_for_each(|(_, light)| light.try_step())
+        self.compute_next_frame();
+        self.grid.par_iter_mut().try_for_each(Light::try_step)
     }
 
     fn play(&mut self, steps: usize) -> Result<()> {
