@@ -1,7 +1,7 @@
 use std::{
     fmt::{self, Display, Formatter},
     marker::PhantomData,
-    ops::{Index, IndexMut, RangeBounds},
+    ops::{Bound, Index, IndexMut, RangeBounds},
 };
 
 use either::Either;
@@ -26,22 +26,19 @@ impl<const N: usize, T: Default + Clone> Default for Grid<N, T> {
 }
 
 impl<const N: usize, T: Send> Grid<N, T> {
-    /// Retruns a parallel iterator over mutable references to all the items in the given range
+    /// Returns a parallel iterator of `(Coordinate, &mut T)` (where the first item in the tuple is the grid coordinates
+    /// of the second item in the tuple) over all the elements in the given range.
     pub fn par_range_mut<R: RangeBounds<Coordinate>>(
         &mut self,
         range: R,
     ) -> impl ParallelIterator<Item = (Coordinate, &mut T)> {
-        let x1 = range.start_bound().map(|coord| coord.x);
-        let x2 = range.end_bound().map(|coord| coord.x);
+        let range = CoordinateRange::new(range);
 
-        let y1 = range.start_bound().map(|coord| coord.y);
-        let y2 = range.end_bound().map(|coord| coord.y);
-
-        self.rows[(x1, x2)]
+        self.rows[range.x]
             .par_iter_mut()
             .enumerate()
             .flat_map(move |(x, row)| {
-                row[(y1, y2)]
+                row[range.y]
                     .par_iter_mut()
                     .enumerate()
                     .map(move |(y, item)| (Coordinate { x, y }, item))
@@ -50,22 +47,19 @@ impl<const N: usize, T: Send> Grid<N, T> {
 }
 
 impl<const N: usize, T: Sync> Grid<N, T> {
-    /// Retruns a parallel iterator over mutable references to all the items in the given range
+    /// Retruns a parallel iterator of `(Coordinate, &T)` (where the first item in the tuple is the grid coordinates
+    /// of the second item in the tuple) over all the elements in the given range.
     pub fn par_range<R: RangeBounds<Coordinate>>(
         &self,
         range: R,
     ) -> impl ParallelIterator<Item = (Coordinate, &T)> {
-        let x1 = range.start_bound().map(|coord| coord.x);
-        let x2 = range.end_bound().map(|coord| coord.x);
+        let range = CoordinateRange::new(range);
 
-        let y1 = range.start_bound().map(|coord| coord.y);
-        let y2 = range.end_bound().map(|coord| coord.y);
-
-        self.rows[(x1, x2)]
+        self.rows[range.x]
             .par_iter()
             .enumerate()
             .flat_map(move |(x, row)| {
-                row[(y1, y2)]
+                row[range.y]
                     .par_iter()
                     .enumerate()
                     .map(move |(y, item)| (Coordinate { x, y }, item))
@@ -161,6 +155,34 @@ impl<const N: usize, T: Display> Display for Grid<N, T> {
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
+}
+
+struct CoordinateRange<X: RangeBounds<usize>, Y: RangeBounds<usize>> {
+    x: X,
+    y: Y,
+}
+
+impl CoordinateRange<(Bound<usize>, Bound<usize>), (Bound<usize>, Bound<usize>)> {
+    fn new<R: RangeBounds<Coordinate>>(range: R) -> Self {
+        Self::from(range)
+    }
+}
+
+impl<R: RangeBounds<Coordinate>> From<R>
+    for CoordinateRange<(Bound<usize>, Bound<usize>), (Bound<usize>, Bound<usize>)>
+{
+    fn from(range: R) -> Self {
+        let x1 = range.start_bound().map(|&Coordinate { x, .. }| x);
+        let x2 = range.end_bound().map(|&Coordinate { x, .. }| x);
+
+        let y1 = range.start_bound().map(|&Coordinate { y, .. }| y);
+        let y2 = range.end_bound().map(|&Coordinate { y, .. }| y);
+
+        Self {
+            x: (x1, x2),
+            y: (y1, y2),
+        }
+    }
 }
 
 impl Coordinate {
