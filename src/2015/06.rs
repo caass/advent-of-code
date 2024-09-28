@@ -1,7 +1,10 @@
-use std::str::FromStr;
+use std::{
+    ops::{Bound, RangeBounds},
+    str::FromStr,
+};
 
 use eyre::{eyre, Report, Result};
-use rayon::{iter::Flatten, prelude::*};
+use rayon::prelude::*;
 use winnow::{
     ascii::digit1,
     combinator::{alt, separated_pair},
@@ -9,11 +12,13 @@ use winnow::{
 };
 
 use crate::meta::{problem, Problem};
+use crate::types::grid::{Coordinate, Grid};
 
 pub const PROBABLY_A_FIRE_HAZARD: Problem = problem!(part_1, part_2);
+const SIDE_LENGTH: usize = 1000;
 
 fn part_1(input: &str) -> Result<usize> {
-    let mut grid = Grid::<Light>::default();
+    let mut grid = Grid::<SIDE_LENGTH, Light>::default();
     for line in input.lines() {
         let Instruction { action, range } = line.parse()?;
         grid.range_mut(range).for_each(|light| light.act(action));
@@ -23,43 +28,13 @@ fn part_1(input: &str) -> Result<usize> {
 }
 
 fn part_2(input: &str) -> Result<usize> {
-    let mut grid = Grid::<AdjustableLight>::default();
+    let mut grid = Grid::<SIDE_LENGTH, AdjustableLight>::default();
     for line in input.lines() {
         let Instruction { action, range } = line.parse()?;
         grid.range_mut(range).for_each(|light| light.act(action));
     }
 
     Ok(grid.into_par_iter().map(|light| light.brightness).sum())
-}
-
-struct Grid<T> {
-    rows: Vec<Vec<T>>,
-}
-
-impl<T: Default + Clone> Default for Grid<T> {
-    fn default() -> Self {
-        Self {
-            rows: vec![vec![T::default(); 1000]; 1000],
-        }
-    }
-}
-
-impl<T: Send> Grid<T> {
-    fn range_mut(&mut self, range: InstructionRange) -> impl ParallelIterator<Item = &mut T> {
-        self.rows[range.from.x..=range.to.x]
-            .par_iter_mut()
-            .flat_map(move |row| &mut row[range.from.y..=range.to.y])
-    }
-}
-
-impl<T: Send> IntoParallelIterator for Grid<T> {
-    type Iter = Flatten<<Vec<Vec<T>> as IntoParallelIterator>::Iter>;
-
-    type Item = T;
-
-    fn into_par_iter(self) -> Self::Iter {
-        self.rows.into_par_iter().flatten()
-    }
 }
 
 #[derive(Debug)]
@@ -81,28 +56,30 @@ impl FromStr for Instruction {
 
 #[derive(Debug)]
 struct InstructionRange {
-    from: Coordinates,
-    to: Coordinates,
+    from: Coordinate,
+    to: Coordinate,
+}
+
+impl RangeBounds<Coordinate> for InstructionRange {
+    fn start_bound(&self) -> Bound<&Coordinate> {
+        Bound::Included(&self.from)
+    }
+
+    fn end_bound(&self) -> Bound<&Coordinate> {
+        Bound::Included(&self.to)
+    }
 }
 
 impl InstructionRange {
     fn parse(input: &mut &str) -> PResult<Self> {
-        separated_pair(Coordinates::parse, " through ", Coordinates::parse)
+        fn parse_coordinate(input: &mut &str) -> PResult<Coordinate> {
+            separated_pair(digit1.parse_to(), ',', digit1.parse_to())
+                .map(|(x, y)| Coordinate { x, y })
+                .parse_next(input)
+        }
+
+        separated_pair(parse_coordinate, " through ", parse_coordinate)
             .map(|(from, to)| InstructionRange { from, to })
-            .parse_next(input)
-    }
-}
-
-#[derive(Debug)]
-struct Coordinates {
-    x: usize,
-    y: usize,
-}
-
-impl Coordinates {
-    fn parse(input: &mut &str) -> PResult<Self> {
-        separated_pair(digit1.parse_to(), ',', digit1.parse_to())
-            .map(|(x, y)| Coordinates { x, y })
             .parse_next(input)
     }
 }
