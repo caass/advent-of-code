@@ -25,6 +25,9 @@ itertools = "0.13.0"
 serde_json = "1.0.128"
 void = "1.0.2"
 either = "1.13.0"
+rstest = { version = "0.23.0", default-features = false }
+elsa = { version = "1.10.0", features = ["indexmap"] }
+stable_deref_trait = "1.2.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
