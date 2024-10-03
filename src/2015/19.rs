@@ -1,9 +1,11 @@
 use std::{
-    borrow::Cow,
+    borrow::{Borrow, Cow},
     collections::{HashMap, HashSet},
     fmt::{self, Display, Formatter},
     iter::{Copied, Flatten},
     ops::Deref,
+    ptr,
+    str::FromStr,
 };
 
 use elsa::FrozenIndexSet;
@@ -11,285 +13,213 @@ use eyre::{bail, eyre, Context, OptionExt, Report, Result};
 use fnv::FnvBuildHasher;
 use rayon::prelude::*;
 use stable_deref_trait::StableDeref;
-use winnow::{ascii::alphanumeric1, combinator::separated_pair, error::ContextError, prelude::*};
+use winnow::{
+    ascii::{alpha1, alphanumeric1},
+    combinator::separated_pair,
+    error::ContextError,
+    prelude::*,
+};
 
 #[cfg(test)]
 use pretty_assertions::assert_eq;
 
+use crate::common::ascii_ext::AsciiExt;
 use crate::meta::{problem, Problem};
 
-pub const MEDICINE_FOR_RUDOLPH: Problem = problem!(|input: &str| -> Result<String> {
-    // let lab: ChemLab = input.try_into()?;
-    // let molecules = lab.calibrate();
-    // Ok::<_, Report>(molecules.len())
-    todo!()
-});
+pub const MEDICINE_FOR_RUDOLPH: Problem = problem!();
 
-// struct ChemLab<'s> {
-//     map: TransformationMap<'s>,
-//     molecule: Molecule,
-// }
+impl<'a> TryFrom<&'a str> for &'a Atom {
+    type Error = Report;
 
-// struct MoleculeSet<'l, 's> {
-//     lab: &'l ChemLab<'s>,
-//     set: HashSet<Molecule, FnvBuildHasher>,
-// }
+    fn try_from(s: &'a str) -> Result<&'a Atom> {
+        Atom::new(s)
+    }
+}
 
-// impl MoleculeSet<'_, '_> {
-//     fn len(&self) -> usize {
-//         self.set.len()
-//     }
-// }
+#[derive(Debug)]
+#[repr(transparent)]
+struct Atom(str);
 
-// impl ChemLab<'_> {
-//     fn calibrate(&self) -> MoleculeSet {
-//         let set = self
-//             .molecule
-//             .atoms()
-//             .flat_map(|atom| {
-//                 self.map
-//                     .transformations(&atom)
-//                     .map(move |new_atom| self.molecule.transform(atom, new_atom))
-//             })
-//             .collect();
+impl Atom {
+    #[inline(always)]
+    fn new<S: AsRef<str> + ?Sized>(s: &S) -> Result<&Self> {
+        let s = s.as_ref();
 
-//         MoleculeSet { lab: self, set }
-//     }
+        if s.is_ascii_alphabetic() {
+            Ok(unsafe { Self::new_unchecked(s) })
+        } else {
+            Err(eyre!("{s} is not a valid atom"))
+        }
+    }
 
-//     fn synthesize(&self) -> usize {
-//         let root = Molecule::E;
-//         let molecules = FrozenIndexSet::<Molecule, FnvBuildHasher>::default();
-//         molecules.
-//         let (tx, rx) = std::sync::mpsc::channel();
+    #[inline(always)]
+    unsafe fn new_unchecked(s: &str) -> &Self {
+        // Safety: `Atom` is guaranteed to have the same layout as `str`
+        unsafe { &*{ s as *const str as *const Atom } }
+    }
+}
 
-//         todo!()
-//     }
-// }
+impl Deref for Atom {
+    type Target = str;
 
-// impl<'s> TryFrom<&'s str> for ChemLab<'s> {
-//     type Error = Report;
+    #[inline(always)]
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
-//     fn try_from(input: &'s str) -> Result<Self> {
-//         let mut lines = input.trim().lines().map(|line| line.trim());
-//         let last_line = lines.next_back().ok_or_eyre("empty input!")?.trim();
-//         let molecule = Molecule::new(last_line);
+#[derive(Debug)]
+#[repr(transparent)]
+struct Molecule(str);
 
-//         let blank = lines.next_back().ok_or_eyre("expected blank line between transformations and molecules, but found no more lines")?.trim();
+impl<'a> TryFrom<&'a str> for &'a Molecule {
+    type Error = Report;
 
-//         if !blank.is_empty() {
-//             bail!(
-//                 "Expected empty line between molecule and transformations, but found \"{blank}\""
-//             );
-//         }
+    fn try_from(s: &'a str) -> Result<Self> {
+        Molecule::new(s)
+    }
+}
 
-//         let transformations = lines
-//             .enumerate()
-//             .map(|(i, line)| {
-//                 line.try_into()
-//                     .wrap_err_with(|| format!("on line {}", i + 1))
-//             })
-//             .collect::<Result<_>>()?;
+impl Molecule {
+    const ELECTRON: &'static Molecule = unsafe { Molecule::new_unchecked("e") };
 
-//         Ok(Self {
-//             map: transformations,
-//             molecule,
-//         })
-//     }
-// }
+    #[inline(always)]
+    fn new<S: AsRef<str> + ?Sized>(s: &S) -> Result<&Molecule> {
+        let s = s.as_ref();
 
-// #[derive(Debug, PartialEq, Eq, Hash)]
-// struct Molecule(Cow<'static, str>);
+        if s.is_ascii_alphabetic() {
+            // Safety: `s` meets the critera for `new_unchecked` and the contract is upheld.
+            Ok(unsafe { Molecule::new_unchecked(s) })
+        } else {
+            Err(eyre!("{s} is not a valid molecule"))
+        }
+    }
 
-// struct MoleculeRef(str);
+    /// Safety: The given string slice must contain only ASCII alphabetical characters.
+    #[inline(always)]
+    const unsafe fn new_unchecked(s: &str) -> &Molecule {
+        // Safety:
+        //
+        // There are two safety concerns here:
+        // 1. Does the contained `str` contain only ascii letters?
+        // 2. Is it legal to cast from an `&str` to an `&Molecule`?
+        //
+        // The answer to 1 is yes, given that the caller upholds the contract for this function.
+        // The answer to 2 is yes, since `Molecule` is a transparent wrapper around `str`.
+        unsafe { &*{ s as *const str as *const Molecule } }
+    }
 
-// impl Deref for MoleculeRef {
-//     type Target = str;
+    fn atoms(&self) -> Atoms {
+        Atoms::new(self)
+    }
+}
 
-//     fn deref(&self) -> &Self::Target {
-//         &self.0
-//     }
-// }
+impl Deref for Molecule {
+    type Target = str;
 
-// impl MoleculeRef {
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
-//     fn atoms(&self) -> Atoms {
-//             Atoms::new(self)
-//         }
+impl<T> AsRef<T> for Molecule
+where
+    <Self as Deref>::Target: AsRef<T>,
+{
+    fn as_ref(&self) -> &T {
+        self.deref().as_ref()
+    }
+}
 
-//         fn transform(&self, from: Atom, to: &str) -> Molecule {
-//             // Double check that this atom came from this molecule.
-//             debug_assert_eq!(&self[from.idx..from.symbol.len()], from.symbol);
+impl ToOwned for Molecule {
+    type Owned = SynthesizedMolecule;
 
-//             let mut out = String::with_capacity(self.len() + to.len() - from.symbol.len());
+    fn to_owned(&self) -> Self::Owned {
+        SynthesizedMolecule(self.0.to_string())
+    }
+}
 
-//             let before = &self[..from.idx];
-//             let after = &self[(from.idx + from.symbol.len())..];
+#[derive(Debug)]
+struct SynthesizedMolecule(String);
 
-//             out.push_str(before);
-//             out.push_str(to);
-//             out.push_str(after);
+impl<T> AsRef<T> for SynthesizedMolecule
+where
+    <Self as Deref>::Target: AsRef<T>,
+{
+    fn as_ref(&self) -> &T {
+        self.deref().as_ref()
+    }
+}
 
-//             Molecule(Cow::Owned(out))
-//         }
-// }
+impl Borrow<Molecule> for SynthesizedMolecule {
+    fn borrow(&self) -> &Molecule {
+        self.deref()
+    }
+}
 
-// impl Molecule {
-//     const E: Molecule = Molecule(Cow::Borrowed("e"));
+impl Deref for SynthesizedMolecule {
+    type Target = Molecule;
 
-//     fn new<S: ToString>(molecule: S) -> Self {
-//         Self(Cow::Owned(molecule.to_string()))
-//     }
-// }
+    fn deref(&self) -> &Self::Target {
+        // Safety: we ke know the contained string is ascii alphabetic due to `SynthesizedMolecule`'s constructor.
+        unsafe { Molecule::new_unchecked(&self.0) }
+    }
+}
 
-// // Safety: `StableDeref` is implemented for `String`, which this struct is a wrapper around.
-// unsafe impl StableDeref for Molecule {}
+#[derive(Debug)]
+struct Transformation<'a> {
+    from: &'a Atom,
+    to: &'a Molecule,
+}
 
-// impl Deref for Molecule {
-//     type Target = MoleculeRef;
+impl<'a> TryFrom<&'a str> for Transformation<'a> {
+    type Error = Report;
 
-//     fn deref(&self) -> &Self::Target {
-//         MoleculeRef(self.0)
-//     }
-// }
+    fn try_from(value: &'a str) -> Result<Self> {
+        let (from_str, to_str) = value
+            .split_once(" => ")
+            .ok_or_else(|| eyre!("No separator found in transformation: \"{value}\""))?;
+        let from = from_str.try_into()?;
+        let to = to_str.try_into()?;
 
-// struct Atoms<'m> {
-//     molecule: &'m str,
-//     i: usize,
-// }
+        Ok(Self { from, to })
+    }
+}
 
-// impl<'m> Atoms<'m> {
-//     fn new(molecule: &'m Molecule) -> Self {
-//         Self {
-//             molecule: molecule.deref(),
-//             i: 0,
-//         }
-//     }
-// }
+#[derive(Debug)]
+struct Atoms<'a> {
+    molecule: &'a Molecule,
+}
 
-// impl<'m> Iterator for Atoms<'m> {
-//     type Item = Atom<'m>;
+impl<'a> Atoms<'a> {
+    fn new(molecule: &'a Molecule) -> Self {
+        Self { molecule }
+    }
+}
 
-//     fn next(&mut self) -> Option<Self::Item> {
-//         // Find the first uppercase character after byte 0, which indicates the start of the next atom.
-//         let rest = self.molecule.get(1..)?;
-//         let next_atom_start = rest
-//             .find(|ch: char| ch.is_ascii_uppercase())
-//             .unwrap_or(rest.len())
-//             // Add one to correct for the 1-byte offset.
-//             + 1;
+impl<'a> Iterator for Atoms<'a> {
+    type Item = &'a Atom;
 
-//         // Split off this atom from the rest of the molecule.
-//         let (atom_symbol, rest) = self.molecule.split_at_checked(next_atom_start)?;
-//         let atom = Atom {
-//             symbol: atom_symbol,
-//             idx: self.i,
-//         };
+    fn next(&mut self) -> Option<Self::Item> {
+        let next_capital_letter_idx = self
+            .molecule
+            .get(1..)?
+            .find(|ch: char| ch.is_ascii_uppercase())
+            .map(|i| i + 1)
+            .unwrap_or_else(|| self.molecule.len());
 
-//         self.molecule = rest;
-//         self.i += atom_symbol.len();
+        let (atom, molecule) = self
+            .molecule
+            .split_at_checked(next_capital_letter_idx)
+            .map(|(atom, molecule)|
+                // Safety: since the molecule is ascii alphabetic, these parts of it are also ascii alphabetic
+                unsafe {
+                (Atom::new_unchecked(atom), Molecule::new_unchecked(molecule))
+            })
+            .unwrap_or_else(|| panic!("logic failure, this should always be ok"));
 
-//         Some(atom)
-//     }
-// }
-
-// #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-// struct Atom<'s> {
-//     /// The chemical symbol for this atom
-//     symbol: &'s str,
-
-//     /// The position of this atom in its parent molecule
-//     idx: usize,
-// }
-
-// impl Display for Molecule {
-//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-//         f.write_str(&self.0)
-//     }
-// }
-
-// #[derive(Default)]
-// struct TransformationMap<'s>(HashMap<&'s str, HashSet<&'s str, FnvBuildHasher>, FnvBuildHasher>);
-// type TransformationIter<'s, 'm> =
-//     Copied<Flatten<<Option<&'m HashSet<&'s str, FnvBuildHasher>> as IntoIterator>::IntoIter>>;
-
-// impl<'s> TransformationMap<'s> {
-//     fn transformations<'m>(&'m self, atom: &Atom) -> TransformationIter<'s, 'm> {
-//         self.0.get(atom.symbol).into_iter().flatten().copied()
-//     }
-// }
-
-// impl<'s> TryFrom<&'s str> for TransformationMap<'s> {
-//     type Error = Report;
-
-//     fn try_from(value: &'s str) -> Result<Self> {
-//         value.lines().map(|line| line.trim().try_into()).collect()
-//     }
-// }
-
-// impl<'s> FromIterator<Transformation<'s>> for TransformationMap<'s> {
-//     fn from_iter<T: IntoIterator<Item = Transformation<'s>>>(iter: T) -> Self {
-//         let mut map =
-//             HashMap::<&'s str, HashSet<&'s str, FnvBuildHasher>, FnvBuildHasher>::default();
-//         for Transformation { from, to } in iter {
-//             map.entry(from).or_default().insert(to);
-//         }
-
-//         Self(map)
-//     }
-// }
-
-// struct Transformation<'s> {
-//     from: &'s str,
-//     to: &'s str,
-// }
-
-// impl<'s> TryFrom<&'s str> for Transformation<'s> {
-//     type Error = Report;
-
-//     fn try_from(value: &'s str) -> Result<Self> {
-//         separated_pair(alphanumeric1::<_, ContextError>, " => ", alphanumeric1)
-//             .map(|(from, to)| Self { from, to })
-//             .parse(value)
-//             .map_err(|e| {
-//                 eyre!(
-//                     "Error parsing {value} to Transformation at index {}",
-//                     e.offset()
-//                 )
-//             })
-//     }
-// }
-
-// #[test]
-// fn atoms() {
-//     let molecule = Molecule::new("AbCdEFGhiJ");
-
-//     let expected = vec![
-//         Atom {
-//             symbol: "Ab",
-//             idx: 0,
-//         },
-//         Atom {
-//             symbol: "Cd",
-//             idx: 2,
-//         },
-//         Atom {
-//             symbol: "E",
-//             idx: 4,
-//         },
-//         Atom {
-//             symbol: "F",
-//             idx: 5,
-//         },
-//         Atom {
-//             symbol: "Ghi",
-//             idx: 6,
-//         },
-//         Atom {
-//             symbol: "J",
-//             idx: 9,
-//         },
-//     ];
-//     let actual: Vec<_> = molecule.atoms().collect();
-
-//     assert_eq!(expected, actual);
-// }
+        // Safety: a subset of a molecule (an ascii alphabetic string) is also ascii alphabetic.
+        self.molecule = molecule;
+        Some(atom)
+    }
+}
