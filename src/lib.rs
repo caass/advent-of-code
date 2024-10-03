@@ -1,7 +1,7 @@
 use phf::phf_map;
 
+pub(crate) mod common;
 pub mod meta;
-pub(crate) mod types;
 pub(crate) mod util;
 
 use meta::AdventOfCode;

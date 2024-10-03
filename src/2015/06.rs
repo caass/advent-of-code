@@ -11,8 +11,8 @@ use winnow::{
     prelude::*,
 };
 
+use crate::common::grid::{Coordinate, Grid};
 use crate::meta::{problem, Problem};
-use crate::types::grid::{Coordinate, Grid};
 
 pub const PROBABLY_A_FIRE_HAZARD: Problem = problem!(part_1, part_2);
 const SIDE_LENGTH: usize = 1000;

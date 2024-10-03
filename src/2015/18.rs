@@ -4,8 +4,8 @@ use std::sync::OnceLock;
 use eyre::{eyre, OptionExt, Report, Result};
 use rayon::prelude::*;
 
+use crate::common::grid::{Coordinate, Grid};
 use crate::meta::{problem, Problem};
-use crate::types::grid::{Coordinate, Grid};
 
 pub const LIKE_A_GIF_FOR_YOUR_YARD: Problem = problem!(
     |input: &str| {
