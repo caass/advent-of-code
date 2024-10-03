@@ -3,6 +3,7 @@ use std::ops::{Bound, RangeBounds};
 use rayon::prelude::*;
 use wide::u8x16;
 
+// TODO: use this?
 pub trait AsciiExt {
     fn is_ascii_alphabetic(&self) -> bool;
 
