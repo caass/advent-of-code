@@ -17,17 +17,19 @@ use crate::meta::{problem, Problem};
 pub const MEDICINE_FOR_RUDOLPH: Problem =
     problem!(|input: &str| { input.parse::<ChemLab>().map(|lab| lab.calibrate()) });
 
-type Transformations = HashMap<Atom, HashSet<TargetMolecule, FnvBuildHasher>, AtomHasher>;
+type Syntheses = HashMap<Atom, HashSet<TargetMolecule, FnvBuildHasher>, AtomHasher>;
+type Reductions = HashMap<TargetMolecule, HashSet<Atom, BuildNoHashHasher<Atom>>, FnvBuildHasher>;
 
 #[derive(Debug)]
 struct ChemLab {
-    transformations: Transformations,
+    syntheses: Syntheses,
+    reductions: Reductions,
     target: SynthesizedMolecule,
 }
 
 impl ChemLab {
     fn calibrate(&self) -> usize {
-        self.target.syntheses(&self.transformations).len()
+        self.target.syntheses(&self.syntheses).len()
     }
 }
 
@@ -47,7 +49,8 @@ impl FromStr for ChemLab {
             bail!("Expected empty line before target molecule");
         };
 
-        let mut transformations = Transformations::default();
+        let mut syntheses = Syntheses::default();
+        let mut reductions = Reductions::default();
 
         for line in lines {
             let (atom_str, molecule_str) = line
@@ -57,11 +60,13 @@ impl FromStr for ChemLab {
             let atom = atom_str.parse()?;
             let molecule = molecule_str.parse()?;
 
-            transformations.entry(atom).or_default().insert(molecule);
+            syntheses.entry(atom).or_default().insert(molecule);
+            reductions.entry(molecule).or_default().insert(atom);
         }
 
         Ok(ChemLab {
-            transformations,
+            syntheses,
+            reductions,
             target,
         })
     }
@@ -144,7 +149,7 @@ impl Molecule {
 
     fn syntheses(
         &self,
-        transformations: &Transformations,
+        transformations: &Syntheses,
     ) -> HashSet<SynthesizedMolecule, FnvBuildHasher> {
         self.atoms()
             .enumerate()
@@ -171,7 +176,7 @@ impl Molecule {
 }
 
 /// Represents a molecule that can be transformed into.
-#[derive(Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Default, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Clone, Copy)]
 struct TargetMolecule(ArrayVec<[Atom; 8]>);
 
 impl Deref for TargetMolecule {
