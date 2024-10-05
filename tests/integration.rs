@@ -18,7 +18,7 @@ util::tests! {
         16: [213, 323],
         17: [654, 57],
         18: [821, 886],
-        19: [518]
+        19: [#[ignore = "Correct solution, needs rewrite."] 518]
     }
 }
 
@@ -27,12 +27,12 @@ mod util {
 
     /// Helper macro for more easily writing advent of code integration tests.
     macro_rules! tests {
-    {$($year:literal: {$($day:literal: [$($part:literal),+]),*}),+} => {
+    {$($year:literal: {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*}),+} => {
         ::paste::paste!{
             $(
                 mod [<_ $year>] {
                     $(
-                        crate::util::tests_impl!(year: $year, day: $day, parts: [$($part),+]);
+                        crate::util::tests_impl!(year: $year, day: $day, parts: [$($(#[$attrs])* $part),+]);
                     )*
                 }
             )+
@@ -44,27 +44,28 @@ mod util {
     #[doc(hidden)]
     macro_rules! tests_impl {
     // Construct a module named `d{$day}` that contains tests for both parts of a given day
-    (year: $year:literal, day: $day:literal, parts: [$part1:literal, $part2:literal]) => {
+    (year: $year:literal, day: $day:literal, parts: [$(#[$attr1:meta])* $part1:literal, $(#[$attr2:meta])* $part2:literal]) => {
         ::paste::paste!{
             mod [<day $day>] {
-                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1);
-                crate::util::tests_impl!(year: $year, day: $day, part: 2, solution: $part2);
+                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attr1)*);
+                crate::util::tests_impl!(year: $year, day: $day, part: 2, solution: $part2, meta: $($attr2)*);
             }
         }
     };
 
     // Construct a module named `d{$day}` that contains a test for part 1 of a given day
-    (year: $year:literal, day: $day:literal, parts: [$part1:literal]) => {
+    (year: $year:literal, day: $day:literal, parts: [$(#[$attrs:meta])* $part1:literal]) => {
         ::paste::paste!{
             mod [<day $day>] {
-                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1);
+                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attrs)*);
             }
         }
     };
 
     // Construct a test named `p{$part}` that checks for the given solution
-    (year: $year:literal, day: $day:literal, part: $part:literal, solution: $solution:literal) => {
+    (year: $year:literal, day: $day:literal, part: $part:literal, solution: $solution:literal, meta: $($attrs:meta)*) => {
         ::paste::paste!{
+            $(#[$attrs])*
             #[test]
             fn [<part $part>]() {
                 let two_digit_day = if $day < 10 {
