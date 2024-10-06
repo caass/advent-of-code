@@ -18,7 +18,8 @@ util::tests! {
         16: [213, 323],
         17: [654, 57],
         18: [821, 886],
-        19: [#[ignore = "Correct solution, needs rewrite."] 518]
+        19: [#[ignore = "Correct solution, needs rewrite."] 518],
+        20: [786240, 831600]
     }
 }
 

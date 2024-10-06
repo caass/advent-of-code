@@ -3,7 +3,7 @@ use phf::phf_map;
 use crate::meta::ProblemSet;
 use crate::util::mod_days;
 
-mod_days!(01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19);
+mod_days!(01, 02, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20);
 
 pub const PROBLEMS: ProblemSet = ProblemSet(phf_map! {
     1u8 => NOT_QUITE_LISP,
@@ -24,5 +24,6 @@ pub const PROBLEMS: ProblemSet = ProblemSet(phf_map! {
     16u8 => AUNT_SUE,
     17u8 => NO_SUCH_THING_AS_TOO_MUCH,
     18u8 => LIKE_A_GIF_FOR_YOUR_YARD,
-    19u8 => MEDICINE_FOR_RUDOLPH
+    19u8 => MEDICINE_FOR_RUDOLPH,
+    20u8 => INFINITE_ELVES_AND_INFINITE_HOUSES
 });

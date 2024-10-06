@@ -15,6 +15,8 @@ jobs:
   test:
     name: Test AoC Solutions
     runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: -C target-cpu=native
 
     steps:
       - uses: actions/checkout@v4
@@ -46,3 +48,4 @@ jobs:
           INPUT_2015_17: ${{ secrets.INPUT_2015_17 }}
           INPUT_2015_18: ${{ secrets.INPUT_2015_18 }}
           INPUT_2015_19: ${{ secrets.INPUT_2015_19 }}
+          INPUT_2015_20: ${{ secrest.INPUT_2015_20 }}
