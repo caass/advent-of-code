@@ -1,5 +1,3 @@
-use std::fmt::{self, Display, Formatter};
-
 use eyre::OptionExt;
 use rayon::prelude::*;
 
@@ -13,6 +11,7 @@ pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = problem!(
             .map(|address| House { address })
             .find_first(|house| house.presents_with_infinite_visitors() >= n)
             .ok_or_eyre("no houses got enough presents")
+            .map(|house| house.address)
     },
     |input: &str| {
         let n = input.trim().parse::<u32>()?;
@@ -21,6 +20,7 @@ pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = problem!(
             .map(|address| House { address })
             .find_first(|house| house.presents_with_finite_visitors() >= n)
             .ok_or_eyre("no houses got enough presents")
+            .map(|house| house.address)
     }
 );
 
@@ -29,12 +29,6 @@ pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = problem!(
 #[derive(Debug)]
 struct House {
     address: u32,
-}
-
-impl Display for House {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&self.address, f)
-    }
 }
 
 impl House {
