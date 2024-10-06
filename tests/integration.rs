@@ -44,11 +44,11 @@ mod util {
     #[doc(hidden)]
     macro_rules! tests_impl {
     // Construct a module named `d{$day}` that contains tests for both parts of a given day
-    (year: $year:literal, day: $day:literal, parts: [$(#[$attr1:meta])* $part1:literal, $(#[$attr2:meta])* $part2:literal]) => {
+    (year: $year:literal, day: $day:literal, parts: [$(#[$attrs1:meta])* $part1:literal, $(#[$attrs2:meta])* $part2:literal]) => {
         ::paste::paste!{
             mod [<day $day>] {
-                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attr1)*);
-                crate::util::tests_impl!(year: $year, day: $day, part: 2, solution: $part2, meta: $($attr2)*);
+                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attrs1)*);
+                crate::util::tests_impl!(year: $year, day: $day, part: 2, solution: $part2, meta: $($attrs2)*);
             }
         }
     };
@@ -117,5 +117,6 @@ mod util {
 }
 
     pub(crate) use tests;
+    #[doc(hidden)]
     pub(crate) use tests_impl;
 }
