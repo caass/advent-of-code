@@ -24,6 +24,8 @@ jobs:
         uses: cargo-bins/cargo-binstall@v1.10.5
       - name: Install `nextest`, `rage`, `just`
         run: cargo binstall cargo-nextest rage just --secure --no-confirm
+      - name: Decrypt puzzle inputs
+        run: just decrypt-inputs
       - name: Test
         run: just test
         env:

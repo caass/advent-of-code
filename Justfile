@@ -4,7 +4,7 @@ secret := env("AOC_INPUTS_SECRET")
 run *ARGS:
     cargo run --release -- {{ARGS}}
 
-test *ARGS: decrypt-inputs
+test *ARGS:
     -RUSTFLAGS="-C target-cpu=native" cargo nextest run --verbose --no-fail-fast {{ARGS}}
 
 encrypt-inputs:
