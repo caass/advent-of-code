@@ -5,20 +5,28 @@ use crate::meta::{problem, Problem};
 
 pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = problem!(
     |input: &str| {
-        let n = input.trim().parse::<u32>()?;
-        (0..=u32::MAX)
+        let n = input.trim().parse::<usize>()?;
+        (0..=usize::MAX)
             .into_par_iter()
             .map(|address| House { address })
-            .find_first(|house| house.presents_with_infinite_visitors() >= n)
+            .find_first(|house| {
+                house
+                    .presents_with_infinite_visitors()
+                    .is_some_and(|p| p >= n)
+            })
             .ok_or_eyre("no houses got enough presents")
             .map(|house| house.address)
     },
     |input: &str| {
-        let n = input.trim().parse::<u32>()?;
-        (0..=u32::MAX)
+        let n = input.trim().parse::<usize>()?;
+        (0..=usize::MAX)
             .into_par_iter()
             .map(|address| House { address })
-            .find_first(|house| house.presents_with_finite_visitors() >= n)
+            .find_first(|house| {
+                house
+                    .presents_with_finite_visitors()
+                    .is_some_and(|p| p >= n)
+            })
             .ok_or_eyre("no houses got enough presents")
             .map(|house| house.address)
     }
@@ -28,20 +36,24 @@ pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = problem!(
 
 #[derive(Debug)]
 struct House {
-    address: u32,
+    address: usize,
 }
 
 impl House {
-    fn presents_with_infinite_visitors(&self) -> u32 {
-        self.address.factors().map(|n| n * 10).sum()
+    fn presents_with_infinite_visitors(&self) -> Option<usize> {
+        // use `checked_mul` because if we're getting out of `usize` range, we're already too high.
+        self.address
+            .factors()
+            .map(|n| n.checked_mul(10))
+            .try_fold(1usize, |a, opt| opt.and_then(move |b| a.checked_add(b)))
     }
 
-    fn presents_with_finite_visitors(&self) -> u32 {
+    fn presents_with_finite_visitors(&self) -> Option<usize> {
         self.address
             .factors()
             .filter(|&fac| self.address / fac < 50)
-            .map(|n| n * 11)
-            .sum()
+            .map(|n| n.checked_mul(11))
+            .try_fold(1usize, |a, opt| opt.and_then(move |b| a.checked_add(b)))
     }
 }
 
@@ -49,23 +61,23 @@ trait Factorable {
     fn factors(&self) -> Factors;
 }
 
-impl Factorable for u32 {
+impl Factorable for usize {
     fn factors(&self) -> Factors {
         Factors::of(*self)
     }
 }
 
 struct Factors {
-    of: u32,
-    limit: u32,
-    current: u32,
-    extra: Option<u32>,
+    of: usize,
+    limit: usize,
+    current: usize,
+    extra: Option<usize>,
 }
 
 impl Factors {
-    fn of(n: u32) -> Self {
+    fn of(n: usize) -> Self {
         // limit is sqrt of `n`, since sqrt(`n`) * sqrt(`n`) == of
-        let limit = (n as f64).sqrt().trunc() as u32;
+        let limit = (n as f64).sqrt().trunc() as usize;
 
         Self {
             of: n,
@@ -77,7 +89,7 @@ impl Factors {
 }
 
 impl Iterator for Factors {
-    type Item = u32;
+    type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(other_factor) = self.extra.take() {
