@@ -1,3 +1,3 @@
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const MEDICINE_FOR_RUDOLPH: Problem = problem!();
+problem!();

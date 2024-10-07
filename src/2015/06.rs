@@ -12,9 +12,9 @@ use winnow::{
 };
 
 use crate::common::grid::{Coordinate, Grid};
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const PROBABLY_A_FIRE_HAZARD: Problem = problem!(part_1, part_2);
+problem!(part_1, part_2);
 const SIDE_LENGTH: usize = 1000;
 
 fn part_1(input: &str) -> Result<usize> {

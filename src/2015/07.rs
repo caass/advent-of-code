@@ -11,9 +11,9 @@ use winnow::{
     prelude::*,
 };
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const SOME_ASSEMBLY_REQUIRED: Problem = problem!(part1, part2);
+problem!(part1, part2);
 
 type WireName = TinyAsciiStr<4>;
 const A: WireName = unsafe { WireName::from_bytes_unchecked(*b"a\0\0\0") };

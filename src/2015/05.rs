@@ -1,9 +1,9 @@
 use eyre::Result;
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = problem!(part_1, part_2);
+problem!(part_1, part_2);
 
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 const BANNED_PAIRS: [&[u8]; 4] = [b"ab", b"cd", b"pq", b"xy"];

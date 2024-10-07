@@ -4,9 +4,9 @@ use eyre::{bail, eyre, OptionExt, Report, Result};
 use itertools::Itertools;
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const RPG_SIMULATOR_20XX: Problem = problem!(
+problem!(
     |input: &str| {
         let player = Character::PLAYER;
         let boss = input.parse()?;

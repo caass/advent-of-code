@@ -5,9 +5,9 @@ use eyre::{eyre, OptionExt, Report, Result};
 use rayon::prelude::*;
 
 use crate::common::grid::{Coordinate, Grid};
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const LIKE_A_GIF_FOR_YOUR_YARD: Problem = problem!(
+problem!(
     |input: &str| {
         let mut lights = input.parse::<LightSet<100>>()?;
         lights.play(100)?;

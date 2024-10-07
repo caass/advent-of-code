@@ -15,10 +15,10 @@ use winnow::{
     Parser,
 };
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
 const RACE_DURATION: usize = 2503;
-pub const REINDEER_OLYMPICS: Problem = problem!(race, tick_race);
+problem!(race, tick_race);
 
 fn race(input: &str) -> Result<usize> {
     let roster = Roster::try_from(input)?;

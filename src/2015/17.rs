@@ -3,11 +3,11 @@ use std::{cmp::Ordering, str::FromStr};
 use eyre::{OptionExt, Result};
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
 const LITERS_OF_EGGNOG: u8 = 150;
 
-pub const NO_SUCH_THING_AS_TOO_MUCH: Problem = problem!(
+problem!(
     |input: &str| input
         .parse::<ContainerCollection>()?
         .combinations_that_hold(LITERS_OF_EGGNOG)

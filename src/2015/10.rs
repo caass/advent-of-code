@@ -2,9 +2,9 @@ use eyre::Result;
 use itertools::Itertools;
 use void::Void;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const ELVES_LOOK_ELVES_SAY: Problem = problem!(look_and_say_n::<40>, look_and_say_n::<50>);
+problem!(look_and_say_n::<40>, look_and_say_n::<50>);
 
 fn look_and_say_n<const N: usize>(n: &str) -> Result<usize, Void> {
     let mut n = n.to_string();

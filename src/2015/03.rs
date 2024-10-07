@@ -4,9 +4,9 @@ use eyre::{eyre, Report, Result};
 use nohash_hasher::IntMap;
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const PERFECTLY_SPHERICAL_HOUSES_IN_A_VACUUM: Problem = problem!(part_1, part_2);
+problem!(part_1, part_2);
 
 fn part_1(input: &str) -> Result<usize> {
     let mut grid = HouseGrid::default();

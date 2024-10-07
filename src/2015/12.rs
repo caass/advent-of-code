@@ -1,9 +1,9 @@
 use rayon::prelude::*;
 use serde_json::Value;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const JS_ABACUS_FRAMEWORK_DOT_IO: Problem = problem!(
+problem!(
     |input| serde_json::from_str(input).map(|root| sum_numbers(root, false)),
     |input| serde_json::from_str(input).map(|root| sum_numbers(root, true))
 );

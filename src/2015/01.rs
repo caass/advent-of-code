@@ -4,9 +4,9 @@ use eyre::{OptionExt, Result};
 use rayon::prelude::*;
 use wide::u8x16;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const NOT_QUITE_LISP: Problem = problem!(part_1, part_2);
+problem!(part_1, part_2);
 
 const UP: u8 = b'(';
 const DOWN: u8 = b')';

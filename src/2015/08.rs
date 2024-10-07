@@ -12,9 +12,9 @@ use winnow::{
     token::{any, take},
 };
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const MATCHSTICKS: Problem = problem!(part1, part2);
+problem!(part1, part2);
 
 fn part1(input: &str) -> Result<usize> {
     input

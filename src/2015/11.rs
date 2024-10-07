@@ -9,9 +9,9 @@ use eyre::{bail, eyre, Report, Result};
 use rayon::iter::plumbing::{bridge, Producer};
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const CORPORATE_POLICY: Problem = problem!(
+problem!(
     |input: &str| input.parse::<Password>().map(Password::next),
     |input: &str| input.parse::<Password>().map(|pwd| pwd.next().next())
 );

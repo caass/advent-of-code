@@ -3,9 +3,9 @@ use std::str::FromStr;
 use eyre::{bail, OptionExt, Report, Result};
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const I_WAS_TOLD_THERE_WOULD_BE_NO_MATH: Problem = problem!(part_1, part_2);
+problem!(part_1, part_2);
 
 struct Dimensions([usize; 3]);
 

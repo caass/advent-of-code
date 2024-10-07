@@ -1,9 +1,9 @@
 use eyre::OptionExt;
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = problem!(
+problem!(
     |input: &str| {
         let n = input.trim().parse::<usize>()?;
         (0..=usize::MAX)

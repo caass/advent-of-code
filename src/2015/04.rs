@@ -2,9 +2,9 @@ use eyre::{OptionExt, Result};
 use md5::{digest::Output, Digest, Md5};
 use rayon::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const THE_IDEAL_STOCKING_STUFFER: Problem = problem!(part_1, part_2);
+problem!(part_1, part_2);
 
 fn part_1(input: &str) -> Result<usize> {
     find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] < 0x10)

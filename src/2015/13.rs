@@ -8,10 +8,9 @@ use winnow::combinator::{alt, eof, preceded, separated_pair, seq};
 use winnow::error::{ContextError, ParseError};
 use winnow::prelude::*;
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
-pub const KNIGHTS_OF_THE_DINNER_TABLE: Problem =
-    problem!(optimize_happiness, optimize_happiness_with_self);
+problem!(optimize_happiness, optimize_happiness_with_self);
 
 fn optimize_happiness(input: &str) -> Result<isize> {
     let table: Table = input.try_into().map_err(|e| eyre!("{e}"))?;

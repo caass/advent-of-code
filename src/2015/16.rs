@@ -9,7 +9,7 @@ use winnow::ascii::alpha1;
 use winnow::combinator::{delimited, separated, separated_pair};
 use winnow::{ascii::dec_uint, prelude::*};
 
-use crate::meta::{problem, Problem};
+use crate::meta::problem;
 
 const READOUT: MfcsamReadout = MfcsamReadout {
     children: 3,
@@ -24,7 +24,7 @@ const READOUT: MfcsamReadout = MfcsamReadout {
     perfumes: 1,
 };
 
-pub const AUNT_SUE: Problem = problem!(
+problem!(
     |input: &str| { input.parse::<Aunts>()?.find(|sue| sue.matches(&READOUT)) },
     |input: &str| {
         input
