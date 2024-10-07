@@ -13,7 +13,7 @@ env:
 
 jobs:
   test:
-    name: Test AoC Solutions
+    name: Test Solutions
     runs-on: ubuntu-latest
     env:
       RUSTFLAGS: -C target-cpu=native
@@ -22,30 +22,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install `cargo-binstall`
         uses: cargo-bins/cargo-binstall@v1.10.5
-      - name: Install `cargo-nextest`
-        run: cargo binstall cargo-nextest --secure --no-confirm
-      - name: Build
-        run: cargo build --release --verbose
+      - name: Install `nextest`, `rage`, `just`
+        run: cargo binstall cargo-nextest rage just --secure --no-confirm
       - name: Test
-        run: cargo nextest run --release --verbose --no-fail-fast
+        run: just test
         env:
-          INPUT_2015_01: ${{ secrets.INPUT_2015_01 }}
-          INPUT_2015_02: ${{ secrets.INPUT_2015_02 }}
-          INPUT_2015_03: ${{ secrets.INPUT_2015_03 }}
-          INPUT_2015_04: ${{ secrets.INPUT_2015_04 }}
-          INPUT_2015_05: ${{ secrets.INPUT_2015_05 }}
-          INPUT_2015_06: ${{ secrets.INPUT_2015_06 }}
-          INPUT_2015_07: ${{ secrets.INPUT_2015_07 }}
-          INPUT_2015_08: ${{ secrets.INPUT_2015_08 }}
-          INPUT_2015_09: ${{ secrets.INPUT_2015_09 }}
-          INPUT_2015_10: ${{ secrets.INPUT_2015_10 }}
-          INPUT_2015_11: ${{ secrets.INPUT_2015_11 }}
-          INPUT_2015_12: ${{ secrets.INPUT_2015_12 }}
-          INPUT_2015_13: ${{ secrets.INPUT_2015_13 }}
-          INPUT_2015_14: ${{ secrets.INPUT_2015_14 }}
-          INPUT_2015_15: ${{ secrets.INPUT_2015_15 }}
-          INPUT_2015_16: ${{ secrets.INPUT_2015_16 }}
-          INPUT_2015_17: ${{ secrets.INPUT_2015_17 }}
-          INPUT_2015_18: ${{ secrets.INPUT_2015_18 }}
-          INPUT_2015_19: ${{ secrets.INPUT_2015_19 }}
-          INPUT_2015_20: ${{ secrets.INPUT_2015_20 }}
+          AOC_INPUTS_PUBKEY: ${{ secrets.AOC_INPUTS_PUBKEY }}
+          AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}

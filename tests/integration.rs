@@ -76,12 +76,7 @@ mod util {
                 };
 
                 // Read input from ENV in CI, or from disk locally.
-                let input = if ::std::env::var("CI").ok().as_deref() == Some("true") {
-                    let input_var = ::std::format!("INPUT_{}_{}", $year, two_digit_day);
-
-                    ::std::env::var(&input_var)
-                        .unwrap_or_else(|e| ::std::panic!("Error reading {input_var}: {e}"))
-                } else {
+                let input = {
                     let input_file = {
                         let mut crate_dir: ::std::path::PathBuf =
                             ::std::env!("CARGO_MANIFEST_DIR").parse().unwrap();
