@@ -1,7 +1,7 @@
 use std::io::{stdin, IsTerminal, Read};
 
 use clap::Parser;
-use eyre::{bail, OptionExt, Result};
+use eyre::{bail, eyre, Result};
 
 use advent_of_code::meta::{Day, Part, Year};
 use advent_of_code::AOC;
@@ -26,7 +26,7 @@ fn main() -> Result<()> {
 
     let f = AOC
         .get(year, day, part)
-        .ok_or_eyre("haven't solved part {part} of day {day} of {year} yet")?;
+        .ok_or_else(|| eyre!("haven't solved part {part} of day {day} of {year} yet"))?;
 
     let output = f.solve(input.trim())?;
     println!("{}", output);
