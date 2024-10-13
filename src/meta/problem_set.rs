@@ -8,11 +8,13 @@ pub struct ProblemSet([Option<Problem>; 25]);
 impl ProblemSet {
     #[inline(always)]
     pub const fn day(&self, day: Day) -> Option<&Problem> {
-        self.0[day.as_u8() as usize].as_ref()
+        let idx = day.as_u8() as usize - 1;
+        self.0[idx].as_ref()
     }
 
     pub(crate) const fn with_day(mut self, day: Day, problem: Problem) -> Self {
-        self.0[day.as_u8() as usize] = Some(problem);
+        let idx = day.as_u8() as usize - 1;
+        self.0[idx] = Some(problem);
         self
     }
 

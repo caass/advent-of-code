@@ -10,7 +10,8 @@ pub struct Problem([Option<&'static dyn Solution>; 2]);
 
 impl Problem {
     pub const fn part(&self, part: Part) -> Option<&'static dyn Solution> {
-        self.0[part.as_u8() as usize]
+        let idx = part.as_u8() as usize - 1;
+        self.0[idx]
     }
 
     #[allow(dead_code)]

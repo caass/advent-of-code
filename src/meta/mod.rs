@@ -26,11 +26,13 @@ impl AdventOfCode {
 
     #[inline(always)]
     pub const fn year(&self, year: Year) -> Option<&ProblemSet> {
-        self.0[year.as_u16() as usize].as_ref()
+        let idx = (year.as_u16() - Year::FIRST) as usize;
+        self.0[idx].as_ref()
     }
 
     pub(crate) const fn with_year(mut self, year: Year, problems: ProblemSet) -> Self {
-        self.0[year.as_u16() as usize - Year::FIRST as usize] = Some(problems);
+        let idx = (year.as_u16() - Year::FIRST) as usize;
+        self.0[idx] = Some(problems);
         self
     }
 
