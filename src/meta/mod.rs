@@ -1,56 +1,49 @@
-//! Types and functions related to the advent of code format and structure,
-//! rather than individual problems.
+use std::ops::Index;
 
-mod day;
-mod macros;
-mod part;
-mod year;
+mod indices;
+mod problem;
+mod problem_set;
+mod solution;
 
-pub use day::{Day, ParseDayErr};
-use eyre::Result;
-pub(crate) use macros::{problem, problem_set};
-pub use part::{ParsePartError, Part};
-pub use year::{ParseYearError, Year};
+pub use indices::{Day, Part, Year};
+pub(crate) use problem::Problem;
+pub(crate) use problem_set::{problems, ProblemSet};
+use solution::Solution;
 
-pub struct AdventOfCode(pub(crate) phf::Map<u16, ProblemSet>);
+#[repr(transparent)]
+pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST) as usize }]);
 
 impl AdventOfCode {
-    #[inline(always)]
-    pub fn year(&self, year: Year) -> Option<&ProblemSet> {
-        self.0.get(&year.as_u16())
+    pub const fn get(&self, year: Year, day: Day, part: Part) -> Option<&dyn Solution> {
+        let Some(set) = self.year(year) else {
+            return None;
+        };
+
+        let Some(day) = set.day(day) else { return None };
+
+        day.part(part)
     }
 
     #[inline(always)]
-    pub fn get(&self, year: Year, day: Day, part: Part) -> Option<ProblemPart> {
+    pub const fn year(&self, year: Year) -> Option<&ProblemSet> {
+        self.0[year.as_u16() as usize].as_ref()
+    }
+
+    pub(crate) const fn with_year(mut self, year: Year, problems: ProblemSet) -> Self {
+        self.0[year.as_u16() as usize - Year::FIRST as usize] = Some(problems);
+        self
+    }
+
+    pub(crate) const fn new() -> Self {
+        Self([None, None, None, None, None, None, None, None])
+    }
+}
+
+impl Index<Year> for AdventOfCode {
+    type Output = ProblemSet;
+
+    fn index(&self, year: Year) -> &Self::Output {
         self.year(year)
-            .and_then(|set| set.day(day))
-            .and_then(|problem| problem.part(part))
+            .unwrap_or_else(|| panic!("Haven't solved any problems from {year}"))
     }
 }
-
-pub struct ProblemSet(pub(crate) phf::Map<u8, Problem>);
-
-impl ProblemSet {
-    #[inline(always)]
-    pub fn day(&self, day: Day) -> Option<&Problem> {
-        self.0.get(&day.as_u8())
-    }
-}
-
-pub struct Problem(Option<ProblemPart>, Option<ProblemPart>);
-
-impl Problem {
-    #[inline(always)]
-    pub fn part(&self, part: Part) -> Option<ProblemPart> {
-        match part {
-            Part::ONE => self.0,
-            Part::TWO => self.1,
-        }
-    }
-
-    pub(crate) const fn new(part1: Option<ProblemPart>, part2: Option<ProblemPart>) -> Self {
-        Self(part1, part2)
-    }
-}
-
-pub type ProblemPart = fn(&str) -> Result<String>;

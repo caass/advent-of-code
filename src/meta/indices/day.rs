@@ -1,11 +1,13 @@
 use std::fmt::{self, Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::num::ParseIntError;
 use std::str::FromStr;
 
 use enum_iterator::Sequence;
+use enum_map::Enum;
 use thiserror::Error;
 
-#[derive(Debug, Clone, Copy, Sequence)]
+#[derive(Debug, Clone, Copy, Sequence, PartialEq, Eq, Enum)]
 #[repr(u8)]
 pub enum Day {
     One = 1,
@@ -40,29 +42,10 @@ impl Day {
     pub const fn as_u8(self) -> u8 {
         self as u8
     }
-}
 
-impl From<Day> for u8 {
     #[inline(always)]
-    fn from(value: Day) -> Self {
-        value.as_u8()
-    }
-}
-
-#[derive(Debug, Error)]
-pub enum FromU8Error {
-    #[error("Days are 1-indexed")]
-    Zero,
-
-    #[error("They stop posting problems after the 25th")]
-    TooBig,
-}
-
-impl TryFrom<u8> for Day {
-    type Error = FromU8Error;
-
-    fn try_from(value: u8) -> Result<Self, Self::Error> {
-        match value {
+    pub(crate) const fn from_u8(day: u8) -> Result<Self, FromU8Error> {
+        match day {
             0 => Err(FromU8Error::Zero),
             1 => Ok(Day::One),
             2 => Ok(Day::Two),
@@ -94,6 +77,30 @@ impl TryFrom<u8> for Day {
     }
 }
 
+impl From<Day> for u8 {
+    #[inline(always)]
+    fn from(value: Day) -> Self {
+        value.as_u8()
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum FromU8Error {
+    #[error("Days are 1-indexed")]
+    Zero,
+
+    #[error("They stop posting problems after the 25th")]
+    TooBig,
+}
+
+impl TryFrom<u8> for Day {
+    type Error = FromU8Error;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        Day::from_u8(value)
+    }
+}
+
 impl Display for Day {
     #[inline(always)]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -118,3 +125,11 @@ impl FromStr for Day {
         Ok(day)
     }
 }
+
+impl Hash for Day {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u8(self.as_u8())
+    }
+}
+
+impl nohash_hasher::IsEnabled for Day {}

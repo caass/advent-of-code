@@ -12,33 +12,33 @@ use winnow::{
     token::{any, take},
 };
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(part1, part2);
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| {
+        input
+            .par_lines()
+            .map(|s| {
+                let line = s.trim().parse::<Line>()?;
+                Ok::<_, Report>(line.code_len() - line.data_len())
+            })
+            .try_reduce(|| 0, |a, b| Ok(a + b))
+    },
+    &|input| {
+        input
+            .par_lines()
+            .map(|s| {
+                let line = s.trim().parse::<Line>()?;
 
-fn part1(input: &str) -> Result<usize> {
-    input
-        .par_lines()
-        .map(|s| {
-            let line = s.trim().parse::<Line>()?;
-            Ok(line.code_len() - line.data_len())
-        })
-        .try_reduce(|| 0, |a, b| Ok(a + b))
-}
+                let code_len = line.code_len();
+                let re_encoded_len = line.re_encoded_len();
 
-fn part2(input: &str) -> Result<usize> {
-    input
-        .par_lines()
-        .map(|s| {
-            let line = s.trim().parse::<Line>()?;
-
-            let code_len = line.code_len();
-            let re_encoded_len = line.re_encoded_len();
-
-            Ok(re_encoded_len - code_len)
-        })
-        .try_reduce(|| 0, |a, b| Ok(a + b))
-}
+                Ok::<_, Report>(re_encoded_len - code_len)
+            })
+            .try_reduce(|| 0, |a, b| Ok(a + b))
+            .map(|n| n.to_string())
+    },
+);
 
 struct Line {
     chars: Vec<Char>,

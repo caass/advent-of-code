@@ -16,12 +16,12 @@ use winnow::{
     Parser,
 };
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(|input| best_cookie(input, None), |input| best_cookie(
-    input,
-    Some(500)
-));
+pub const PROBLEM: Problem = Problem::solved(&|input| best_cookie(input, None), &|input| {
+    best_cookie(input, Some(500))
+});
+
 const NUM_TABLESPOONS: usize = 100;
 
 fn best_cookie(input: &str, calorie_restriction: Option<usize>) -> Result<usize> {

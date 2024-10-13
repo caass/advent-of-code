@@ -3,22 +3,26 @@ use std::{cmp::Ordering, str::FromStr};
 use eyre::{OptionExt, Result};
 use rayon::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
+
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| {
+        input
+            .parse::<ContainerCollection>()?
+            .combinations_that_hold(LITERS_OF_EGGNOG)
+            .map(|c| c.len())
+            .ok_or_eyre("No combinations of containers can hold that much eggnog!")
+    },
+    &|input| {
+        input
+            .parse::<ContainerCollection>()?
+            .combinations_that_hold(LITERS_OF_EGGNOG)
+            .map(|c| c.num_smallest_combinations())
+            .ok_or_eyre("No combinations of containers can hold that much eggnog!")
+    },
+);
 
 const LITERS_OF_EGGNOG: u8 = 150;
-
-problem!(
-    |input: &str| input
-        .parse::<ContainerCollection>()?
-        .combinations_that_hold(LITERS_OF_EGGNOG)
-        .map(|c| c.len())
-        .ok_or_eyre("No combinations of containers can hold that much eggnog!"),
-    |input: &str| input
-        .parse::<ContainerCollection>()?
-        .combinations_that_hold(LITERS_OF_EGGNOG)
-        .map(|c| c.num_smallest_combinations())
-        .ok_or_eyre("No combinations of containers can hold that much eggnog!")
-);
 
 /// A set of all the container combinations that can hold a given volume of eggnog.
 #[derive(Debug, PartialEq)]

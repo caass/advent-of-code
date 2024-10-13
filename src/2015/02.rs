@@ -3,9 +3,24 @@ use std::str::FromStr;
 use eyre::{bail, OptionExt, Report, Result};
 use rayon::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(part_1, part_2);
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| {
+        input
+            .par_lines()
+            .map(|line| line.parse().map(Dimensions::wrapping_paper))
+            .try_reduce(|| 0, |a, b| Ok(a + b))
+            .map(|n| n.to_string())
+    },
+    &|input| {
+        input
+            .par_lines()
+            .map(|line| line.parse().map(Dimensions::ribbon))
+            .try_reduce(|| 0, |a, b| Ok(a + b))
+            .map(|n| n.to_string())
+    },
+);
 
 struct Dimensions([usize; 3]);
 
@@ -54,18 +69,4 @@ impl FromStr for Dimensions {
 
         Ok(Self([a, b, c]))
     }
-}
-
-fn part_1(input: &str) -> Result<usize> {
-    input
-        .par_lines()
-        .map(|line| line.parse().map(Dimensions::wrapping_paper))
-        .try_reduce(|| 0, |a, b| Ok(a + b))
-}
-
-fn part_2(input: &str) -> Result<usize> {
-    input
-        .par_lines()
-        .map(|line| line.parse().map(Dimensions::ribbon))
-        .try_reduce(|| 0, |a, b| Ok(a + b))
 }

@@ -5,20 +5,20 @@ use eyre::{eyre, OptionExt, Report, Result};
 use rayon::prelude::*;
 
 use crate::common::grid::{Coordinate, Grid};
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(
-    |input: &str| {
+pub const PROBLEM: Problem = Problem::solved(
+    &|input: &str| {
         let mut lights = input.parse::<LightSet<100>>()?;
         lights.play(100)?;
         Ok::<_, Report>(lights.num_lit())
     },
-    |input: &str| {
+    &|input: &str| {
         let mut lights = input.parse::<LightSet<100>>()?;
         lights.notice_breakage();
         lights.play(100)?;
         Ok::<_, Report>(lights.num_lit())
-    }
+    },
 );
 
 struct LightSet<const N: usize> {

@@ -9,11 +9,11 @@ use eyre::{bail, eyre, Report, Result};
 use rayon::iter::plumbing::{bridge, Producer};
 use rayon::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(
-    |input: &str| input.parse::<Password>().map(Password::next),
-    |input: &str| input.parse::<Password>().map(|pwd| pwd.next().next())
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| input.parse::<Password>().map(Password::next),
+    &|input| input.parse::<Password>().map(|pwd| pwd.next().next()),
 );
 
 const ASCII_LETTER_OFFSET: u8 = b'a';

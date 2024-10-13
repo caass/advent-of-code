@@ -1,11 +1,13 @@
 use std::fmt::{self, Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
 use std::num::ParseIntError;
 use std::str::FromStr;
 
 use enum_iterator::{all, Sequence};
+use enum_map::Enum;
 use thiserror::Error;
 
-#[derive(Debug, Clone, Copy, Sequence)]
+#[derive(Debug, Clone, Copy, Sequence, PartialEq, Eq, Enum)]
 #[repr(u16)]
 pub enum Year {
     Fifteen = 2015,
@@ -95,3 +97,11 @@ impl FromStr for Year {
         Ok(year)
     }
 }
+
+impl Hash for Year {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u16(self.as_u16());
+    }
+}
+
+impl nohash_hasher::IsEnabled for Year {}

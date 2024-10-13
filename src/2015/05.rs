@@ -1,9 +1,9 @@
 use eyre::Result;
 use rayon::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(part_1, part_2);
+pub const PROBLEM: Problem = Problem::solved(&part_1, &part_2);
 
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 const BANNED_PAIRS: [&[u8]; 4] = [b"ab", b"cd", b"pq", b"xy"];

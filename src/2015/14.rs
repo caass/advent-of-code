@@ -15,10 +15,11 @@ use winnow::{
     Parser,
 };
 
-use crate::meta::problem;
+use crate::meta::Problem;
+
+pub const PROBLEM: Problem = Problem::solved(&race, &tick_race);
 
 const RACE_DURATION: usize = 2503;
-problem!(race, tick_race);
 
 fn race(input: &str) -> Result<usize> {
     let roster = Roster::try_from(input)?;

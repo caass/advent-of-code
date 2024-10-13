@@ -12,9 +12,10 @@ use winnow::{
 };
 
 use crate::common::grid::{Coordinate, Grid};
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(part_1, part_2);
+pub const PROBLEM: Problem = Problem::solved(&part_1, &part_2);
+
 const SIDE_LENGTH: usize = 1000;
 
 fn part_1(input: &str) -> Result<usize> {

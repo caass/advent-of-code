@@ -4,10 +4,10 @@ use eyre::{bail, eyre, OptionExt, Report, Result};
 use itertools::Itertools;
 use rayon::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(
-    |input: &str| {
+pub const PROBLEM: Problem = Problem::solved(
+    &|input: &str| {
         let player = Character::PLAYER;
         let boss = input.parse()?;
         let loadout = player
@@ -16,7 +16,7 @@ problem!(
 
         Ok::<_, Report>(loadout.cost())
     },
-    |input: &str| {
+    &|input: &str| {
         let player = Character::PLAYER;
         let boss = input.parse()?;
         let loadout = player
@@ -24,7 +24,7 @@ problem!(
             .ok_or_eyre("impossible to lose to boss")?;
 
         Ok::<_, Report>(loadout.cost())
-    }
+    },
 );
 
 #[derive(Debug)]

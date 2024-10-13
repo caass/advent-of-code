@@ -105,7 +105,7 @@ mod util {
                     .ok_or_else(|| ::eyre::eyre!("Haven't solved part {part} of {year} day {day} yet."))
                     .unwrap();
 
-                let output = (f)(input.trim()).unwrap();
+                let output = f.solve(input.trim()).unwrap();
 
                 ::pretty_assertions::assert_eq!(output, $solution.to_string());
             }

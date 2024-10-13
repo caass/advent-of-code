@@ -1,3 +1,3 @@
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!();
+pub const PROBLEM: Problem = Problem::unsolved();

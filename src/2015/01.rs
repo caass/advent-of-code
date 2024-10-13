@@ -1,17 +1,15 @@
-use std::string::ToString;
-
 use eyre::{OptionExt, Result};
 use rayon::prelude::*;
 use wide::u8x16;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(part_1, part_2);
+pub const PROBLEM: Problem = Problem::solved(&part_1, &part_2);
 
 const UP: u8 = b'(';
 const DOWN: u8 = b')';
 
-fn part_1(input: &str) -> Result<isize> {
+pub(crate) fn part_1(input: &str) -> Result<isize> {
     #[inline(always)]
     fn sum_chunk(chunk: &[u8]) -> isize {
         if chunk.len() == u8x16::LANES as usize {
@@ -53,7 +51,7 @@ fn part_1(input: &str) -> Result<isize> {
         .sum())
 }
 
-fn part_2(input: &str) -> Result<usize> {
+pub(crate) fn part_2(input: &str) -> Result<usize> {
     let mut floor = 0;
 
     input

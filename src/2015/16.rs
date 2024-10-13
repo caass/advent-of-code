@@ -9,7 +9,16 @@ use winnow::ascii::alpha1;
 use winnow::combinator::{delimited, separated, separated_pair};
 use winnow::{ascii::dec_uint, prelude::*};
 
-use crate::meta::problem;
+use crate::meta::Problem;
+
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| input.parse::<Aunts>()?.find(|sue| sue.matches(&READOUT)),
+    &|input| {
+        input
+            .parse::<Aunts>()?
+            .find(|sue| sue.matches_range(&READOUT))
+    },
+);
 
 const READOUT: MfcsamReadout = MfcsamReadout {
     children: 3,
@@ -23,15 +32,6 @@ const READOUT: MfcsamReadout = MfcsamReadout {
     cars: 2,
     perfumes: 1,
 };
-
-problem!(
-    |input: &str| { input.parse::<Aunts>()?.find(|sue| sue.matches(&READOUT)) },
-    |input: &str| {
-        input
-            .parse::<Aunts>()?
-            .find(|sue| sue.matches_range(&READOUT))
-    }
-);
 
 struct Aunts(HashMap<u16, Sue, BuildNoHashHasher<u16>>);
 

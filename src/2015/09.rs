@@ -8,11 +8,11 @@ use winnow::combinator::seq;
 use winnow::error::{ContextError, ErrMode, ParseError, StrContext};
 use winnow::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(
-    |input| Locations::try_from(input).map(|locs| locs.shortest_distance()),
-    |input| Locations::try_from(input).map(|locs| locs.longest_distance())
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| Locations::try_from(input).map(|locations| locations.shortest_distance()),
+    &|input| Locations::try_from(input).map(|locations| locations.longest_distance()),
 );
 
 /// A list of locations Santa has to visit and how far apart they are from each other.

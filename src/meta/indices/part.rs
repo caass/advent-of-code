@@ -1,12 +1,14 @@
 use std::{
     fmt::{self, Debug, Display, Formatter},
+    hash::{Hash, Hasher},
     num::ParseIntError,
     str::FromStr,
 };
 
+use enum_map::Enum;
 use thiserror::Error;
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Enum)]
 pub struct Part(bool);
 
 impl Debug for Part {
@@ -32,6 +34,13 @@ impl Display for Part {
 impl Part {
     pub const ONE: Part = Part(true);
     pub const TWO: Part = Part(false);
+
+    pub(crate) const fn as_u8(&self) -> u8 {
+        match *self {
+            Part::ONE => 1,
+            Part::TWO => 2,
+        }
+    }
 }
 
 #[derive(Debug, Error)]
@@ -74,3 +83,11 @@ impl FromStr for Part {
         Ok(part)
     }
 }
+
+impl Hash for Part {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u8(self.as_u8());
+    }
+}
+
+impl nohash_hasher::IsEnabled for Part {}

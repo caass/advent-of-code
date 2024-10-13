@@ -4,9 +4,9 @@ use eyre::{eyre, Report, Result};
 use nohash_hasher::IntMap;
 use rayon::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(part_1, part_2);
+pub const PROBLEM: Problem = Problem::solved(&part_1, &part_2);
 
 fn part_1(input: &str) -> Result<usize> {
     let mut grid = HouseGrid::default();

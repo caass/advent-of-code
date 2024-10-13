@@ -1,11 +1,11 @@
 use rayon::prelude::*;
 use serde_json::Value;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(
-    |input| serde_json::from_str(input).map(|root| sum_numbers(root, false)),
-    |input| serde_json::from_str(input).map(|root| sum_numbers(root, true))
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| serde_json::from_str(input).map(|root| sum_numbers(root, false)),
+    &|input| serde_json::from_str(input).map(|root| sum_numbers(root, true)),
 );
 
 fn sum_numbers(value: Value, ignore_red: bool) -> i64 {

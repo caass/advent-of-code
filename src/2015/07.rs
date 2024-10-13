@@ -11,35 +11,34 @@ use winnow::{
     prelude::*,
 };
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(part1, part2);
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| {
+        input
+            .par_lines()
+            .map(|line| line.trim().parse())
+            .collect::<Result<WireKit>>()?
+            .measure(&A)
+            .ok_or_eyre("failed to measure wire A")
+    },
+    &|input| {
+        let mut kit = input
+            .par_lines()
+            .map(|line| line.trim().parse())
+            .collect::<Result<WireKit>>()?;
+
+        let a = kit.measure(&A).ok_or_eyre("failed to measure wire A")?;
+        kit.reset();
+        kit.set(B, a)?;
+
+        kit.measure(&A).ok_or_eyre("failed to measure wire A")
+    },
+);
 
 type WireName = TinyAsciiStr<4>;
 const A: WireName = unsafe { WireName::from_bytes_unchecked(*b"a\0\0\0") };
 const B: WireName = unsafe { WireName::from_bytes_unchecked(*b"b\0\0\0") };
-
-fn part1(input: &str) -> Result<u16> {
-    let kit = input
-        .par_lines()
-        .map(|line| line.trim().parse())
-        .collect::<Result<WireKit, _>>()?;
-
-    kit.measure(&A).ok_or_eyre("failed to measure wire A")
-}
-
-fn part2(input: &str) -> Result<u16> {
-    let mut kit = input
-        .par_lines()
-        .map(|line| line.trim().parse())
-        .collect::<Result<WireKit, _>>()?;
-
-    let a = kit.measure(&A).ok_or_eyre("failed to measure wire A")?;
-    kit.reset();
-    kit.set(B, a)?;
-
-    kit.measure(&A).ok_or_eyre("failed to measure wire A")
-}
 
 #[derive(Debug)]
 struct WireKit(HashMap<WireName, MeasuredInput, FnvBuildHasher>);

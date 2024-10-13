@@ -1,10 +1,10 @@
 use eyre::OptionExt;
 use rayon::prelude::*;
 
-use crate::meta::problem;
+use crate::meta::Problem;
 
-problem!(
-    |input: &str| {
+pub const PROBLEM: Problem = Problem::solved(
+    &|input| {
         let n = input.trim().parse::<usize>()?;
         (0..=usize::MAX)
             .into_par_iter()
@@ -17,7 +17,7 @@ problem!(
             .ok_or_eyre("no houses got enough presents")
             .map(|house| house.address)
     },
-    |input: &str| {
+    &|input| {
         let n = input.trim().parse::<usize>()?;
         (0..=usize::MAX)
             .into_par_iter()
@@ -29,7 +29,7 @@ problem!(
             })
             .ok_or_eyre("no houses got enough presents")
             .map(|house| house.address)
-    }
+    },
 );
 
 // the number of presents a house gets is (10 * factor for each factor of that houses address)
