@@ -35,6 +35,28 @@ impl Index<Day> for ProblemSet {
     }
 }
 
+/// Helper macro to create a [`ProblemSet`] from a series of [`Problems`].
+///
+/// Equivalent to:
+/// ```compile_fail
+/// // problems!(01, 02, /* .., */ 25);
+/// #[path = "01.rs"]
+/// mod day1;
+///
+/// #[path = "02.rs"]
+/// mod day2;
+///
+/// // ...
+///
+/// #[path = "25.rs"]
+/// mod day25;
+///
+/// pub const PROBLEMS: ProblemSet = ProblemSet::new()
+///     .with_day(Day::One, day1::PROBLEM)
+///     .with_day(Day::Two, day2::PROBLEM)
+///     // ...
+///     with_day(Day::TwentyFive, day25::PROBLEM);
+/// ```
 macro_rules! problems {
     ($($day:literal),+) => {
         ::paste::paste!{
@@ -43,15 +65,17 @@ macro_rules! problems {
                 mod [<day $day>];
             )+
 
-            #[allow(clippy::zero_prefixed_literal)]
             pub const PROBLEMS: crate::meta::ProblemSet = const {
                 let problems = crate::meta::ProblemSet::new();
+
                 $(
+                    #[allow(clippy::zero_prefixed_literal)]
                     let Ok(day_index) = crate::meta::Day::from_u8($day) else {
                         ::std::panic!("Invalid day");
                     };
                     let problems = problems.with_day(day_index, [<day $day>]::PROBLEM);
                 )+
+
                 problems
             };
         }
