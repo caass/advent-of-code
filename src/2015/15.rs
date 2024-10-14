@@ -18,9 +18,10 @@ use winnow::{
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(&|input| best_cookie(input, None), &|input| {
-    best_cookie(input, Some(500))
-});
+pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem =
+    Problem::solved(&|input| best_cookie(input, None), &|input| {
+        best_cookie(input, Some(500))
+    });
 
 const NUM_TABLESPOONS: usize = 100;
 

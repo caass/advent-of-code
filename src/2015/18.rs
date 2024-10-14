@@ -7,7 +7,7 @@ use rayon::prelude::*;
 use crate::common::grid::{Coordinate, Grid};
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(
+pub const LIKE_A_GIF_FOR_YOUR_YARD: Problem = Problem::solved(
     &|input: &str| {
         let mut lights = input.parse::<LightSet<100>>()?;
         lights.play(100)?;

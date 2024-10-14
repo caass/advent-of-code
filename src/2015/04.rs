@@ -4,7 +4,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(
+pub const THE_IDEAL_STOCKING_STUFFER: Problem = Problem::solved(
     &|input| {
         find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] < 0x10)
             .ok_or_eyre(format!("No hashes in u{} start with 5 zeros", usize::BITS))

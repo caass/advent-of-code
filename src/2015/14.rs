@@ -17,7 +17,7 @@ use winnow::{
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(&race, &tick_race);
+pub const REINDEER_OLYMPICS: Problem = Problem::solved(&race, &tick_race);
 
 const RACE_DURATION: usize = 2503;
 

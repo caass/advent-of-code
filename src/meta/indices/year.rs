@@ -31,6 +31,22 @@ impl Year {
         self as u16
     }
 
+    pub(crate) const fn from_u16(year: u16) -> Result<Self, FromU16Error> {
+        match year {
+            ..=2014 => Err(FromU16Error::Early(year)),
+            2015 => Ok(Year::Fifteen),
+            2016 => Ok(Year::Sixteen),
+            2017 => Ok(Year::Seventeen),
+            2018 => Ok(Year::Eighteen),
+            2019 => Ok(Year::Nineteen),
+            2020 => Ok(Year::Twenty),
+            2021 => Ok(Year::TwentyOne),
+            2022 => Ok(Year::TwentyTwo),
+            2023 => Ok(Year::TwentyThree),
+            2024.. => Err(FromU16Error::Late(year)),
+        }
+    }
+
     /// Returns an iterator over all values of `Self`
     #[inline(always)]
     pub fn iter() -> impl Iterator<Item = Self> {
@@ -56,20 +72,8 @@ pub enum FromU16Error {
 impl TryFrom<u16> for Year {
     type Error = FromU16Error;
 
-    fn try_from(value: u16) -> Result<Self, Self::Error> {
-        match value {
-            ..=2014 => Err(FromU16Error::Early(value)),
-            2015 => Ok(Year::Fifteen),
-            2016 => Ok(Year::Sixteen),
-            2017 => Ok(Year::Seventeen),
-            2018 => Ok(Year::Eighteen),
-            2019 => Ok(Year::Nineteen),
-            2020 => Ok(Year::Twenty),
-            2021 => Ok(Year::TwentyOne),
-            2022 => Ok(Year::TwentyTwo),
-            2023 => Ok(Year::TwentyThree),
-            2024.. => Err(FromU16Error::Late(value)),
-        }
+    fn try_from(year: u16) -> Result<Self, Self::Error> {
+        Self::from_u16(year)
     }
 }
 

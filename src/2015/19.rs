@@ -1,3 +1,3 @@
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::unsolved();
+pub const MEDICINE_FOR_RUDOLPH: Problem = Problem::unsolved();

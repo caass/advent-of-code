@@ -3,7 +3,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(&part_1, &part_2);
+pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = Problem::solved(&part_1, &part_2);
 
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 const BANNED_PAIRS: [&[u8]; 4] = [b"ab", b"cd", b"pq", b"xy"];

@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(
+pub const I_WAS_TOLD_THERE_WOULD_BE_NO_MATH: Problem = Problem::solved(
     &|input| {
         input
             .par_lines()

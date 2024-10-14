@@ -14,7 +14,7 @@ use winnow::{
 use crate::common::grid::{Coordinate, Grid};
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(&part_1, &part_2);
+pub const PROBABLY_A_FIRE_HAZARD: Problem = Problem::solved(&part_1, &part_2);
 
 const SIDE_LENGTH: usize = 1000;
 

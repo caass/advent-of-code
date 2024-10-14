@@ -4,7 +4,7 @@ use void::Void;
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(&look_and_say::<40>, &look_and_say::<50>);
+pub const ELVES_LOOK_ELVES_SAY: Problem = Problem::solved(&look_and_say::<40>, &look_and_say::<50>);
 
 fn look_and_say<const N: usize>(n: &str) -> Result<usize, Void> {
     let mut n = n.to_string();

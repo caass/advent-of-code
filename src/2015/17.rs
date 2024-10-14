@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(
+pub const NO_SUCH_THING_AS_TOO_MUCH: Problem = Problem::solved(
     &|input| {
         input
             .parse::<ContainerCollection>()?

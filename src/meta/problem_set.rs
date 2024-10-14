@@ -36,10 +36,15 @@ impl Index<Day> for ProblemSet {
 }
 
 /// Helper macro to create a [`ProblemSet`] from a series of [`Problems`].
-///
-/// Equivalent to:
 /// ```compile_fail
-/// // problems!(01, 02, /* .., */ 25);
+/// // Equivalent to:
+/// // PROBLEMS!{
+/// //     01 => SOME_PROBLEM,
+/// //     02 => ANOTHER_PROBLEM,
+/// //     // ...
+/// //     25 => THE_FINAL_PROBLEM
+/// // }
+///
 /// #[path = "01.rs"]
 /// mod day1;
 ///
@@ -52,13 +57,13 @@ impl Index<Day> for ProblemSet {
 /// mod day25;
 ///
 /// pub const PROBLEMS: ProblemSet = ProblemSet::new()
-///     .with_day(Day::One, day1::PROBLEM)
-///     .with_day(Day::Two, day2::PROBLEM)
+///     .with_day(Day::One, day1::SOME_PROBLEM)
+///     .with_day(Day::Two, day2::ANOTHER_PROBLEM)
 ///     // ...
-///     with_day(Day::TwentyFive, day25::PROBLEM);
+///     .with_day(Day::TwentyFive, day25::THE_FINAL_PROBLEM);
 /// ```
-macro_rules! problems {
-    ($($day:literal),+) => {
+macro_rules! PROBLEMS {
+    {$($day:literal => $problem:ident),+} => {
         ::paste::paste!{
             $(
                 #[path = "" $day ".rs"]
@@ -73,7 +78,7 @@ macro_rules! problems {
                     let Ok(day_index) = crate::meta::Day::from_u8($day) else {
                         ::std::panic!("Invalid day");
                     };
-                    let problems = problems.with_day(day_index, [<day $day>]::PROBLEM);
+                    let problems = problems.with_day(day_index, self::[<day $day>]::$problem);
                 )+
 
                 problems
@@ -82,4 +87,4 @@ macro_rules! problems {
     };
 }
 
-pub(crate) use problems;
+pub(crate) use PROBLEMS;

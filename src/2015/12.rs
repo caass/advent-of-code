@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(
+pub const JS_ABACUS_FRAMEWORK_IO: Problem = Problem::solved(
     &|input| serde_json::from_str(input).map(|root| sum_numbers(root, false)),
     &|input| serde_json::from_str(input).map(|root| sum_numbers(root, true)),
 );

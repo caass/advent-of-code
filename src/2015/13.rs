@@ -10,7 +10,8 @@ use winnow::prelude::*;
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(&optimize_happiness, &optimize_happiness_with_self);
+pub const KNIGHTS_OF_THE_DINNER_TABLE: Problem =
+    Problem::solved(&optimize_happiness, &optimize_happiness_with_self);
 
 fn optimize_happiness(input: &str) -> Result<isize> {
     let table: Table = input.try_into().map_err(|e| eyre!("{e}"))?;

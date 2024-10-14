@@ -14,7 +14,7 @@ use winnow::{
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(
+pub const MATCHSTICKS: Problem = Problem::solved(
     &|input| {
         input
             .par_lines()

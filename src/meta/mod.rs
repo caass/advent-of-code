@@ -7,7 +7,7 @@ mod solution;
 
 pub use indices::{Day, Part, Year};
 pub(crate) use problem::Problem;
-pub(crate) use problem_set::{problems, ProblemSet};
+pub(crate) use problem_set::{ProblemSet, PROBLEMS};
 use solution::Solution;
 
 #[repr(transparent)]
@@ -49,3 +49,30 @@ impl Index<Year> for AdventOfCode {
             .unwrap_or_else(|| panic!("Haven't solved any problems from {year}"))
     }
 }
+
+/// Helper macro to assemble an [`AdventOfCode`] from the given [`Year`]s.
+macro_rules! AOC {
+    ([$($year:literal),+]) => {
+        ::paste::paste!{
+            $(
+                #[path = "" $year "/mod.rs"]
+                mod [<year $year>];
+            )+
+
+            pub const AOC: crate::meta::AdventOfCode = const {
+                let aoc = crate::meta::AdventOfCode::new();
+
+                $(
+                    let Ok(year_index) = crate::meta::Year::from_u16($year) else {
+                        ::std::panic!("Invalid year");
+                    };
+                    let aoc = aoc.with_year(year_index, self::[<year $year>]::PROBLEMS);
+                )+
+
+                aoc
+            };
+        }
+    };
+}
+
+pub(crate) use AOC;

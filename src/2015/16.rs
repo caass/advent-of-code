@@ -11,7 +11,7 @@ use winnow::{ascii::dec_uint, prelude::*};
 
 use crate::meta::Problem;
 
-pub const PROBLEM: Problem = Problem::solved(
+pub const AUNT_SUE: Problem = Problem::solved(
     &|input| input.parse::<Aunts>()?.find(|sue| sue.matches(&READOUT)),
     &|input| {
         input
