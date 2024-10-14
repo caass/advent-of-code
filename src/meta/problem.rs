@@ -14,13 +14,13 @@ impl Problem {
         self.0[idx]
     }
 
-    #[allow(dead_code)]
+    #[allow(dead_code, reason = "Sometimes unused depending on solution progress")]
     #[inline(always)]
     pub(crate) const fn unsolved() -> Self {
         Self([None, None])
     }
 
-    #[allow(dead_code)]
+    #[allow(dead_code, reason = "Sometimes unused depending on solution progress")]
     #[inline(always)]
     pub(crate) const fn partially_solved<F, T, E>(part_one: &'static F) -> Self
     where
@@ -31,7 +31,7 @@ impl Problem {
         Self([Some(part_one as &dyn Solution), None])
     }
 
-    #[allow(dead_code)]
+    #[allow(dead_code, reason = "Sometimes unused depending on solution progress")]
     #[inline(always)]
     pub(crate) const fn solved<F1, T1, E1, F2, T2, E2>(
         part_one: &'static F1,
