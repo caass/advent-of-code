@@ -38,7 +38,7 @@ impl Index<Day> for ProblemSet {
 /// Helper macro to create a [`ProblemSet`] from a series of [`Problems`].
 /// ```compile_fail
 /// // Equivalent to:
-/// // PROBLEMS!{
+/// // PROBLEMS! {
 /// //     01 => SOME_PROBLEM,
 /// //     02 => ANOTHER_PROBLEM,
 /// //     // ...
