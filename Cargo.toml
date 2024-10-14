@@ -19,7 +19,7 @@ thiserror = "1.0.63"
 wide = "0.7.28"
 eyre = "0.6.12"
 nohash-hasher = "0.2.0"
-md-5 = { version = "0.10.6", features = ["asm"] }
+md-5 = { version = "0.11.0-pre.4", features = ["asm"] }
 itoa = "1.0"
 winnow = { version = "0.6.18", features = ["simd"] }
 phf = { version = "0.11", features = ["macros"] }
