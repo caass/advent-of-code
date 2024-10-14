@@ -28,6 +28,8 @@ jobs:
         run: rustup default ${{ matrix.channel }}
       - name: Add WebAssembly target
         run: rustup target add wasm32-unknown-unknown
+      - name: Install `clippy`
+        run: rustup component add clippy
       - name: Run `clippy`
         run: cargo clippy --target=wasm32-unknown-unknown
       - name: Install `cargo-binstall`
