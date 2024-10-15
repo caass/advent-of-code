@@ -21,13 +21,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Install Rust ${{ matrix.channel }}
         run: rustup install ${{ matrix.channel }}
       - name: Set Rust toolchain to ${{ matrix.channel }}
         run: rustup default ${{ matrix.channel }}
-      - name: Add WebAssembly target
-        run: rustup target add wasm32-unknown-unknown
       - name: Install `clippy`
         run: rustup component add clippy
       - name: Run `clippy`
@@ -36,7 +35,7 @@ jobs:
         uses: cargo-bins/cargo-binstall@v1.10.5
       - name: Install `nextest`, `rage`, `just`
         run: cargo binstall cargo-nextest rage just --secure --no-confirm
-      - name: Test (Native)
+      - name: Test
         run: just test
         env:
           AOC_INPUTS_PUBKEY: ${{ secrets.AOC_INPUTS_PUBKEY }}
