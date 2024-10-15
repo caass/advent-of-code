@@ -2,6 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     ops::Deref,
     str::FromStr,
+    sync::atomic::{AtomicUsize, Ordering},
 };
 
 use eyre::{bail, eyre, OptionExt, Report};
@@ -11,8 +12,10 @@ use tinystr::TinyAsciiStr;
 
 use crate::meta::Problem;
 
-pub const MEDICINE_FOR_RUDOLPH: Problem =
-    Problem::partially_solved(&|input| input.parse().map(|lab: Lab| lab.plus_ultra().len()));
+pub const MEDICINE_FOR_RUDOLPH: Problem = Problem::solved(
+    &|input| input.parse().map(|lab: Lab| lab.plus_ultra().len()),
+    &|input| input.parse().map(|lab: Lab| lab.num_steps()),
+);
 
 #[derive(Debug)]
 struct Lab {
@@ -33,6 +36,22 @@ impl Lab {
             })
             .flat_map(|(from, tos)| tos.par_iter().map(move |to| self.target.replace(from, to)))
             .collect()
+    }
+
+    /// Determine the number of steps required to synthesize the target molecule from a single electron.
+    fn num_steps(&self) -> usize {
+        let rn_ar_count = AtomicUsize::new(0);
+        let y_count = AtomicUsize::new(0);
+
+        self.target.atoms().copied().for_each(|atom| {
+            if atom == Atom::RN || atom == Atom::AR {
+                rn_ar_count.fetch_add(1, Ordering::Relaxed);
+            } else if atom == Atom::Y {
+                y_count.fetch_add(1, Ordering::Relaxed);
+            };
+        });
+
+        self.target.len() - rn_ar_count.into_inner() - 2 * y_count.into_inner() - 1
     }
 }
 
@@ -90,6 +109,12 @@ impl FromStr for Molecule {
 
 #[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord, Copy, Clone)]
 struct Atom(TinyAsciiStr<2>);
+
+impl Atom {
+    const RN: Atom = Atom(unsafe { TinyAsciiStr::from_bytes_unchecked(*b"Rn") });
+    const AR: Atom = Atom(unsafe { TinyAsciiStr::from_bytes_unchecked(*b"Ar") });
+    const Y: Atom = Atom(unsafe { TinyAsciiStr::from_bytes_unchecked(*b"Y\0") });
+}
 
 impl FromStr for Atom {
     type Err = <TinyAsciiStr<2> as FromStr>::Err;
