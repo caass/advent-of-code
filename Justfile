@@ -14,3 +14,6 @@ encrypt-inputs:
 
 decrypt-inputs:
     echo {{secret}} | rage -d -i - ./tests/fixtures.gz.age | tar xz ./tests/fixtures
+
+download-inputs:
+    ./scripts/download-inputs.sh
