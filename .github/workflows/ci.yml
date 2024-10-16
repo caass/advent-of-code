@@ -38,14 +38,14 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install ${{ matrix.channel }} toolchain
-        run: rustup install ${{ matrix.channel }}
-      - name: Set default toolchain to ${{ matrix.channel }}
-        run: rustup default ${{ matrix.channel }}
       - name: Install `cargo-binstall`
         uses: cargo-bins/cargo-binstall@v1.10.5
       - name: Install `nextest`, `rage`, `just`
         run: cargo binstall cargo-nextest rage just --secure --no-confirm
+      - name: Install ${{ matrix.channel }} toolchain
+        run: rustup install ${{ matrix.channel }}
+      - name: Set default toolchain to ${{ matrix.channel }}
+        run: rustup default ${{ matrix.channel }}
       - name: Test
         run: just test --profile ci
         env:
@@ -60,6 +60,8 @@ jobs:
         uses: actions/checkout@v4
       - name: Install Rust stable
         run: rustup install stable
+      - name: Set default toolchain to stable
+        run: rustup default stable
       - name: Install `cargo-binstall`
         uses: cargo-bins/cargo-binstall@v1.10.5
       - name: Install `rage`, `just`
