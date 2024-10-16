@@ -7,9 +7,9 @@ run *ARGS:
     RUSTFLAGS="-C target-cpu=native" cargo run --release -- {{ARGS}}
 
 test *ARGS: decrypt-inputs
-    cargo nextest run --verbose --no-fail-fast {{ARGS}}
+    cargo nextest run {{ARGS}}
 
-encrypt-inputs:
+encrypt-inputs: download-inputs
     tar cz ./tests/fixtures | rage -r {{pubkey}} > ./tests/fixtures.gz.age
 
 decrypt-inputs:

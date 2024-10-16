@@ -8,6 +8,10 @@ cookies --version 2>/dev/null 1>&2 || \
 SESSION_COOKIE="$(cookies https://adventofcode.com session)"
 FIXTURES_PATH="./tests/fixtures"
 
+THIS_YEAR="$(date +%Y)"
+THIS_MONTH="$(date +%m)"
+TODAY="$(date +%d)"
+
 get_input() {
     year=$1
     day=$2
@@ -25,7 +29,7 @@ fi
 
 printf "Downloading inputs...\n"
 
-for year in `seq 2015 2023`; do
+for year in `seq 2015 $(( $THIS_YEAR - 1 ))`; do
     printf '%s: ' $year
     year_path="${FIXTURES_PATH}/$year"
 
@@ -50,4 +54,18 @@ for year in `seq 2015 2023`; do
     printf 'Done!\n'
 done
 
-printf 'Done!\n'
+if [ $THIS_MONTH -eq 12 ]; then
+    for day in `seq 1 $TODAY`; do
+        printf '%s, ' $day
+
+        two_digit_day=$day
+
+        if [ "${#day}" -eq 1 ]; then
+            two_digit_day="0$day"
+        fi
+
+        input_path="$year_path/$two_digit_day"
+
+        get_input $year $day > $input_path
+    done
+fi
