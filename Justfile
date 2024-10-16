@@ -14,7 +14,7 @@ bench *ARGS: decrypt-inputs
     cargo bench {{ARGS}}
 
 get-inputs: download-inputs
-    #!/usr/bin/env sh
+    #!/usr/bin/env -S bash --posix
     set -euo pipefail
 
     if [[ -z "$AOC_INPUTS_PUBKEY" ]]; then
@@ -29,7 +29,7 @@ clean:
 
 [private]
 decrypt-inputs:
-    #!/usr/bin/env sh
+    #!/usr/bin/env -S bash --posix
     set -euo pipefail
 
     if [[ -z "$AOC_INPUTS_SECRET" ]]; then
@@ -40,7 +40,7 @@ decrypt-inputs:
 
 [private]
 download-inputs:
-    #!/usr/bin/env sh
+    #!/usr/bin/env -S bash --posix
     set -euo pipefail
 
     cookies --version 2>/dev/null 1>&2 || \
