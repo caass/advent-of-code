@@ -13,6 +13,9 @@ run *ARGS:
 test *ARGS: decrypt-inputs
     cargo nextest run {{ARGS}}
 
+bench *ARGS: decrypt-inputs
+    RUSTFLAGS="-C target-cpu=native" cargo bench {{ARGS}}
+
 get-inputs: download-inputs
     tar cz ./tests/fixtures | rage -r {{pubkey}} > ./tests/fixtures.gz.age
 
