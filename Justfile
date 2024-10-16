@@ -1,15 +1,17 @@
+export RUSTFLAGS := "-C target-cpu=native"
+
 [private]
 default:
   just --list
 
 run *ARGS:
-    RUSTFLAGS="-C target-cpu=native" cargo run --release -- {{ARGS}}
+    cargo run --release -- {{ARGS}}
 
 test *ARGS: decrypt-inputs
     cargo nextest run {{ARGS}}
 
 bench *ARGS: decrypt-inputs
-    RUSTFLAGS="-C target-cpu=native" cargo bench {{ARGS}}
+    cargo bench {{ARGS}}
 
 get-inputs: download-inputs
     #!/usr/bin/env sh
