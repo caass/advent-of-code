@@ -1,5 +1,8 @@
 export RUSTFLAGS := "-C target-cpu=native"
 
+# MacOS uses BSD tar, which can generate warnings when untarring on Linux.
+tar := if os() == "macos" { "gtar" } else { "tar" }
+
 [private]
 default:
   just --list
@@ -21,11 +24,11 @@ get-inputs: download-inputs
         printf "Need AOC_INPUTS_PUBKEY to be set to encrypt puzzle inputs.\n" && exit 1
     fi
 
-    tar cz ./tests/fixtures | rage -r $AOC_INPUTS_PUBKEY > ./tests/fixtures.gz.age
+    {{tar}} cz ./tests/fixtures | rage -r $AOC_INPUTS_PUBKEY > ./tests/fixtures.gz.age
 
-clean:
+clean: clean-inputs
     cargo clean
-    rm -rf tests/fixtures
+
 
 [private]
 decrypt-inputs:
@@ -36,10 +39,14 @@ decrypt-inputs:
         printf "Need AOC_INPUTS_SECRET to be set to decrypt puzzle inputs.\n" && exit 1
     fi
 
-    printenv AOC_INPUTS_SECRET | rage -d -i - ./tests/fixtures.gz.age | tar xz ./tests/fixtures
+    printenv AOC_INPUTS_SECRET | rage -d -i - ./tests/fixtures.gz.age | {{tar}} xz ./tests/fixtures
 
 [private]
-download-inputs:
+clean-inputs:
+    rm -rf tests/fixtures
+
+[private]
+download-inputs: clean-inputs
     #!/usr/bin/env -S bash --posix
     set -euo pipefail
 
