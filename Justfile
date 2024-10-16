@@ -1,8 +1,3 @@
-set quiet
-
-pubkey := env("AOC_INPUTS_PUBKEY")
-secret := env("AOC_INPUTS_SECRET")
-
 [private]
 default:
   just --list
@@ -17,11 +12,15 @@ bench *ARGS: decrypt-inputs
     RUSTFLAGS="-C target-cpu=native" cargo bench {{ARGS}}
 
 get-inputs: download-inputs
-    tar cz ./tests/fixtures | rage -r {{pubkey}} > ./tests/fixtures.gz.age
+    tar cz ./tests/fixtures | rage -r $AOC_INPUTS_PUBKEY > ./tests/fixtures.gz.age
+
+clean:
+    cargo clean
+    rm -rf tests/fixtures
 
 [private]
 decrypt-inputs:
-    echo {{secret}} | rage -d -i - ./tests/fixtures.gz.age | tar xz ./tests/fixtures
+    printenv AOC_INPUTS_SECRET | rage -d -i - ./tests/fixtures.gz.age | tar xz ./tests/fixtures
 
 [private]
 download-inputs:
