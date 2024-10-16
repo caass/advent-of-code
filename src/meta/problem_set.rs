@@ -29,6 +29,7 @@ impl ProblemSet {
 impl Index<Day> for ProblemSet {
     type Output = Problem;
 
+    #[inline(always)]
     fn index(&self, day: Day) -> &Self::Output {
         self.day(day)
             .unwrap_or_else(|| panic!("Haven't solved either part of day {day}"))

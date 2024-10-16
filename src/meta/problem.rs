@@ -9,6 +9,7 @@ use crate::meta::Solution;
 pub struct Problem([Option<&'static dyn Solution>; 2]);
 
 impl Problem {
+    #[inline(always)]
     pub const fn part(&self, part: Part) -> Option<&'static dyn Solution> {
         let idx = part.as_u8() as usize - 1;
         self.0[idx]
@@ -55,6 +56,7 @@ impl Problem {
 impl Index<Part> for Problem {
     type Output = dyn Solution;
 
+    #[inline(always)]
     fn index(&self, part: Part) -> &Self::Output {
         self.part(part)
             .unwrap_or_else(move || panic!("Haven't solved part {part} yet"))
