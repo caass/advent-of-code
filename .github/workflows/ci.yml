@@ -46,7 +46,10 @@ jobs:
 
   bench:
     needs: test
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - run: rustup install stable
@@ -60,7 +63,7 @@ jobs:
           bencher run \
           --project adventofcode \
           --branch main \
-          --testbed ubuntu-latest \
+          --testbed ${{ matrix.os }} \
           --threshold-measure latency \
           --threshold-test t_test \
           --threshold-max-sample-size 64 \
