@@ -7,15 +7,19 @@ tar := if os() == "macos" { "gtar" } else { "tar" }
 default:
   just --list
 
+# Run the advent of code binary
 run *ARGS:
     cargo run --release -- {{ARGS}}
 
+# Run unit & integration tests
 test *ARGS: decrypt-inputs
     cargo nextest run {{ARGS}}
 
+# Benchmark against inputs in `tests/fixtures.gz.age`
 bench *ARGS: decrypt-inputs
     cargo bench {{ARGS}}
 
+# Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
     #!/usr/bin/env -S bash --posix
     set -euo pipefail
@@ -26,9 +30,9 @@ get-inputs: download-inputs
 
     {{tar}} cz ./tests/fixtures | rage -r $AOC_INPUTS_PUBKEY > ./tests/fixtures.gz.age
 
+# Clean `target/` and `tests/fixtures/`
 clean: clean-inputs
     cargo clean
-
 
 [private]
 decrypt-inputs:
