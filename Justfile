@@ -12,6 +12,13 @@ bench *ARGS: decrypt-inputs
     RUSTFLAGS="-C target-cpu=native" cargo bench {{ARGS}}
 
 get-inputs: download-inputs
+    #!/usr/bin/env sh
+    set -euo pipefail
+
+    if [[ -z "$AOC_INPUTS_PUBKEY" ]]; then
+        printf "Need AOC_INPUTS_PUBKEY to be set to encrypt puzzle inputs.\n" && exit 1
+    fi
+
     tar cz ./tests/fixtures | rage -r $AOC_INPUTS_PUBKEY > ./tests/fixtures.gz.age
 
 clean:
