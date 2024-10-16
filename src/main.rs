@@ -1,35 +1,35 @@
-use std::io::{stdin, IsTerminal, Read};
-
 use clap::Parser;
-use eyre::{bail, eyre, Result};
+use clap_stdin::FileOrStdin;
+use eyre::Result;
 
 use advent_of_code::meta::{Day, Part, Year};
 use advent_of_code::AOC;
 
 #[derive(Debug, Parser)]
-struct AocArgs {
+struct Args {
+    /// The year of Advent of Code the problem is in
     year: Year,
+
+    /// The day (1-indexed) to solve
     day: Day,
+
+    /// The part of the puzzle to solve.
     part: Part,
+
+    /// File containing puzzle input (can also be read from STDIN).
+    input: FileOrStdin,
 }
 
 fn main() -> Result<()> {
-    let AocArgs { year, day, part } = AocArgs::parse();
+    let Args {
+        year,
+        day,
+        part,
+        input,
+    } = Args::parse();
 
-    let input = if stdin().is_terminal() {
-        bail!("Expected input on stdin, try `cargo run --release -- {year} {day} {part} < path/to/input");
-    } else {
-        let mut buf = String::new();
-        stdin().read_to_string(&mut buf)?;
-        buf
-    };
-
-    let f = AOC
-        .get(year, day, part)
-        .ok_or_else(|| eyre!("haven't solved part {part} of day {day} of {year} yet"))?;
-
-    let output = f.solve(input.trim())?;
-    println!("{}", output);
+    let solution = AOC[year][day][part].solve(input.contents()?.trim())?;
+    println!("{}", solution);
 
     Ok(())
 }
