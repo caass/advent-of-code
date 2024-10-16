@@ -22,10 +22,12 @@ jobs:
         run: rustup install ${{ matrix.channel }}
       - name: Set default toolchain to ${{ matrix.channel }}
         run: rustup default ${{ matrix.channel }}
-      - name: Install `clippy`
-        run: rustup component add clippy
+      - name: Install `clippy`, `rustfmt`
+        run: rustup component add clippy rustfmt
       - name: Run `clippy`
         run: cargo clippy
+      - name: Run `rustfmt`
+        run: cargo fmt --check
 
   test:
     name: Test
