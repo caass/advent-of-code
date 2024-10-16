@@ -22,7 +22,7 @@ jobs:
         run: rustup install ${{ matrix.channel }}
       - name: Set default toolchain to ${{ matrix.channel }}
         run: rustup default ${{ matrix.channel }}
-      - name: Populate cache
+      - name: Cache rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
@@ -48,7 +48,7 @@ jobs:
         run: rustup install ${{ matrix.channel }}
       - name: Set default toolchain to ${{ matrix.channel }}
         run: rustup default ${{ matrix.channel }}
-      - name: Populate cache
+      - name: Cache rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
@@ -70,7 +70,7 @@ jobs:
         run: rustup install stable
       - name: Set default toolchain to stable
         run: rustup default stable
-      - name: Populate cache
+      - name: Cache rust dependencies
         uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
