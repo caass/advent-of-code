@@ -55,7 +55,7 @@ jobs:
         with:
           cache-all-crates: "true"
       - run: cargo install rage just --verbose
-      - uses: bencherdev/bencher@main
+      - uses: bencherdev/bencher@v0.4.22
       - run: |
           bencher run \
           --project adventofcode \
