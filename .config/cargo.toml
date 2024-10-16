@@ -1,0 +1,6 @@
+[profile.release]
+lto = "fat"
+codegen-units = 1
+
+[profile.ci]
+inherits = "test"

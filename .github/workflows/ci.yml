@@ -41,3 +41,4 @@ jobs:
           AOC_INPUTS_PUBKEY: ${{ secrets.AOC_INPUTS_PUBKEY }}
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
           RUSTFLAGS: -C target-cpu=native
+          NEXTEST_PROFILE: ci
