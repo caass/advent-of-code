@@ -20,12 +20,18 @@ clean:
 
 [private]
 decrypt-inputs:
+    #!/usr/bin/env sh
+    set -euo pipefail
+
+    if [[ -z "$AOC_INPUTS_SECRET" ]]; then
+        printf "Need AOC_INPUTS_SECRET to be set to decrypt puzzle inputs.\n" && exit 1
+    fi
+
     printenv AOC_INPUTS_SECRET | rage -d -i - ./tests/fixtures.gz.age | tar xz ./tests/fixtures
 
 [private]
 download-inputs:
     #!/usr/bin/env sh
-
     set -euo pipefail
 
     cookies --version 2>/dev/null 1>&2 || \
