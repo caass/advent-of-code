@@ -20,6 +20,10 @@ impl AdventOfCode {
         self.0[idx].as_ref()
     }
 
+    pub fn years(&self) -> impl Iterator<Item = (Year, &ProblemSet)> {
+        Year::iter().flat_map(|year| self.year(year).map(|set| (year, set)))
+    }
+
     pub(crate) const fn with_year(mut self, year: Year, problems: ProblemSet) -> Self {
         let idx = (year.as_u16() - Year::FIRST) as usize;
         self.0[idx] = Some(problems);

@@ -11,6 +11,12 @@ use thiserror::Error;
 #[derive(PartialEq, Eq, Clone, Copy, Enum)]
 pub struct Part(bool);
 
+impl Part {
+    pub fn iter() -> impl Iterator<Item = Self> {
+        [Part::ONE, Part::TWO].into_iter()
+    }
+}
+
 impl Debug for Part {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_tuple("Part")

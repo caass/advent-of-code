@@ -1,6 +1,7 @@
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::num::ParseIntError;
+use std::path::Path;
 use std::str::FromStr;
 
 use enum_iterator::{all, Sequence};
@@ -19,6 +20,22 @@ pub enum Year {
     TwentyOne,
     TwentyTwo,
     TwentyThree,
+}
+
+impl AsRef<Path> for Year {
+    fn as_ref(&self) -> &Path {
+        Path::new(match self {
+            Year::Fifteen => "2015",
+            Year::Sixteen => "2016",
+            Year::Seventeen => "2017",
+            Year::Eighteen => "2018",
+            Year::Nineteen => "2019",
+            Year::Twenty => "2020",
+            Year::TwentyOne => "2021",
+            Year::TwentyTwo => "2022",
+            Year::TwentyThree => "2023",
+        })
+    }
 }
 
 impl Year {

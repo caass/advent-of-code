@@ -100,12 +100,7 @@ mod util {
                 let part =
                     <::advent_of_code::meta::Part as ::std::convert::TryFrom<u8>>::try_from($part).unwrap();
 
-                let f = ::advent_of_code::AOC
-                    .get(year, day, part)
-                    .ok_or_else(|| ::eyre::eyre!("Haven't solved part {part} of {year} day {day} yet."))
-                    .unwrap();
-
-                let output = f.solve(input.trim()).unwrap();
+                let output = ::advent_of_code::AOC[year][day][part].solve(input.trim()).unwrap();
 
                 ::pretty_assertions::assert_eq!(output, $solution.to_string());
             }

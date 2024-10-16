@@ -12,6 +12,10 @@ impl ProblemSet {
         self.0[idx].as_ref()
     }
 
+    pub fn days(&self) -> impl Iterator<Item = (Day, &Problem)> {
+        Day::iter().flat_map(|day| self.day(day).map(|problem| (day, problem)))
+    }
+
     pub(crate) const fn with_day(mut self, day: Day, problem: Problem) -> Self {
         let idx = day.as_u8() as usize - 1;
         self.0[idx] = Some(problem);

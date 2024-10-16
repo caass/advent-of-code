@@ -1,9 +1,10 @@
 use std::fmt::{self, Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::num::ParseIntError;
+use std::path::Path;
 use std::str::FromStr;
 
-use enum_iterator::Sequence;
+use enum_iterator::{all, Sequence};
 use enum_map::Enum;
 use thiserror::Error;
 
@@ -35,6 +36,38 @@ pub enum Day {
     TwentyThree,
     TwentyFour,
     TwentyFive,
+}
+
+impl AsRef<Path> for Day {
+    fn as_ref(&self) -> &Path {
+        Path::new(match self {
+            Day::One => "01",
+            Day::Two => "02",
+            Day::Three => "03",
+            Day::Four => "04",
+            Day::Five => "05",
+            Day::Six => "06",
+            Day::Seven => "07",
+            Day::Eight => "08",
+            Day::Nine => "09",
+            Day::Ten => "10",
+            Day::Eleven => "11",
+            Day::Twelve => "12",
+            Day::Thirteen => "13",
+            Day::Fourteen => "14",
+            Day::Fifteen => "15",
+            Day::Sixteen => "16",
+            Day::Seventeen => "17",
+            Day::Eighteen => "18",
+            Day::Nineteen => "19",
+            Day::Twenty => "20",
+            Day::TwentyOne => "21",
+            Day::TwentyTwo => "22",
+            Day::TwentyThree => "23",
+            Day::TwentyFour => "24",
+            Day::TwentyFive => "25",
+        })
+    }
 }
 
 impl Day {
@@ -75,6 +108,12 @@ impl Day {
             26.. => Err(FromU8Error::TooBig),
         }
     }
+
+    /// Returns an iterator over all values of `Self`
+    #[inline(always)]
+    pub fn iter() -> impl Iterator<Item = Self> {
+        all::<Self>()
+    }
 }
 
 impl From<Day> for u8 {
@@ -104,7 +143,7 @@ impl TryFrom<u8> for Day {
 impl Display for Day {
     #[inline(always)]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&self.as_u8(), f)
+        write!(f, "{:0>2}", self.as_u8())
     }
 }
 

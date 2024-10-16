@@ -15,6 +15,10 @@ impl Problem {
         self.0[idx]
     }
 
+    pub fn parts(&self) -> impl Iterator<Item = (Part, &dyn Solution)> {
+        Part::iter().flat_map(|part| self.part(part).map(|solution| (part, solution)))
+    }
+
     #[allow(dead_code, reason = "Sometimes unused depending on solution progress")]
     #[inline(always)]
     pub(crate) const fn unsolved() -> Self {
