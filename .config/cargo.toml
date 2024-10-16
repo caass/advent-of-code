@@ -4,3 +4,7 @@ codegen-units = 1
 
 [profile.ci]
 inherits = "test"
+
+[profile.profiling]
+inherits = "release"
+debug = "full"
