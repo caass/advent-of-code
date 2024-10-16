@@ -11,7 +11,7 @@ pub(crate) use problem_set::{ProblemSet, PROBLEMS};
 use solution::Solution;
 
 #[repr(transparent)]
-pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST) as usize }]);
+pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST + 1) as usize }]);
 
 impl AdventOfCode {
     #[inline(always)]
@@ -31,7 +31,7 @@ impl AdventOfCode {
     }
 
     pub(crate) const fn new() -> Self {
-        Self([None, None, None, None, None, None, None, None])
+        Self([None, None, None, None, None, None, None, None, None])
     }
 }
 
