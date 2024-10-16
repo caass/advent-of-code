@@ -12,33 +12,73 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  ci:
-    name: CI
+  lint:
+    name: Lint
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         channel: [stable, beta, nightly]
-    runs-on: ${{ matrix.os }}
-
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install Rust ${{ matrix.channel }}
+      - name: Install ${{ matrix.channel }} toolchain
         run: rustup install ${{ matrix.channel }}
-      - name: Set Rust toolchain to ${{ matrix.channel }}
+      - name: Set default toolchain to ${{ matrix.channel }}
         run: rustup default ${{ matrix.channel }}
       - name: Install `clippy`
         run: rustup component add clippy
       - name: Run `clippy`
         run: cargo clippy
+
+  test:
+    name: Test
+    needs: lint
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        channel: [stable, beta, nightly]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install ${{ matrix.channel }} toolchain
+        run: rustup install ${{ matrix.channel }}
+      - name: Set default toolchain to ${{ matrix.channel }}
+        run: rustup default ${{ matrix.channel }}
       - name: Install `cargo-binstall`
         uses: cargo-bins/cargo-binstall@v1.10.5
       - name: Install `nextest`, `rage`, `just`
         run: cargo binstall cargo-nextest rage just --secure --no-confirm
       - name: Test
-        run: just test
+        run: just test --profile ci
         env:
-          AOC_INPUTS_PUBKEY: ${{ secrets.AOC_INPUTS_PUBKEY }}
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
-          RUSTFLAGS: -C target-cpu=native
-          NEXTEST_PROFILE: ci
+
+  bench:
+    name: Bench
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Rust stable
+        run: rustup install stable
+      - name: Install `cargo-binstall`
+        uses: cargo-bins/cargo-binstall@v1.10.5
+      - name: Install `rage`, `just`
+        run: cargo binstall rage just --secure --no-confirm
+      - name: Install `bencher`
+        uses: bencherdev/bencher@main
+      - name: Run benchmarks
+        run: |
+          bencher run \
+          --project adventofcode \
+          --branch main \
+          --testbed ubuntu-latest \
+          --err \
+          --adapter rust_criterion \
+          --github-actions '${{ secrets.GITHUB_TOKEN }}' \
+          "just bench --color always"
+        env:
+          AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
+          BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
