@@ -4,6 +4,7 @@ use std::sync::LazyLock;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use eyre::{Context, Result};
+use pprof::criterion::{Output, PProfProfiler};
 
 use advent_of_code::meta::{Day, Year};
 use advent_of_code::AOC;
@@ -40,5 +41,9 @@ pub fn aoc(c: &mut Criterion) {
         });
 }
 
-criterion_group!(benches, aoc);
+criterion_group! {
+    name = benches;
+    config = Criterion::default().with_profiler(PProfProfiler::new(100, Output::Protobuf));
+    targets = aoc
+}
 criterion_main!(benches);

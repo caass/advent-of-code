@@ -19,6 +19,12 @@ test *ARGS: decrypt-inputs
 bench *ARGS: decrypt-inputs
     cargo bench {{ARGS}}
 
+# Collect CPU profiling data from benchmarks
+profile *ARGS: decrypt-inputs
+    cargo build --benches --profile profiling
+    ./target/profiling/deps/$(ls target/profiling/deps | rg "bench-[^\.]+$") --bench --profile-time 10 {{ARGS}}
+    # TODO: collect profiles and upload to firefox
+
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
     #!/usr/bin/env -S bash --posix
