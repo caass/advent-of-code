@@ -2,12 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
-use cfg_if::cfg_if;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use eyre::{Context, Result};
-
-#[cfg(unix)]
-use pprof::criterion::{Output, PProfProfiler};
 
 use advent_of_code::meta::{Day, Year};
 use advent_of_code::AOC;
@@ -16,16 +12,6 @@ static FIXTURES_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
     let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     crate_dir.join("tests").join("fixtures")
 });
-
-fn config() -> Criterion {
-    cfg_if! {
-        if #[cfg(unix)] {
-            Criterion::default().with_profiler(PProfProfiler::new(100, Output::Protobuf))
-        } else {
-            Criterion::default()
-        }
-    }
-}
 
 fn read_input(year: Year, day: Day) -> Result<String> {
     let path = FIXTURES_DIR.join(year).join(day);
@@ -54,10 +40,5 @@ pub fn aoc(c: &mut Criterion) {
         });
 }
 
-criterion_group! {
-    name = benches;
-    config = config();
-    targets = aoc
-}
-
+criterion_group!(benches, aoc);
 criterion_main!(benches);
