@@ -13,6 +13,7 @@ use winnow::{
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/7
 pub const SOME_ASSEMBLY_REQUIRED: Problem = Problem::solved(
     &|input| {
         input

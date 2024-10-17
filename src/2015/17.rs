@@ -5,6 +5,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/17
 pub const NO_SUCH_THING_AS_TOO_MUCH: Problem = Problem::solved(
     &|input| {
         input

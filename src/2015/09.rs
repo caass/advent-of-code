@@ -10,6 +10,7 @@ use winnow::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/9
 pub const ALL_IN_A_SINGLE_NIGHT: Problem = Problem::solved(
     &|input| Locations::try_from(input).map(|locations| locations.shortest_distance()),
     &|input| Locations::try_from(input).map(|locations| locations.longest_distance()),

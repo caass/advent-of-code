@@ -3,6 +3,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/20
 pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = Problem::solved(
     &|input| {
         let n = input.trim().parse::<usize>()?;

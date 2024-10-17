@@ -6,6 +6,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/21
 pub const RPG_SIMULATOR_20XX: Problem = Problem::solved(
     &|input: &str| {
         let player = Character::PLAYER;

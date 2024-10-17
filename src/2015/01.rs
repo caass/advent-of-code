@@ -4,6 +4,7 @@ use wide::u8x16;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/1
 pub const NOT_QUITE_LISP: Problem = Problem::solved(&part_1, &part_2);
 
 const UP: u8 = b'(';

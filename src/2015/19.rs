@@ -12,6 +12,7 @@ use tinystr::TinyAsciiStr;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/19
 pub const MEDICINE_FOR_RUDOLPH: Problem = Problem::solved(
     &|input| input.parse().map(|lab: Lab| lab.plus_ultra().len()),
     &|input| input.parse().map(|lab: Lab| lab.num_steps()),

@@ -14,6 +14,7 @@ use winnow::{
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/8
 pub const MATCHSTICKS: Problem = Problem::solved(
     &|input| {
         input

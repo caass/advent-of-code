@@ -11,6 +11,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/11
 pub const CORPORATE_POLICY: Problem = Problem::solved(
     &|input| input.parse::<Password>().map(Password::next),
     &|input| input.parse::<Password>().map(|pwd| pwd.next().next()),

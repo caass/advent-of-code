@@ -10,6 +10,7 @@ use winnow::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/13
 pub const KNIGHTS_OF_THE_DINNER_TABLE: Problem =
     Problem::solved(&optimize_happiness, &optimize_happiness_with_self);
 

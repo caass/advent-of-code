@@ -5,6 +5,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/2
 pub const I_WAS_TOLD_THERE_WOULD_BE_NO_MATH: Problem = Problem::solved(
     &|input| {
         input

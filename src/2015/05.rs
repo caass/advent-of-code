@@ -3,6 +3,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/5
 pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = Problem::solved(&part_1, &part_2);
 
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];

@@ -18,6 +18,7 @@ use winnow::{
 
 use crate::meta::Problem;
 
+/// https://adventofcode.com/2015/day/15
 pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem =
     Problem::solved(&|input| best_cookie(input, None), &|input| {
         best_cookie(input, Some(500))
