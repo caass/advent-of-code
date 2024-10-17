@@ -47,4 +47,6 @@ md-5 = { version = "0.10.6", features = ["asm"] }
 [dev-dependencies]
 pretty_assertions = "1.4.1"
 criterion = "0.5"
+
+[target.'cfg(not(windows))'.dev-dependencies]
 pprof = { version = "0.13.0", features = ["cpp", "criterion", "prost-codec"] }
