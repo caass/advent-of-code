@@ -19,6 +19,21 @@ test *ARGS: decrypt-inputs
 bench *ARGS: decrypt-inputs
     cargo bench {{ARGS}}
 
+# Run benchmarks under `bencher`
+bencher *ARGS: decrypt-inputs
+    bencher run \
+    --project adventofcode \
+    --branch main \
+    --threshold-measure latency \
+    --threshold-test t_test \
+    --threshold-max-sample-size 64 \
+    --threshold-upper-boundary 0.99 \
+    --thresholds-reset \
+    --err \
+    --adapter rust_criterion \
+    {{ARGS}} \
+    "cargo bench --color always"
+
 # Collect CPU profiling data from benchmarks
 profile *ARGS: decrypt-inputs
     cargo build --benches --profile profiling
