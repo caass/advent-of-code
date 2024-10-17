@@ -71,10 +71,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install ${{ matrix.channel }} toolchain
-        run: rustup install ${{ matrix.channel }}
-      - name: Set ${{ matrix.channel }} toolchain as default
-        run: rustup default ${{ matrix.channel }}
+      - name: Install stable toolchain
+        run: rustup install stable
+      - name: Set stable toolchain as default
+        run: rustup default stable
       - name: Populate Rust cache
         uses: Swatinem/rust-cache@v2
         with:
