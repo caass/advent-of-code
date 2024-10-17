@@ -2,6 +2,7 @@ export RUSTFLAGS := "-C target-cpu=native"
 
 # MacOS uses BSD tar, which can generate warnings when untarring on Linux.
 tar := if os() == "macos" { "gtar" } else { "tar" }
+branch := trim(`git branch --show-current --no-column`)
 
 [private]
 default:
@@ -19,11 +20,11 @@ test *ARGS: decrypt-inputs
 bench *ARGS: decrypt-inputs
     cargo bench {{ARGS}}
 
-# Run benchmarks under `bencher`
+# Run benchmarks under `bencher` i.e. on CI
 bencher *ARGS: decrypt-inputs
     bencher run \
     --project adventofcode \
-    --branch main \
+    --branch {{branch}} \
     --threshold-measure latency \
     --threshold-test t_test \
     --threshold-max-sample-size 64 \
