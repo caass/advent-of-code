@@ -55,7 +55,9 @@ jobs:
       - name: Install `cargo-binstall`
         run: cargo install cargo-binstall --verbose
       - name: Install `cargo-nextest`, `rage`, `just`
-        run: cargo binstall cargo-nextest rage just --verbose
+        run: cargo binstall cargo-nextest rage just --verbose --secure --no-confirm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
         run: just test --profile ci
         env:
@@ -82,7 +84,9 @@ jobs:
       - name: Install `cargo-binstall`
         run: cargo install cargo-binstall --verbose
       - name: Install `rage`, `just`
-        run: cargo binstall rage just --verbose
+        run: cargo binstall rage just --verbose --secure --no-confirm
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `bencher`
         uses: bencherdev/bencher@v0.4.22
       - name: Run benchmarks
