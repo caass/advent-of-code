@@ -10,56 +10,83 @@ env:
 
 jobs:
   lint:
+    name: Lint
     strategy:
       matrix:
         channel: [stable, beta, nightly]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: rustup install ${{ matrix.channel }}
-      - run: rustup default ${{ matrix.channel }}
-      - run: rustup component add clippy rustfmt
-      - uses: Swatinem/rust-cache@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install ${{ matrix.channel }} toolchain
+        run: rustup install ${{ matrix.channel }}
+      - name: Set ${{ matrix.channel }} toolchain as default
+        run: rustup default ${{ matrix.channel }}
+      - name: Install `clippy`, `rustfmt`
+        run: rustup component add clippy rustfmt
+      - name: Populate Rust cache
+        uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-      - run: cargo clippy
-      - run: cargo fmt --check
+      - name: Run `clippy`
+        run: cargo clippy
+      - name: Check formatting
+        run: cargo fmt --check
 
   test:
     needs: lint
+    name: Test
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         channel: [stable, beta, nightly]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - run: rustup install ${{ matrix.channel }}
-      - run: rustup default ${{ matrix.channel }}
-      - uses: Swatinem/rust-cache@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install ${{ matrix.channel }} toolchain
+        run: rustup install ${{ matrix.channel }}
+      - name: Set ${{ matrix.channel }} toolchain as default
+        run: rustup default ${{ matrix.channel }}
+      - name: Populate Rust cache
+        uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-      - run: cargo install cargo-nextest rage just --verbose
-      - run: just test --profile ci
+      - name: Install `cargo-binstall`
+        run: cargo install cargo-binstall --verbose
+      - name: Install `cargo-nextest`, `rage`, `just`
+        run: cargo binstall cargo-nextest rage just --verbose
+      - name: Run tests
+        run: just test --profile ci
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 
   bench:
+    name: Bench
     needs: test
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - run: rustup install stable
-      - run: rustup default stable
-      - uses: Swatinem/rust-cache@v2
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install ${{ matrix.channel }} toolchain
+        run: rustup install ${{ matrix.channel }}
+      - name: Set ${{ matrix.channel }} toolchain as default
+        run: rustup default ${{ matrix.channel }}
+      - name: Populate Rust cache
+        uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-      - run: cargo install rage just --verbose
-      - uses: bencherdev/bencher@v0.4.22
-      - run: just bencher --testbed ${{ matrix.os }} --github-actions '${{ secrets.GITHUB_TOKEN }}'
+      - name: Install `cargo-binstall`
+        run: cargo install cargo-binstall --verbose
+      - name: Install `rage`, `just`
+        run: cargo binstall rage just --verbose
+      - name: Install `bencher`
+        uses: bencherdev/bencher@v0.4.22
+      - name: Run benchmarks
+        run: just bencher --testbed ${{ matrix.os }}
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
           BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
