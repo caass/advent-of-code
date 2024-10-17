@@ -6,7 +6,7 @@ use cfg_if::cfg_if;
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use eyre::{Context, Result};
 
-#[cfg(not(windows))]
+#[cfg(unix)]
 use pprof::criterion::{Output, PProfProfiler};
 
 use advent_of_code::meta::{Day, Year};
@@ -54,7 +54,6 @@ pub fn aoc(c: &mut Criterion) {
         });
 }
 
-#[cfg(not(windows))]
 criterion_group! {
     name = benches;
     config = config();
