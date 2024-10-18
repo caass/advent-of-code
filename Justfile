@@ -21,7 +21,7 @@ bench *ARGS: decrypt-inputs
     cargo bench {{ARGS}}
 
 # Run benchmarks under `bencher` i.e. on CI
-bencher *ARGS: decrypt-inputs
+bencher *ARGS:
     bencher run \
     --project adventofcode \
     --branch {{branch}} \
@@ -33,13 +33,7 @@ bencher *ARGS: decrypt-inputs
     --err \
     --adapter rust_criterion \
     {{ARGS}} \
-    "cargo bench --color always"
-
-# Collect CPU profiling data from benchmarks
-profile *ARGS: decrypt-inputs
-    cargo build --benches --profile profiling
-    ./target/profiling/deps/$(ls target/profiling/deps | rg "bench-[^\.]+$") --bench --profile-time 10 {{ARGS}}
-    # TODO: collect profiles and upload to firefox
+    "just bench --color always"
 
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs

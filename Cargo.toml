@@ -11,9 +11,6 @@ harness = false
 lto = "fat"
 codegen-units = 1
 
-[profile.profiling]
-inherits = "bench"
-debug = "full"
 
 [dependencies]
 enum-iterator = "2.1.0"
