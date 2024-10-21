@@ -25,7 +25,6 @@ impl Display for Coordinate {
 }
 
 impl Coordinate {
-    #[cfg(test)]
     const fn new(row: usize, column: usize) -> Option<Self> {
         let Some(row) = NonZeroUsize::new(row) else {
             return None;
@@ -110,10 +109,8 @@ impl FromStr for Coordinate {
             .split_once(", column ")
             .ok_or_else(|| eyre!("Failed to parse input: {s}"))?;
 
-        Ok(Coordinate {
-            row: row.parse()?,
-            column: column.parse()?,
-        })
+        Coordinate::new(row.parse()?, column.parse()?)
+            .ok_or_else(|| eyre!("Entries are 1-indexed, encountered zero in ({column}, {row})."))
     }
 }
 
