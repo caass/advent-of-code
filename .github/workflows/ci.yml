@@ -54,6 +54,8 @@ jobs:
           cache-all-crates: "true"
       - name: Install `cargo-binstall`
         uses: cargo-bins/cargo-binstall@v1.10.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `cargo-nextest`, `rage`, `just`
         run: cargo binstall cargo-nextest rage just --secure --no-confirm --force
         env:
@@ -83,6 +85,8 @@ jobs:
           cache-all-crates: "true"
       - name: Install `cargo-binstall`
         uses: cargo-bins/cargo-binstall@v1.10.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `rage`, `just`
         run: cargo binstall rage just --secure --no-confirm --force
         env:
