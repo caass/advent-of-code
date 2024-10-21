@@ -19,15 +19,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install ${{ matrix.channel }} toolchain
-        run: rustup install ${{ matrix.channel }}
-      - name: Set ${{ matrix.channel }} toolchain as default
-        run: rustup default ${{ matrix.channel }}
-      - name: Install `clippy`, `rustfmt`
-        run: rustup component add clippy rustfmt
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.channel }}
+          components: rustfmt, clippy
+          override: true
       - name: Populate Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          cache-all-crates: "true"
+          cache-all-crates: true
       - name: Run `clippy`
         run: cargo clippy
       - name: Check formatting
@@ -45,15 +45,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install ${{ matrix.channel }} toolchain
-        run: rustup install ${{ matrix.channel }}
-      - name: Set ${{ matrix.channel }} toolchain as default
-        run: rustup default ${{ matrix.channel }}
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.channel }}
+          override: true
       - name: Populate Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          cache-all-crates: "true"
+          cache-all-crates: true
       - name: Install `cargo-binstall`
-        uses: cargo-bins/cargo-binstall@v1.10.8
+        uses: cargo-bins/cargo-binstall@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `cargo-nextest`, `rage`, `just`
@@ -76,15 +77,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Install stable toolchain
-        run: rustup install stable
-      - name: Set stable toolchain as default
-        run: rustup default stable
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
       - name: Populate Rust cache
         uses: Swatinem/rust-cache@v2
         with:
-          cache-all-crates: "true"
+          cache-all-crates: true
       - name: Install `cargo-binstall`
-        uses: cargo-bins/cargo-binstall@v1.10.8
+        uses: cargo-bins/cargo-binstall@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `rage`, `just`
@@ -92,7 +94,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `bencher`
-        uses: bencherdev/bencher@v0.4.22
+        uses: bencherdev/bencher@v0.4
       - name: Run benchmarks
         run: just bencher --testbed ${{ matrix.os }}
         env:
