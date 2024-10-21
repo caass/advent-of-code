@@ -55,7 +55,7 @@ jobs:
       - name: Install `cargo-binstall`
         run: cargo install cargo-binstall --verbose
       - name: Install `cargo-nextest`, `rage`, `just`
-        run: cargo binstall cargo-nextest rage just --secure --no-confirm
+        run: cargo binstall cargo-nextest rage just --secure --no-confirm --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
@@ -84,7 +84,7 @@ jobs:
       - name: Install `cargo-binstall`
         run: cargo install cargo-binstall --verbose
       - name: Install `rage`, `just`
-        run: cargo binstall rage just --secure --no-confirm
+        run: cargo binstall rage just --secure --no-confirm --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `bencher`
