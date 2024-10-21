@@ -145,6 +145,7 @@ mod test {
     // 4  | 7  12  18
     // 5  | 11  17
     // 6  | 16
+
     coordinate_to_index!((1, 1), 1);
     coordinate_to_index!((2, 1), 2);
     coordinate_to_index!((1, 2), 3);
