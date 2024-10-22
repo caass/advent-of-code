@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use eyre::{OptionExt, Report, Result};
+use eyre::{OptionExt, Result};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -9,22 +9,18 @@ use crate::meta::Problem;
 /// https://adventofcode.com/2015/day/24
 pub const IT_HANGS_IN_THE_BALANCE: Problem = Problem::solved(
     &|input| {
-        Ok::<_, Report>(
-            input
-                .parse::<PackingList>()?
-                .pack(3)
-                .ok_or_eyre("impossible to pack sleigh")?
-                .quantum_entanglement(),
-        )
+        input
+            .parse::<PackingList>()?
+            .pack(3)
+            .map(|list| list.quantum_entanglement())
+            .ok_or_eyre("impossible to pack sleigh")
     },
     &|input| {
-        Ok::<_, Report>(
-            input
-                .parse::<PackingList>()?
-                .pack(4)
-                .ok_or_eyre("impossible to pack sleigh")?
-                .quantum_entanglement(),
-        )
+        input
+            .parse::<PackingList>()?
+            .pack(4)
+            .map(|list| list.quantum_entanglement())
+            .ok_or_eyre("impossible to pack sleigh")
     },
 );
 
