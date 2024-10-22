@@ -12,6 +12,10 @@ default:
 run *ARGS:
     cargo run --release -- {{ARGS}}
 
+# Check for outdated dependencies
+outdated *ARGS:
+    cargo outdated
+
 # Run unit & integration tests
 test *ARGS: decrypt-inputs
     cargo nextest run --no-tests=fail {{ARGS}}
