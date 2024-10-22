@@ -45,8 +45,7 @@ impl PackingList {
                     .iter()
                     .copied()
                     .combinations(k)
-                    .map(|packages| PackingList { packages })
-                    .par_bridge();
+                    .map(|packages| PackingList { packages });
                 lists_of_len_k
                     .filter(|list| list.weight() == target_weight)
                     .min_by_key(PackingList::quantum_entanglement)
