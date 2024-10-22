@@ -95,7 +95,7 @@ jobs:
       - name: Install `bencher`
         uses: bencherdev/bencher@v0.4.22
       - name: Run benchmarks
-        run: just bencher ${{ matrix.os }} --filter ${{ matrix.year }}
+        run: just bencher ${{ matrix.os }} ${{ matrix.year }}
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
           BENCHER_API_TOKEN: ${{ secrets.BENCHER_API_TOKEN }}
