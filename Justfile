@@ -6,7 +6,7 @@ branch := trim(`git branch --show-current --no-column`)
 
 [private]
 default:
-  just --list
+  @just --list
 
 # Run the advent of code binary
 run *ARGS:
@@ -18,10 +18,10 @@ test *ARGS: decrypt-inputs
 
 # Benchmark against inputs in `tests/fixtures.gz.age`
 bench *ARGS: decrypt-inputs
-    cargo bench {{ARGS}}
+    cargo bench --bench bench -- {{ARGS}}
 
 # Run benchmarks under `bencher` i.e. on CI
-bencher *ARGS:
+bencher testbed="adhoc" *ARGS='':
     bencher run \
     --project adventofcode \
     --branch {{branch}} \
@@ -32,8 +32,8 @@ bencher *ARGS:
     --thresholds-reset \
     --err \
     --adapter rust_criterion \
-    {{ARGS}} \
-    "just bench --color always"
+    --testbed {{testbed}} \
+    "just bench --color always {{ARGS}}"
 
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
