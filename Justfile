@@ -9,8 +9,8 @@ default:
   @just --list
 
 # Run the advent of code binary
-run *ARGS:
-    cargo run --release -- {{ARGS}}
+run year day part: decrypt-inputs
+    cargo run --release -- {{year}} {{day}} {{part}} tests/fixtures/{{year}}/{{day}}
 
 # Check for outdated dependencies
 outdated *ARGS:
