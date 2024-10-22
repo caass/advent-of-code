@@ -19,14 +19,14 @@ use self::spell::{Action, Effects, Instant, Spell, SpellKind};
 pub const WIZARD_SIMULATOR_20XX: Problem = Problem::solved(
     &|input| {
         let boss: Boss = input.parse()?;
-        let player = Player::new(50, 500);
+        let player = Player::new();
 
         let game = Game::new(player, boss, false);
         game.least_mana()
     },
     &|input| {
         let boss: Boss = input.parse()?;
-        let player = Player::new(50, 500);
+        let player = Player::new();
 
         let game = Game::new(player, boss, true);
         game.least_mana()
@@ -246,8 +246,8 @@ mod player {
     impl Player {
         /// Construct a new [`Player`] with the given HP and mana
         #[inline(always)]
-        pub(super) fn new(hp: u8, mana: u16) -> Self {
-            Self { hp, mana }
+        pub(super) const fn new() -> Self {
+            Self { hp: 50, mana: 500 }
         }
 
         /// Check if the player is dead
