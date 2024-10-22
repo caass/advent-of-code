@@ -65,9 +65,42 @@ jobs:
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 
+  test-bench:
+    name: Test Benchmarks
+    needs: lint
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install stable toolchain
+        run: rustup install stable
+      - name: Set stable toolchain as default
+        run: rustup default stable
+      - name: Populate Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+      - name: Install `cargo-binstall`
+        uses: cargo-bins/cargo-binstall@v1.10.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install `cargo-nextest`, `rage`, `just`
+        run: cargo binstall cargo-nextest rage just --secure --no-confirm --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run tests
+        run: just test --profile ci --bench bench
+        env:
+          AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
+
   bench:
     name: Bench
-    needs: test
+    needs:
+      - test
+      - test-bench
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
