@@ -97,10 +97,8 @@ jobs:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 
   bench:
-    name: Bench
-    needs:
-      - test
-      - test-bench
+    name: Run Benchmarks
+    needs: test-bench
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
