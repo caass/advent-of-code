@@ -7,68 +7,26 @@ use rayon::prelude::*;
 use crate::meta::Problem;
 
 /// https://adventofcode.com/2015/day/24
-pub const IT_HANGS_IN_THE_BALANCE: Problem = Problem::partially_solved(&|input| {
-    Ok::<_, Report>(
-        input
-            .parse::<PackingList>()?
-            .pack()
-            .ok_or_eyre("impossible to pack sleigh")?
-            .quantum_entanglement(),
-    )
-});
-
-struct Sleigh {
-    center: PackingList,
-    left: PackingList,
-    right: PackingList,
-}
-
-impl Sleigh {
-    fn quantum_entanglement(&self) -> usize {
-        self.center
-            .packages
-            .iter()
-            .copied()
-            .map(|Package { weight }| weight)
-            .product()
-    }
-}
-
-struct PartialArrangement {
-    center: PackingList,
-    sides: PackingList,
-}
-
-impl PartialArrangement {
-    fn is_balanced(&self) -> bool {
-        let (center_weight, side_weight) =
-            rayon::join(|| self.center.weight(), || self.sides.weight());
-
-        center_weight * 2 == side_weight
-    }
-
-    fn try_balance(self) -> Option<Sleigh> {
-        if !self.is_balanced() {
-            return None;
-        }
-
-        let PartialArrangement { center, sides } = self;
-
-        let PartialArrangement {
-            center: left,
-            sides: right,
-        } = sides
-            .splits()
-            .flatten_iter()
-            .find_any(|arrangement| arrangement.is_balanced())?;
-
-        Some(Sleigh {
-            center,
-            left,
-            right,
-        })
-    }
-}
+pub const IT_HANGS_IN_THE_BALANCE: Problem = Problem::solved(
+    &|input| {
+        Ok::<_, Report>(
+            input
+                .parse::<PackingList>()?
+                .pack(3)
+                .ok_or_eyre("impossible to pack sleigh")?
+                .quantum_entanglement(),
+        )
+    },
+    &|input| {
+        Ok::<_, Report>(
+            input
+                .parse::<PackingList>()?
+                .pack(4)
+                .ok_or_eyre("impossible to pack sleigh")?
+                .quantum_entanglement(),
+        )
+    },
+);
 
 #[derive(Debug, Clone)]
 struct PackingList {
@@ -76,46 +34,44 @@ struct PackingList {
 }
 
 impl PackingList {
-    fn pack(&self) -> Option<Sleigh> {
-        self.splits().find_map_first(|arrangements| {
-            arrangements
-                .filter_map(PartialArrangement::try_balance)
-                .min_by_key(Sleigh::quantum_entanglement)
-        })
-    }
-    fn splits(
-        &self,
-    ) -> impl ParallelIterator<Item = impl Iterator<Item = PartialArrangement> + '_> + '_ {
-        let k = self.packages.len().div_ceil(2);
-        (0..k).into_par_iter().map(|k| {
-            self.packages
-                .iter()
-                .copied()
-                .combinations(k)
-                .map(|packages| {
-                    let center = PackingList { packages };
-                    let sides = self.without(&center);
+    fn pack(&self, num_compartments: usize) -> Option<PackingList> {
+        if self.weight() % num_compartments != 0 {
+            return None;
+        };
 
-                    PartialArrangement { center, sides }
-                })
-        })
+        let target_weight = self.weight() / num_compartments;
+
+        (1..self.packages.len())
+            .into_par_iter()
+            .find_map_first(|k| {
+                let lists_of_len_k = self
+                    .packages
+                    .iter()
+                    .copied()
+                    .combinations(k)
+                    .map(|packages| PackingList { packages })
+                    .par_bridge();
+                lists_of_len_k
+                    .filter(|list| list.weight() == target_weight)
+                    .min_by_key(PackingList::quantum_entanglement)
+            })
     }
 
-    #[inline(always)]
     fn weight(&self) -> usize {
         self.packages
             .iter()
             .copied()
-            .map(|Package { weight }| weight)
+            .map(|Package { weight }| usize::from(weight))
             .sum()
     }
 
-    fn without(&self, center: &PackingList) -> PackingList {
-        let mut sides = self.clone();
-        sides
-            .packages
-            .retain(|package| !center.packages.contains(package));
-        sides
+    fn quantum_entanglement(&self) -> u64 {
+        self.packages
+            .iter()
+            .copied()
+            .map(|Package { weight }| u64::from(weight))
+            .reduce(|a, b| a.saturating_mul(b))
+            .unwrap_or_default()
     }
 }
 
@@ -137,7 +93,7 @@ impl FromStr for PackingList {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Package {
-    weight: usize,
+    weight: u8,
 }
 
 impl FromStr for Package {
