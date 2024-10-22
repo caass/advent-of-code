@@ -25,7 +25,7 @@ bench *ARGS: decrypt-inputs
     cargo bench --bench bench -- {{ARGS}}
 
 # Run benchmarks under `bencher` i.e. on CI
-bencher testbed="adhoc" *ARGS='':
+bencher testbed="adhoc" *ARGS='': decrypt-inputs
     bencher run \
     --project adventofcode \
     --branch {{branch}} \
