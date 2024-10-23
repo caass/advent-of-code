@@ -99,6 +99,8 @@ jobs:
   bench:
     name: Run Benchmarks
     needs: test-bench
+    env:
+      RUSTFLAGS: "-C target-cpu=native"
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]

@@ -26,6 +26,7 @@ dependencies = [
  "thiserror",
  "tinystr",
  "void",
+ "wasm-bindgen",
  "wide",
  "winnow",
 ]
