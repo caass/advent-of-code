@@ -1,3 +1,5 @@
+export RUSTFLAGS := "-C target-cpu=native"
+
 # MacOS uses BSD tar, which can generate warnings when untarring on Linux.
 tar := if os() == "macos" { "gtar" } else { "tar" }
 branch := trim(`git branch --show-current --no-column`)
@@ -6,12 +8,9 @@ branch := trim(`git branch --show-current --no-column`)
 default:
   @just --list
 
-build-wasm:
-    cargo build --profile wasm --target wasm32-unknown-unknown --features wasm
-
 # Run the advent of code binary
 run year day part: decrypt-inputs
-    RUSTFLAGS="-C target-cpu=native" cargo run --release -- {{year}} {{day}} {{part}} tests/fixtures/{{year}}/{{day}}
+    cargo run --release -- {{year}} {{day}} {{part}} tests/fixtures/{{year}}/{{day}}
 
 # Check for outdated dependencies
 outdated *ARGS:

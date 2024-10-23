@@ -3,13 +3,6 @@ name = "advent-of-code"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-crate-type = ["lib", "cdylib"]
-
-[features]
-default = ["wasm"]
-wasm = ["dep:wasm-bindgen"]
-
 [[bench]]
 name = "bench"
 harness = false
@@ -18,9 +11,6 @@ harness = false
 lto = "fat"
 codegen-units = 1
 
-[profile.wasm]
-inherits = "release"
-opt-level = "s"
 
 [dependencies]
 enum-iterator = "2.1.0"
@@ -44,9 +34,6 @@ either = "1.13.0"
 # Binary-only
 clap = { version = "4.5.20", features = ["derive"] }
 clap-stdin = "0.5.1"
-
-# Wasm only
-wasm-bindgen = { version = "0.2.95", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 md-5 = "0.10.6"
