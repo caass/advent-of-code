@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use eyre::{bail, eyre, Report, Result};
+use eyre::{bail, eyre, OptionExt, Report, Result};
 use winnow::{
     ascii::dec_uint,
     combinator::{alt, seq},
@@ -10,8 +10,10 @@ use winnow::{
 
 use crate::meta::Problem;
 
-pub const NO_TIME_FOR_A_TAXICAB: Problem =
-    Problem::partially_solved(&|input| input.parse().map(Instructions::final_distance));
+pub const NO_TIME_FOR_A_TAXICAB: Problem = Problem::solved(
+    &|input| input.parse().map(Instructions::final_distance),
+    &|input| input.parse().and_then(Instructions::tron_distance),
+);
 
 #[derive(Debug)]
 struct Instructions(Vec<Instruction>);
@@ -21,16 +23,33 @@ impl Instructions {
     fn final_distance(self) -> u16 {
         let mut pedestrian = Pose::default();
 
-        for instruction in self {
-            pedestrian.follow(instruction);
+        for Instruction { turn, steps } in self {
+            pedestrian.turn(turn);
+            pedestrian.walk(steps);
         }
 
         pedestrian.position.distance_from_origin()
     }
 
     /// The distance from the origin at which point a tron character would crash into their own wall.
-    fn tron_distance(self) -> u16 {
-        todo!()
+    fn tron_distance(self) -> Result<u16> {
+        let mut pedestrian = Pose::default();
+        let mut city = City::default();
+
+        for Instruction { turn, steps } in self {
+            pedestrian.turn(turn);
+            for _ in 1..=steps {
+                pedestrian.walk(1);
+                if city
+                    .visit(pedestrian.position)
+                    .ok_or_eyre("outside city limits!")?
+                {
+                    return Ok(pedestrian.position.distance_from_origin());
+                }
+            }
+        }
+
+        Err(eyre!("Never crossed our own path :("))
     }
 }
 
@@ -86,8 +105,12 @@ struct Pose {
 
 impl Pose {
     #[inline(always)]
-    fn follow(&mut self, Instruction { turn, steps }: Instruction) {
+    fn turn(&mut self, turn: Turn) {
         self.orientation.turn(turn);
+    }
+
+    #[inline(always)]
+    fn walk(&mut self, steps: u8) {
         self.position.walk(steps, self.orientation);
     }
 }
@@ -184,5 +207,30 @@ impl FromStr for Instruction {
         }}
         .parse(s)
         .map_err(|_| eyre!("Invalid instruction: {s}"))
+    }
+}
+
+#[derive(Debug)]
+struct City([[bool; 512]; 512]);
+
+impl Default for City {
+    fn default() -> Self {
+        Self([[false; 512]; 512])
+    }
+}
+
+impl City {
+    #[inline(always)]
+    fn get_mut(&mut self, Position { x, y }: Position) -> Option<&mut bool> {
+        let adjusted_x: usize = (x + 256).try_into().ok()?;
+        let adjusted_y: usize = (y + 256).try_into().ok()?;
+
+        self.0.get_mut(adjusted_x)?.get_mut(adjusted_y)
+    }
+
+    #[inline(always)]
+    fn visit(&mut self, position: Position) -> Option<bool> {
+        self.get_mut(position)
+            .map(|visited| std::mem::replace(visited, true))
     }
 }
