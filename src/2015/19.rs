@@ -60,7 +60,7 @@ impl Lab {
 struct Molecule(Vec<Atom>);
 
 impl Molecule {
-    fn atoms(&self) -> impl IndexedParallelIterator<Item = &Atom> + '_ {
+    fn atoms(&self) -> impl IndexedParallelIterator<Item = &Atom> + use<'_> {
         self.0.par_iter()
     }
 

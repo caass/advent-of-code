@@ -49,7 +49,7 @@ impl<'s> Locations<'s> {
     }
 
     /// Find all possible distances through this list of stops
-    fn distances(&self) -> impl ParallelIterator<Item = usize> + '_ {
+    fn distances(&self) -> impl ParallelIterator<Item = usize> + use<'_> {
         let graph = &self.0;
 
         graph

@@ -438,7 +438,7 @@ mod spell {
 
         /// Returns all actions currently in effect, decrementing the number of
         /// turns remaining on each by 1.
-        pub(super) fn current(&mut self) -> impl Iterator<Item = Action> + '_ {
+        pub(super) fn current(&mut self) -> impl Iterator<Item = Action> + use<'_> {
             self.0
                 .iter_mut()
                 .filter(|(_, turns_left)| turns_left.is_some())
