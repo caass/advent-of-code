@@ -8,25 +8,26 @@ use winnow::combinator::seq;
 use winnow::error::{ContextError, ErrMode, ParseError, StrContext};
 use winnow::prelude::*;
 
+use crate::common::from_str_ext::{TryFromStr, TryParse};
 use crate::meta::Problem;
 
 /// https://adventofcode.com/2015/day/9
 pub const ALL_IN_A_SINGLE_NIGHT: Problem = Problem::solved(
-    &|input| Locations::try_from(input).map(|locations| locations.shortest_distance()),
-    &|input| Locations::try_from(input).map(|locations| locations.longest_distance()),
+    &|input| input.try_parse().map(Locations::shortest_distance),
+    &|input| input.try_parse().map(Locations::longest_distance),
 );
 
 /// A list of locations Santa has to visit and how far apart they are from each other.
 #[derive(Debug)]
 struct Locations<'s>(Graph<&'s str, usize, Undirected, u8>);
 
-impl<'s> TryFrom<&'s str> for Locations<'s> {
-    type Error = Report;
+impl<'s> TryFromStr<'s> for Locations<'s> {
+    type Err = Report;
 
-    fn try_from(input: &'s str) -> std::result::Result<Self, Self::Error> {
+    fn try_from_str(input: &'s str) -> Result<Self> {
         input
             .lines()
-            .map(Leg::try_from)
+            .map(Leg::try_from_str)
             .collect::<Result<Locations, _>>()
             .map_err(|e| eyre!("{e}"))
     }
@@ -39,12 +40,12 @@ impl<'s> Locations<'s> {
     }
 
     /// Find the shortest distance through this list of stops.
-    fn shortest_distance(&self) -> usize {
+    fn shortest_distance(self) -> usize {
         self.distances().reduce(|| usize::MAX, std::cmp::min)
     }
 
     /// Find the longest distance through this list of stops
-    fn longest_distance(&self) -> usize {
+    fn longest_distance(self) -> usize {
         self.distances().reduce(|| usize::MIN, std::cmp::max)
     }
 
@@ -107,10 +108,10 @@ struct Leg<'s> {
     distance: usize,
 }
 
-impl<'s> TryFrom<&'s str> for Leg<'s> {
-    type Error = ParseError<&'s str, ErrMode<ContextError>>;
+impl<'s> TryFromStr<'s> for Leg<'s> {
+    type Err = ParseError<&'s str, ErrMode<ContextError>>;
 
-    fn try_from(input: &'s str) -> Result<Self, Self::Error> {
+    fn try_from_str(input: &'s str) -> Result<Self, Self::Err> {
         seq! { Leg {
             from: alpha1.context(StrContext::Label("from")),
             _: " to ",

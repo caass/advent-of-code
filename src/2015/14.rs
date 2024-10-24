@@ -15,7 +15,10 @@ use winnow::{
     Parser,
 };
 
-use crate::meta::Problem;
+use crate::{
+    common::from_str_ext::{TryFromStr, TryParse},
+    meta::Problem,
+};
 
 /// https://adventofcode.com/2015/day/14
 pub const REINDEER_OLYMPICS: Problem = Problem::solved(&race, &tick_race);
@@ -23,7 +26,7 @@ pub const REINDEER_OLYMPICS: Problem = Problem::solved(&race, &tick_race);
 const RACE_DURATION: usize = 2503;
 
 fn race(input: &str) -> Result<usize> {
-    let roster = Roster::try_from(input)?;
+    let roster: Roster = input.try_parse()?;
 
     let results = roster.race(RACE_DURATION);
     let (_name, distance) = results
@@ -35,7 +38,7 @@ fn race(input: &str) -> Result<usize> {
 }
 
 fn tick_race(input: &str) -> Result<usize> {
-    let roster = Roster::try_from(input)?;
+    let roster: Roster = input.try_parse()?;
 
     let results = roster.tick_race(RACE_DURATION);
     let (_name, points) = results
@@ -112,11 +115,15 @@ impl<'s> Roster<'s> {
     }
 }
 
-impl<'s> TryFrom<&'s str> for Roster<'s> {
-    type Error = Report;
+impl<'s> TryFromStr<'s> for Roster<'s> {
+    type Err = Report;
 
-    fn try_from(value: &'s str) -> Result<Self, Self::Error> {
-        value.trim().par_lines().map(Reindeer::try_from).collect()
+    fn try_from_str(value: &'s str) -> Result<Self, Self::Err> {
+        value
+            .trim()
+            .par_lines()
+            .map(Reindeer::try_from_str)
+            .collect()
     }
 }
 
@@ -161,10 +168,10 @@ impl Reindeer<'_> {
     }
 }
 
-impl<'s> TryFrom<&'s str> for Reindeer<'s> {
-    type Error = Report;
+impl<'s> TryFromStr<'s> for Reindeer<'s> {
+    type Err = Report;
 
-    fn try_from(value: &'s str) -> Result<Self, Self::Error> {
+    fn try_from_str(value: &'s str) -> Result<Self> {
         seq! {Reindeer{
             name: alpha1,
             _: " can fly ",

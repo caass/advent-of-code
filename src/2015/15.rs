@@ -16,22 +16,28 @@ use winnow::{
     Parser,
 };
 
-use crate::meta::Problem;
+use crate::{
+    common::from_str_ext::{TryFromStr, TryParse},
+    meta::Problem,
+};
 
 /// https://adventofcode.com/2015/day/15
-pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem =
-    Problem::solved(&|input| best_cookie(input, None), &|input| {
-        best_cookie(input, Some(500))
-    });
+pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem = Problem::solved(
+    &|input| {
+        input
+            .try_parse()
+            .and_then(|kitchen: Kitchen| kitchen.best_cookie(None))
+            .map(|cookie| cookie.score())
+    },
+    &|input| {
+        input
+            .try_parse()
+            .and_then(|kitchen: Kitchen| kitchen.best_cookie(Some(500)))
+            .map(|cookie| cookie.score())
+    },
+);
 
 const NUM_TABLESPOONS: usize = 100;
-
-fn best_cookie(input: &str, calorie_restriction: Option<usize>) -> Result<usize> {
-    let kitchen = Kitchen::from_input(input)?;
-
-    let cookie = kitchen.best_cookie(calorie_restriction)?;
-    Ok(cookie.score())
-}
 
 #[derive(Debug, PartialEq)]
 struct Kitchen<'s> {
@@ -46,11 +52,15 @@ impl<'s> FromIterator<Ingredient<'s>> for Kitchen<'s> {
     }
 }
 
-impl<'s> Kitchen<'s> {
-    fn from_input(input: &'s str) -> Result<Self> {
-        input.lines().map(|line| line.trim().try_into()).collect()
-    }
+impl<'s> TryFromStr<'s> for Kitchen<'s> {
+    type Err = Report;
 
+    fn try_from_str(input: &'s str) -> Result<Self> {
+        input.lines().map(|line| line.trim().try_parse()).collect()
+    }
+}
+
+impl<'s> Kitchen<'s> {
     fn best_cookie(&self, calorie_restriction: Option<usize>) -> Result<Cookie<'s>> {
         self.ingredients
             .iter()
@@ -210,10 +220,10 @@ impl AddAssign for Qualities {
     }
 }
 
-impl<'s> TryFrom<&'s str> for Ingredient<'s> {
-    type Error = Report;
+impl<'s> TryFromStr<'s> for Ingredient<'s> {
+    type Err = Report;
 
-    fn try_from(value: &'s str) -> Result<Self> {
+    fn try_from_str(value: &'s str) -> Result<Self> {
         seq! {Ingredient {
             name: alpha1::<_, ContextError>,
             qualities: seq!{Qualities {
@@ -263,7 +273,7 @@ fn example() {
     ingredients.insert(cinnamon);
 
     let expected_kitchen = Kitchen { ingredients };
-    let actual_kitchen = Kitchen::from_input(
+    let actual_kitchen = Kitchen::try_from_str(
         "Butterscotch: capacity -1, durability -2, flavor 6, texture 3, calories 8
          Cinnamon: capacity 2, durability 3, flavor -2, texture -1, calories 3",
     )

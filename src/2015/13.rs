@@ -1,4 +1,4 @@
-use eyre::{eyre, Result};
+use eyre::{eyre, OptionExt, Report, Result};
 use itertools::Itertools;
 use petgraph::graph::NodeIndex;
 use petgraph::{Directed, Graph};
@@ -8,28 +8,25 @@ use winnow::combinator::{alt, eof, preceded, separated_pair, seq};
 use winnow::error::{ContextError, ParseError};
 use winnow::prelude::*;
 
+use crate::common::from_str_ext::{TryFromStr, TryParse};
 use crate::meta::Problem;
 
 /// https://adventofcode.com/2015/day/13
-pub const KNIGHTS_OF_THE_DINNER_TABLE: Problem =
-    Problem::solved(&optimize_happiness, &optimize_happiness_with_self);
-
-fn optimize_happiness(input: &str) -> Result<isize> {
-    let table: Table = input.try_into().map_err(|e| eyre!("{e}"))?;
-    Ok(table.optimal_happiness())
-}
-
-fn optimize_happiness_with_self(input: &str) -> Result<isize> {
-    let mut table: Table = input.try_into().map_err(|e| eyre!("{e}"))?;
-    table.seat_self();
-    Ok(table.optimal_happiness())
-}
+pub const KNIGHTS_OF_THE_DINNER_TABLE: Problem = Problem::solved(
+    &|input| input.try_parse().and_then(Table::max_happiness),
+    &|input| input.try_parse().and_then(Table::max_happiness_with_self),
+);
 
 #[derive(Debug)]
 struct Table<'s>(Graph<&'s str, isize, Directed, u8>);
 
 impl Table<'_> {
-    fn optimal_happiness(&self) -> isize {
+    fn max_happiness_with_self(mut self) -> Result<isize> {
+        self.seat_self();
+        self.max_happiness()
+    }
+
+    fn max_happiness(self) -> Result<isize> {
         let graph = &self.0;
         let k = graph.node_count();
         graph
@@ -51,7 +48,7 @@ impl Table<'_> {
                     .sum()
             })
             .max()
-            .unwrap()
+            .ok_or_eyre("nobody sat at the table :(")
     }
 
     fn seat_self(&mut self) {
@@ -64,11 +61,16 @@ impl Table<'_> {
     }
 }
 
-impl<'s> TryFrom<&'s str> for Table<'s> {
-    type Error = ParseError<&'s str, ContextError>;
+impl<'s> TryFromStr<'s> for Table<'s> {
+    type Err = Report;
 
-    fn try_from(value: &'s str) -> Result<Self, Self::Error> {
-        value.trim().lines().map(Relationship::try_from).collect()
+    fn try_from_str(value: &'s str) -> Result<Self> {
+        value
+            .trim()
+            .lines()
+            .map(Relationship::try_from_str)
+            .collect::<Result<_, _>>()
+            .map_err(|_| eyre!("invalid input"))
     }
 }
 
@@ -107,10 +109,10 @@ struct Relationship<'s> {
     feeling: isize,
 }
 
-impl<'s> TryFrom<&'s str> for Relationship<'s> {
-    type Error = ParseError<&'s str, ContextError>;
+impl<'s> TryFromStr<'s> for Relationship<'s> {
+    type Err = ParseError<&'s str, ContextError>;
 
-    fn try_from(value: &'s str) -> Result<Self, Self::Error> {
+    fn try_from_str(value: &'s str) -> Result<Self, Self::Err> {
         fn parse_feeling(input: &mut &str) -> PResult<isize> {
             let sign = alt(("gain".map(|_| 1isize), "lose".map(|_| -1isize)));
             let magnitude = digit1.parse_to::<isize>();
@@ -147,7 +149,7 @@ fn example() {
     David would lose 7 happiness units by sitting next to Bob.
     David would gain 41 happiness units by sitting next to Carol.";
 
-    let table: Table = input.try_into().unwrap();
+    let table: Table = input.try_parse().unwrap();
 
-    assert_eq!(table.optimal_happiness(), 330);
+    assert_eq!(table.max_happiness().unwrap(), 330);
 }
