@@ -6,20 +6,20 @@ use crate::common::bool_ext::BoolExt;
 use crate::meta::Problem;
 
 pub const SQUARES_WITH_THREE_SIDES: Problem = Problem::solved(
-    &|input| Dimensions::horizontals(input).count_valid_triangles(),
-    &|input| Dimensions::verticals(input).count_valid_triangles(),
+    &|input| Triangle::horizontals(input).count_valid(),
+    &|input| Triangle::verticals(input).count_valid(),
 );
 
 #[derive(Debug)]
-struct Dimensions(u16, u16, u16);
+struct Triangle(u16, u16, u16);
 
-impl Dimensions {
-    fn is_valid_triangle(&self) -> bool {
+impl Triangle {
+    fn is_valid(&self) -> bool {
         self.0 + self.1 > self.2 && self.1 + self.2 > self.0 && self.0 + self.2 > self.1
     }
 }
 
-impl Dimensions {
+impl Triangle {
     fn verticals(input: &str) -> impl Iterator<Item = Result<Self>> + use<'_> {
         Verticals(input).into_iter()
     }
@@ -32,7 +32,7 @@ impl Dimensions {
 struct Verticals<'input>(&'input str);
 
 impl<'input> IntoIterator for Verticals<'input> {
-    type Item = Result<Dimensions>;
+    type Item = Result<Triangle>;
 
     type IntoIter = VerticalChunks<'input>;
 
@@ -47,12 +47,12 @@ impl<'input> IntoIterator for Verticals<'input> {
 
 struct VerticalChunks<'input> {
     source: Lines<'input>,
-    b: Option<Dimensions>,
-    c: Option<Dimensions>,
+    b: Option<Triangle>,
+    c: Option<Triangle>,
 }
 
 impl<'input> Iterator for VerticalChunks<'input> {
-    type Item = Result<Dimensions>;
+    type Item = Result<Triangle>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(next) = self.b.take().or_else(|| self.c.take()) {
@@ -71,27 +71,27 @@ impl<'input> Iterator for VerticalChunks<'input> {
             )));
         };
 
-        let Dimensions(a1, b1, c1) = match split_line(first_line) {
+        let Triangle(a1, b1, c1) = match split_line(first_line) {
             Ok(ok) => ok,
             Err(e) => return Some(Err(e)),
         };
-        let Dimensions(a2, b2, c2) = match split_line(second_line) {
+        let Triangle(a2, b2, c2) = match split_line(second_line) {
             Ok(ok) => ok,
             Err(e) => return Some(Err(e)),
         };
-        let Dimensions(a3, b3, c3) = match split_line(third_line) {
+        let Triangle(a3, b3, c3) = match split_line(third_line) {
             Ok(ok) => ok,
             Err(e) => return Some(Err(e)),
         };
 
-        self.b = Some(Dimensions(b1, b2, b3));
-        self.c = Some(Dimensions(c1, c2, c3));
+        self.b = Some(Triangle(b1, b2, b3));
+        self.c = Some(Triangle(c1, c2, c3));
 
-        Some(Ok(Dimensions(a1, a2, a3)))
+        Some(Ok(Triangle(a1, a2, a3)))
     }
 }
 
-fn split_line(line: &str) -> Result<Dimensions> {
+fn split_line(line: &str) -> Result<Triangle> {
     let mut parts = line.split_whitespace();
 
     let a = parts.next().ok_or_eyre("empty input")?.parse()?;
@@ -108,19 +108,19 @@ fn split_line(line: &str) -> Result<Dimensions> {
         bail!("Unexpected token in input: \"{rest}\"");
     }
 
-    Ok(Dimensions(a, b, c))
+    Ok(Triangle(a, b, c))
 }
 
 trait DimensionsList {
-    fn count_valid_triangles(self) -> Result<u16>;
+    fn count_valid(self) -> Result<u16>;
 }
 
 impl<I> DimensionsList for I
 where
-    I: Iterator<Item = Result<Dimensions>>,
+    I: Iterator<Item = Result<Triangle>>,
 {
-    fn count_valid_triangles(self) -> Result<u16> {
-        self.map(|res| res.map(|dims| dims.is_valid_triangle().into_num()))
+    fn count_valid(self) -> Result<u16> {
+        self.map(|res| res.map(|dims| dims.is_valid().into_num()))
             .reduce(|a, b| Ok(a? + b?))
             .ok_or_eyre("empty input")?
     }
