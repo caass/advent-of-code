@@ -3,6 +3,9 @@ name = "advent-of-code"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["lib", "cdylib"]
+
 [[bench]]
 name = "bench"
 harness = false
@@ -17,10 +20,6 @@ lto = "thin"
 debug = true
 debug-assertions = true
 overflow-checks = true
-
-[profile.smol]
-inherits = "release"
-opt-level = "s"
 
 [dependencies]
 enum-iterator = "2.1.0"

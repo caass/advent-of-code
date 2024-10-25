@@ -4,12 +4,9 @@ use std::ops::{Deref, DerefMut};
 use std::panic::UnwindSafe;
 use std::{slice, str};
 
-use eyre::{bail, eyre, OptionExt, Result};
+use eyre::{bail, eyre, Result};
 
-use crate::{
-    meta::{AdventOfCode, Day, Part, Year},
-    AOC,
-};
+use crate::AOC;
 
 #[repr(transparent)]
 struct WasmBuffer([u8]);
@@ -91,6 +88,7 @@ impl<'i, 'o, 'e> WasmContext<'i, 'o, 'e> {
     }
 }
 
+#[no_mangle]
 pub unsafe extern "C" fn solve(
     year_u16: u16,
     day_u8: u8,
