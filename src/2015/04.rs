@@ -16,7 +16,7 @@ pub const THE_IDEAL_STOCKING_STUFFER: Problem = Problem::solved(
     },
 );
 
-#[inline(always)]
+#[inline]
 fn find<F: Sync + Fn(Output<Md5>) -> bool>(input: &str, f: F) -> Option<usize> {
     let mut base = Md5::new();
     base.update(input);

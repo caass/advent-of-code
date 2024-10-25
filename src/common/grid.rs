@@ -234,14 +234,14 @@ impl Display for Coordinate {
 impl<const N: usize, T> Index<Coordinate> for Grid<N, T> {
     type Output = T;
 
-    #[inline(always)]
+    #[inline]
     fn index(&self, index: Coordinate) -> &Self::Output {
         self.get(index).unwrap()
     }
 }
 
 impl<const N: usize, T> IndexMut<Coordinate> for Grid<N, T> {
-    #[inline(always)]
+    #[inline]
     fn index_mut(&mut self, index: Coordinate) -> &mut Self::Output {
         self.get_mut(index).unwrap()
     }

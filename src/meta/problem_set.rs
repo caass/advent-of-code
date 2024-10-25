@@ -6,7 +6,7 @@ use crate::meta::{Day, Problem};
 pub struct ProblemSet([Option<Problem>; 25]);
 
 impl ProblemSet {
-    #[inline(always)]
+    #[inline]
     pub const fn day(&self, day: Day) -> Option<&Problem> {
         let idx = day.as_u8() as usize - 1;
         self.0[idx].as_ref()
@@ -33,7 +33,7 @@ impl ProblemSet {
 impl Index<Day> for ProblemSet {
     type Output = Problem;
 
-    #[inline(always)]
+    #[inline]
     fn index(&self, day: Day) -> &Self::Output {
         self.day(day)
             .unwrap_or_else(|| panic!("Haven't solved either part of day {day}"))

@@ -14,7 +14,7 @@ use solution::Solution;
 pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST + 1) as usize }]);
 
 impl AdventOfCode {
-    #[inline(always)]
+    #[inline]
     pub const fn year(&self, year: Year) -> Option<&ProblemSet> {
         let idx = (year.as_u16() - Year::FIRST) as usize;
         self.0[idx].as_ref()
@@ -38,7 +38,7 @@ impl AdventOfCode {
 impl Index<Year> for AdventOfCode {
     type Output = ProblemSet;
 
-    #[inline(always)]
+    #[inline]
     fn index(&self, year: Year) -> &Self::Output {
         self.year(year)
             .unwrap_or_else(|| panic!("Haven't solved any problems from {year}"))

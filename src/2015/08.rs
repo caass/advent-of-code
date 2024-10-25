@@ -50,7 +50,7 @@ impl Line {
         self.chars.par_iter().map(Char::code_len).sum::<usize>() + 2 // + 2 for the opening and closing `"`s
     }
 
-    #[inline(always)]
+    #[inline]
     fn data_len(&self) -> usize {
         self.chars.len()
     }

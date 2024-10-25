@@ -137,7 +137,7 @@ struct Ingredient<'s> {
 }
 
 impl Ingredient<'_> {
-    #[inline(always)]
+    #[inline]
     fn tbsp(&self, tbsp: u8) -> Qualities {
         let tbsp: isize = tbsp.into();
         let Ingredient {

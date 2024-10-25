@@ -28,7 +28,7 @@ struct Dimensions([usize; 3]);
 impl Dimensions {
     /// Returns the amount of wrapping paper needed to wrap a present with dimensions `self`:
     /// enough to cover all six sides plus extra equal to the area of the smallest side.
-    #[inline(always)]
+    #[inline]
     fn wrapping_paper(self) -> usize {
         let Dimensions([l, w, h]) = self;
 
@@ -41,7 +41,7 @@ impl Dimensions {
 
     /// Returns the amount of ribbon needed to tie off a present with dimensions `self`:
     /// enough to wrap around the smallest size, plus bow-material equal to the volume of the present.
-    #[inline(always)]
+    #[inline]
     fn ribbon(self) -> usize {
         let Dimensions([l, w, h]) = self;
 

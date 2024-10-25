@@ -43,7 +43,7 @@ impl Year {
     pub const LAST: u16 = Year::TwentyThree.as_u16();
 
     /// Returns a u16 represenation of `Self` guaranteed to be between [`FIRST_YEAR`] and [`LAST_YEAR`].
-    #[inline(always)]
+    #[inline]
     pub const fn as_u16(self) -> u16 {
         self as u16
     }
@@ -65,14 +65,14 @@ impl Year {
     }
 
     /// Returns an iterator over all values of `Self`
-    #[inline(always)]
+    #[inline]
     pub fn iter() -> impl Iterator<Item = Self> {
         all::<Self>()
     }
 }
 
 impl From<Year> for u16 {
-    #[inline(always)]
+    #[inline]
     fn from(value: Year) -> Self {
         value.as_u16()
     }
@@ -95,7 +95,7 @@ impl TryFrom<u16> for Year {
 }
 
 impl Display for Year {
-    #[inline(always)]
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.as_u16(), f)
     }

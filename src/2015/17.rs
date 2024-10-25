@@ -151,14 +151,14 @@ impl ContainerCombination {
     }
 
     /// Construct a combination of containers consisting of a single container.
-    #[inline(always)]
+    #[inline]
     fn single(container: Container) -> Self {
         Self {
             containers: vec![container],
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn len(&self) -> usize {
         self.containers.len()
     }
@@ -195,17 +195,17 @@ impl ContainerCollection {
         Self { containers }
     }
 
-    #[inline(always)]
+    #[inline]
     fn containers(&self) -> &[Container] {
         &self.containers
     }
 
-    #[inline(always)]
+    #[inline]
     fn iter(&self) -> std::slice::Iter<Container> {
         self.containers().iter()
     }
 
-    #[inline(always)]
+    #[inline]
     fn par_iter(&self) -> rayon::iter::Copied<rayon::slice::Iter<Container>> {
         self.containers().par_iter().copied()
     }

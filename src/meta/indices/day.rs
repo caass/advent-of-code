@@ -71,12 +71,12 @@ impl AsRef<Path> for Day {
 }
 
 impl Day {
-    #[inline(always)]
+    #[inline]
     pub const fn as_u8(self) -> u8 {
         self as u8
     }
 
-    #[inline(always)]
+    #[inline]
     pub(crate) const fn from_u8(day: u8) -> Result<Self, FromU8Error> {
         match day {
             0 => Err(FromU8Error::Zero),
@@ -110,14 +110,14 @@ impl Day {
     }
 
     /// Returns an iterator over all values of `Self`
-    #[inline(always)]
+    #[inline]
     pub fn iter() -> impl Iterator<Item = Self> {
         all::<Self>()
     }
 }
 
 impl From<Day> for u8 {
-    #[inline(always)]
+    #[inline]
     fn from(value: Day) -> Self {
         value.as_u8()
     }
@@ -141,7 +141,7 @@ impl TryFrom<u8> for Day {
 }
 
 impl Display for Day {
-    #[inline(always)]
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{:0>2}", self.as_u8())
     }

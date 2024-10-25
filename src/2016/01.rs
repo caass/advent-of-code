@@ -60,27 +60,27 @@ struct Position {
 }
 
 impl Position {
-    #[inline(always)]
+    #[inline]
     fn distance_from_origin(&self) -> u16 {
         self.x.unsigned_abs() + self.y.unsigned_abs()
     }
 
-    #[inline(always)]
+    #[inline]
     fn north(&mut self, steps: i16) {
         self.y += steps;
     }
 
-    #[inline(always)]
+    #[inline]
     fn east(&mut self, steps: i16) {
         self.x += steps;
     }
 
-    #[inline(always)]
+    #[inline]
     fn south(&mut self, steps: i16) {
         self.y -= steps;
     }
 
-    #[inline(always)]
+    #[inline]
     fn west(&mut self, steps: i16) {
         self.x -= steps
     }
@@ -104,12 +104,12 @@ struct Pose {
 }
 
 impl Pose {
-    #[inline(always)]
+    #[inline]
     fn turn(&mut self, turn: Turn) {
         self.orientation.turn(turn);
     }
 
-    #[inline(always)]
+    #[inline]
     fn walk(&mut self, steps: u8) {
         self.position.walk(steps, self.orientation);
     }
@@ -125,7 +125,7 @@ enum Orientation {
 }
 
 impl Orientation {
-    #[inline(always)]
+    #[inline]
     fn turn(&mut self, turn: Turn) {
         *self = match (&self, turn) {
             (Orientation::East, Turn::Left) | (Orientation::West, Turn::Right) => {
@@ -145,7 +145,7 @@ impl Orientation {
 }
 
 impl FromIterator<Instruction> for Instructions {
-    #[inline(always)]
+    #[inline]
     fn from_iter<T: IntoIterator<Item = Instruction>>(iter: T) -> Self {
         Self(Vec::from_iter(iter))
     }
@@ -156,7 +156,7 @@ impl IntoIterator for Instructions {
 
     type IntoIter = <Vec<Instruction> as IntoIterator>::IntoIter;
 
-    #[inline(always)]
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
     }
@@ -165,7 +165,7 @@ impl IntoIterator for Instructions {
 impl FromStr for Instructions {
     type Err = Report;
 
-    #[inline(always)]
+    #[inline]
     fn from_str(s: &str) -> Result<Self> {
         s.trim().split(", ").map(Instruction::from_str).collect()
     }
@@ -180,7 +180,7 @@ enum Turn {
 impl FromStr for Turn {
     type Err = Report;
 
-    #[inline(always)]
+    #[inline]
     fn from_str(s: &str) -> Result<Self> {
         match s {
             "R" => Ok(Self::Right),
@@ -199,7 +199,7 @@ struct Instruction {
 impl FromStr for Instruction {
     type Err = Report;
 
-    #[inline(always)]
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         seq! {Instruction {
             turn: alt::<_, _, ContextError, _>(("R", "L")).parse_to(),
@@ -220,7 +220,7 @@ impl Default for City {
 }
 
 impl City {
-    #[inline(always)]
+    #[inline]
     fn get_mut(&mut self, Position { x, y }: Position) -> Option<&mut bool> {
         let adjusted_x: usize = (x + 256).try_into().ok()?;
         let adjusted_y: usize = (y + 256).try_into().ok()?;
@@ -228,7 +228,7 @@ impl City {
         self.0.get_mut(adjusted_x)?.get_mut(adjusted_y)
     }
 
-    #[inline(always)]
+    #[inline]
     fn visit(&mut self, position: Position) -> Option<bool> {
         self.get_mut(position)
             .map(|visited| std::mem::replace(visited, true))

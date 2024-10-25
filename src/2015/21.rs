@@ -87,7 +87,7 @@ impl Character {
     }
 
     /// Returns `true` if `self` loses a fight against `enemy`
-    #[inline(always)]
+    #[inline]
     fn loses_to(&self, enemy: &Character) -> bool {
         !self.wins_against(enemy)
     }
@@ -110,7 +110,7 @@ impl Character {
         //
         // The winner is whoever has a higher `t` when f(t) <= self.hp, where ties go to the player.
 
-        #[inline(always)]
+        #[inline]
         fn rounds_survived(protagonist: &Character, antagonist: &Character) -> u8 {
             (0..=u8::MAX)
                 .into_par_iter()

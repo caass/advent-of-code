@@ -75,7 +75,7 @@ impl Molecule {
         out
     }
 
-    #[inline(always)]
+    #[inline]
     fn len(&self) -> usize {
         self.0.len()
     }
@@ -120,7 +120,7 @@ impl Atom {
 impl FromStr for Atom {
     type Err = <TinyAsciiStr<2> as FromStr>::Err;
 
-    #[inline(always)]
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         s.parse().map(Atom)
     }

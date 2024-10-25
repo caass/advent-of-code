@@ -16,7 +16,7 @@ pub const BATHROOM_SECURITY: Problem = Problem::solved(
 struct Code(Vec<Digit>);
 
 impl Code {
-    #[inline(always)]
+    #[inline]
     fn push(&mut self, digit: Digit) {
         self.0.push(digit);
     }

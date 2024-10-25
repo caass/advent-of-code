@@ -79,7 +79,7 @@ struct Values {
 }
 
 impl Values {
-    #[inline(always)]
+    #[inline]
     const fn new() -> Self {
         Values { current: 20151125 }
     }
@@ -88,7 +88,7 @@ impl Values {
 impl Iterator for Values {
     type Item = usize;
 
-    #[inline(always)]
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let current = self.current;
         self.current = (current * 252533) % 33554393;

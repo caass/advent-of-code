@@ -112,7 +112,7 @@ struct Light {
 }
 
 impl Light {
-    #[inline(always)]
+    #[inline]
     fn act(&mut self, action: Action) {
         match action {
             Action::TurnOn => self.on = true,
@@ -128,7 +128,7 @@ struct AdjustableLight {
 }
 
 impl AdjustableLight {
-    #[inline(always)]
+    #[inline]
     fn act(&mut self, action: Action) {
         match action {
             Action::TurnOn => self.brightness += 1,

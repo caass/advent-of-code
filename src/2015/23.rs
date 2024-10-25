@@ -38,7 +38,7 @@ impl Computer {
 impl Index<Register> for Computer {
     type Output = usize;
 
-    #[inline(always)]
+    #[inline]
     fn index(&self, index: Register) -> &Self::Output {
         match index {
             Register::A => &self.a,
@@ -48,7 +48,7 @@ impl Index<Register> for Computer {
 }
 
 impl IndexMut<Register> for Computer {
-    #[inline(always)]
+    #[inline]
     fn index_mut(&mut self, index: Register) -> &mut Self::Output {
         match index {
             Register::A => &mut self.a,
@@ -116,7 +116,7 @@ struct Program {
 }
 
 impl FromIterator<Instruction> for Program {
-    #[inline(always)]
+    #[inline]
     fn from_iter<T: IntoIterator<Item = Instruction>>(iter: T) -> Self {
         Self {
             instructions: Vec::from_iter(iter),
@@ -127,7 +127,7 @@ impl FromIterator<Instruction> for Program {
 impl FromStr for Program {
     type Err = Report;
 
-    #[inline(always)]
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         s.trim()
             .lines()

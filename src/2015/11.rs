@@ -45,7 +45,7 @@ impl IntoParallelIterator for Password {
 impl ParallelIterator for PasswordIter {
     type Item = Password;
 
-    #[inline(always)]
+    #[inline]
     fn drive_unindexed<C>(self, consumer: C) -> C::Result
     where
         C: rayon::iter::plumbing::UnindexedConsumer<Self::Item>,
@@ -55,17 +55,17 @@ impl ParallelIterator for PasswordIter {
 }
 
 impl IndexedParallelIterator for PasswordIter {
-    #[inline(always)]
+    #[inline]
     fn len(&self) -> usize {
         ExactSizeIterator::len(self)
     }
 
-    #[inline(always)]
+    #[inline]
     fn drive<C: rayon::iter::plumbing::Consumer<Self::Item>>(self, consumer: C) -> C::Result {
         bridge(self, consumer)
     }
 
-    #[inline(always)]
+    #[inline]
     fn with_producer<CB: rayon::iter::plumbing::ProducerCallback<Self::Item>>(
         self,
         callback: CB,
@@ -126,7 +126,7 @@ impl Iterator for PasswordIter {
         Some(next)
     }
 
-    #[inline(always)]
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         (
             ExactSizeIterator::len(self),
@@ -136,7 +136,7 @@ impl Iterator for PasswordIter {
 }
 
 impl ExactSizeIterator for PasswordIter {
-    #[inline(always)]
+    #[inline]
     fn len(&self) -> usize {
         match self.from.distance(&self.to) {
             // We're done iterating, we've hit every password
@@ -175,7 +175,7 @@ impl Producer for PasswordIter {
 
     type IntoIter = PasswordIter;
 
-    #[inline(always)]
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self
     }
@@ -204,19 +204,19 @@ impl Password {
     const ZZZZZZZZ: Password = Password([Letter::Z; 8]);
 
     /// Returns an iterator over the `Letter`s in this password.
-    #[inline(always)]
+    #[inline]
     fn iter(&self) -> std::slice::Iter<Letter> {
         self.0.iter()
     }
 
     /// Returns an iterator over mutable references to the `Letter`s in this password.
-    #[inline(always)]
+    #[inline]
     fn iter_mut(&mut self) -> std::slice::IterMut<Letter> {
         self.0.iter_mut()
     }
 
     /// Returns the slice of `Letter`s that make up this password.
-    #[inline(always)]
+    #[inline]
     fn letters(&self) -> &[Letter] {
         &self.0
     }
@@ -326,7 +326,7 @@ impl Password {
 impl Add<usize> for Password {
     type Output = Password;
 
-    #[inline(always)]
+    #[inline]
     fn add(self, rhs: usize) -> Self::Output {
         let lhs = self.value();
         let value = (lhs + rhs) % const { Password::ZZZZZZZZ.value() + 1 };
@@ -337,7 +337,7 @@ impl Add<usize> for Password {
 }
 
 impl AddAssign<usize> for Password {
-    #[inline(always)]
+    #[inline]
     fn add_assign(&mut self, rhs: usize) {
         *self = *self + rhs;
     }
@@ -409,7 +409,7 @@ impl Letter {
     /// # Errors
     ///
     /// Returns an error if the given `char` isn't an ASCII lowercase letter.
-    #[inline(always)]
+    #[inline]
     const fn from_char(letter: char) -> Result<Self, &'static str> {
         if letter.is_ascii_lowercase() {
             // Safety: letter is ascii lowercase
@@ -424,7 +424,7 @@ impl Letter {
     /// # Safety
     ///
     /// The caller must guarantee the given `char` is an ASCII lowercase letter.
-    #[inline(always)]
+    #[inline]
     const unsafe fn from_char_unchecked(letter: char) -> Self {
         let byte = letter as u8;
         // Safety: the caller guarantees the letter is ascii lowercase
@@ -436,7 +436,7 @@ impl Letter {
     /// # Errors
     ///
     /// Returns an error if the given value isn't between 0-25.
-    #[inline(always)]
+    #[inline]
     const fn from_value(value: u8) -> Result<Self, &'static str> {
         if value < 26 {
             // Safety: the letter is between 0-25
@@ -451,7 +451,7 @@ impl Letter {
     /// # Safety
     ///
     /// The caller must guarantee the value is between 0-25.
-    #[inline(always)]
+    #[inline]
     const unsafe fn from_value_unchecked(value: u8) -> Self {
         let byte = value + ASCII_LETTER_OFFSET;
         // Safety: the caller guarantees the value is between 0-25
@@ -459,13 +459,13 @@ impl Letter {
     }
 
     /// Returns the [`char`] representation of this `Letter`
-    #[inline(always)]
+    #[inline]
     const fn char(&self) -> char {
         *self as u8 as char
     }
 
     /// Returns the base 10 value of this `Letter`, where `Letter::A.value() == 0` and `Letter::Z.value() == 25`.
-    #[inline(always)]
+    #[inline]
     const fn value(&self) -> u8 {
         *self as u8 - ASCII_LETTER_OFFSET
     }
@@ -473,7 +473,7 @@ impl Letter {
     /// Increments this `Letter` by 1 wrapping at `Z`.
     ///
     /// Returns `true` if the operation wrapped.
-    #[inline(always)]
+    #[inline]
     fn increment(&mut self) -> bool {
         *self += 1u8;
 
@@ -483,7 +483,7 @@ impl Letter {
     /// Decrements this `Letter` by 1, wrapping at `A`.
     ///
     /// Returns `true` if the operation wrapped.
-    #[inline(always)]
+    #[inline]
     fn decrement(&mut self) -> bool {
         *self -= 1u8;
 
@@ -501,7 +501,7 @@ impl TryFrom<char> for Letter {
 }
 
 impl PartialEq<char> for Letter {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &char) -> bool {
         self.char().eq(other)
     }
@@ -524,7 +524,7 @@ impl FromStr for Letter {
 }
 
 impl Display for Letter {
-    #[inline(always)]
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.write_char(self.char())
     }
@@ -553,7 +553,7 @@ macro_rules! impl_letter_math {
         }
 
         impl AddAssign<$ty> for Letter {
-            #[inline(always)]
+            #[inline]
             fn add_assign(&mut self, rhs: $ty) {
                 *self = *self + rhs
             }
@@ -580,7 +580,7 @@ macro_rules! impl_letter_math {
         }
 
         impl SubAssign<$ty> for Letter {
-            #[inline(always)]
+            #[inline]
             fn sub_assign(&mut self, rhs: $ty) {
                 *self = *self - rhs;
             }
@@ -589,7 +589,7 @@ macro_rules! impl_letter_math {
         impl TryFrom<$ty> for Letter {
             type Error = ::eyre::Report;
 
-            #[inline(always)]
+            #[inline]
             fn try_from(value: $ty) -> Result<Self, Self::Error> {
                 let value = value.try_into()?;
                 Self::from_value(value).map_err(Report::msg)
@@ -597,7 +597,7 @@ macro_rules! impl_letter_math {
         }
 
         impl PartialEq<$ty> for Letter {
-            #[inline(always)]
+            #[inline]
             fn eq(&self, other: &$ty) -> bool {
                 // Safety: 0-25 fits in every integer representation
                 let this: $ty = unsafe { self.value().try_into().unwrap_unchecked() };

@@ -146,14 +146,14 @@ struct Reindeer<'s> {
 }
 
 impl Hash for Reindeer<'_> {
-    #[inline(always)]
+    #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.name.hash(state);
     }
 }
 
 impl PartialEq for Reindeer<'_> {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.name.eq(other.name)
     }
@@ -162,7 +162,7 @@ impl PartialEq for Reindeer<'_> {
 impl Eq for Reindeer<'_> {}
 
 impl Reindeer<'_> {
-    #[inline(always)]
+    #[inline]
     fn cycle_duration(&self) -> usize {
         self.fly_duration + self.rest_duration
     }

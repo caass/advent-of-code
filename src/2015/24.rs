@@ -96,7 +96,7 @@ struct Package {
 impl FromStr for Package {
     type Err = <usize as FromStr>::Err;
 
-    #[inline(always)]
+    #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         s.parse().map(|weight| Package { weight })
     }

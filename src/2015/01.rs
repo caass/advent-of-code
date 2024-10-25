@@ -11,7 +11,7 @@ const UP: u8 = b'(';
 const DOWN: u8 = b')';
 
 pub(crate) fn part_1(input: &str) -> Result<isize> {
-    #[inline(always)]
+    #[inline]
     fn sum_chunk(chunk: &[u8]) -> isize {
         if chunk.len() == u8x16::LANES as usize {
             let simd_chunk = u8x16::from(chunk);

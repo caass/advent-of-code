@@ -94,17 +94,17 @@ impl GameState {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn is_victory(&self) -> bool {
         self.boss.is_dead() && !self.player.is_dead()
     }
 
-    #[inline(always)]
+    #[inline]
     fn is_over(&self) -> bool {
         self.player.is_dead() || self.boss.is_dead()
     }
 
-    #[inline(always)]
+    #[inline]
     fn process_effects(&mut self) -> u8 {
         let mut armor = 0;
         for action in self.effects.current() {
@@ -194,13 +194,13 @@ mod boss {
 
     impl Boss {
         /// Defend from a player's attack, taking damage.
-        #[inline(always)]
+        #[inline]
         pub(super) fn defend(&mut self, damage: u8) {
             self.hp = self.hp.saturating_sub(damage);
         }
 
         /// Attack, returning the amount of damage dealt to the player after taking armor into account.
-        #[inline(always)]
+        #[inline]
         pub(super) fn attack(&self, armor: u8) -> NonZeroU8 {
             match self.damage.saturating_sub(armor) {
                 0 => unsafe { NonZeroU8::new_unchecked(1) },
@@ -209,7 +209,7 @@ mod boss {
         }
 
         /// Returns `true` if the boss is dead.
-        #[inline(always)]
+        #[inline]
         pub(super) fn is_dead(&self) -> bool {
             self.hp == 0
         }
@@ -245,43 +245,43 @@ mod player {
 
     impl Player {
         /// Construct a new [`Player`] with the given HP and mana
-        #[inline(always)]
+        #[inline]
         pub(super) const fn new() -> Self {
             Self { hp: 50, mana: 500 }
         }
 
         /// Check if the player is dead
-        #[inline(always)]
+        #[inline]
         pub(super) fn is_dead(&self) -> bool {
             self.mana < Spell::MAGIC_MISSILE.cost.into() || self.hp == 0
         }
 
         /// Defend from an enemey attack, taking damage equal to the given value
-        #[inline(always)]
+        #[inline]
         pub(super) fn defend(&mut self, damage: NonZeroU8) {
             self.hp = self.hp.saturating_sub(damage.get());
         }
 
         /// Return a list of all the spells this player can cast with their current mana.
-        #[inline(always)]
+        #[inline]
         pub(super) fn options(&self) -> [Option<Spell>; 5] {
             std::array::from_fn(|i| (u16::from(SPELLS[i].cost) <= self.mana).then_some(SPELLS[i]))
         }
 
         /// Regain a given amount of mana
-        #[inline(always)]
+        #[inline]
         pub(super) fn recharge(&mut self, mana: u8) {
             self.mana = self.mana.saturating_add(mana.into());
         }
 
         /// Spend a given amount of mana
-        #[inline(always)]
+        #[inline]
         pub(super) fn cast(&mut self, mana: u8) {
             self.mana = self.mana.saturating_sub(mana.into());
         }
 
         /// Heal for a given amount of HP
-        #[inline(always)]
+        #[inline]
         pub(super) fn heal(&mut self, hp: u8) {
             self.hp = self.hp.saturating_add(hp);
         }
@@ -364,7 +364,7 @@ mod spell {
             },
         };
 
-        #[inline(always)]
+        #[inline]
         pub const fn value(&self) -> u8 {
             self.kind.value()
         }
@@ -377,7 +377,7 @@ mod spell {
     }
 
     impl SpellKind {
-        #[inline(always)]
+        #[inline]
         pub const fn value(&self) -> u8 {
             match self {
                 SpellKind::Instant(instant) => instant.value(),
@@ -393,7 +393,7 @@ mod spell {
     }
 
     impl Instant {
-        #[inline(always)]
+        #[inline]
         pub const fn value(&self) -> u8 {
             match self {
                 Instant::Damage => 4,
@@ -410,7 +410,7 @@ mod spell {
     }
 
     impl Action {
-        #[inline(always)]
+        #[inline]
         pub const fn value(&self) -> u8 {
             match self {
                 Action::Shield => 7,
@@ -425,13 +425,13 @@ mod spell {
 
     impl Effects {
         /// Returns `true` if the given action is already in effect.
-        #[inline(always)]
+        #[inline]
         pub(super) fn is_active(&self, action: &Action) -> bool {
             self.0[*action].is_some()
         }
 
         /// Cast the given spell action for the given number of turns.
-        #[inline(always)]
+        #[inline]
         pub(super) fn cast(&mut self, action: Action, turns: u8) {
             self.0[action] = NonZeroU8::new(turns);
         }
