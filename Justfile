@@ -1,5 +1,3 @@
-export RUSTFLAGS := "-C target-cpu=native"
-
 # MacOS uses BSD tar, which can generate warnings when untarring on Linux.
 tar := if os() == "macos" { "gtar" } else { "tar" }
 branch := trim(`git branch --show-current --no-column`)
@@ -11,6 +9,9 @@ default:
 # Run the advent of code binary
 run year day part: decrypt-inputs
     cargo run --release -- {{year}} {{day}} {{part}} tests/fixtures/{{year}}/{{day}}
+
+build-wasm:
+    cargo +nightly build --profile=smol -Z build-std=std,panic_abort --target wasm64-unknown-unknown
 
 # Check for outdated dependencies
 outdated *ARGS:

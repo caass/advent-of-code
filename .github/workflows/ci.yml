@@ -40,6 +40,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         channel: [stable, beta, nightly]
+    env:
+      RUSTFLAGS: "-C target-cpu=native"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -71,6 +73,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      RUSTFLAGS: "-C target-cpu=native"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -102,6 +106,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+    env:
+      RUSTFLAGS: "-C target-cpu=native"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
