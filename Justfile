@@ -14,7 +14,7 @@ run year day part: decrypt-inputs
 
 # Check for outdated dependencies
 outdated *ARGS:
-    cargo outdated
+    cargo outdated {{ARGS}}
 
 # Run unit & integration tests
 test *ARGS: decrypt-inputs
@@ -37,7 +37,7 @@ bencher testbed="adhoc" *ARGS='': decrypt-inputs
     --err \
     --adapter rust_criterion \
     --testbed {{testbed}} \
-    "cargo bench --color always {{ARGS}}" || exit 0
+    "just bench --color always {{ARGS}}" || exit 0
 
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
