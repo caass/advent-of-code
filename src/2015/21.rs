@@ -114,6 +114,7 @@ impl Character {
         fn rounds_survived(protagonist: &Character, antagonist: &Character) -> u8 {
             (0..=u8::MAX)
                 .into_par_iter()
+                .by_exponential_blocks()
                 .find_first(|&round| {
                     // t * max(d - a, 1) - self.hp <= 0
                     round as usize * antagonist.damage_to(protagonist) as usize

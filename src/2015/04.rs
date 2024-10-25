@@ -2,6 +2,7 @@ use eyre::OptionExt;
 use md5::{digest::Output, Digest, Md5};
 use rayon::prelude::*;
 
+use crate::common::U32_MAX;
 use crate::meta::Problem;
 
 /// https://adventofcode.com/2015/day/4
@@ -21,14 +22,17 @@ fn find<F: Sync + Fn(Output<Md5>) -> bool>(input: &str, f: F) -> Option<usize> {
     let mut base = Md5::new();
     base.update(input);
 
-    (0..=usize::MAX).into_par_iter().find_first(|&n| {
-        let mut buf = itoa::Buffer::new();
-        let slice = buf.format(n);
+    (0..U32_MAX)
+        .into_par_iter()
+        .by_exponential_blocks()
+        .find_first(|&n| {
+            let mut buf = itoa::Buffer::new();
+            let slice = buf.format(n);
 
-        let mut hasher: Md5 = Md5::clone(&base);
-        Digest::update(&mut hasher, slice);
-        let result = Digest::finalize(hasher);
+            let mut hasher: Md5 = Md5::clone(&base);
+            Digest::update(&mut hasher, slice);
+            let result = Digest::finalize(hasher);
 
-        (f)(result)
-    })
+            (f)(result)
+        })
 }

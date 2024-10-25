@@ -247,6 +247,7 @@ impl Password {
     fn next(mut self) -> Password {
         self.increment();
         self.into_par_iter()
+            .by_exponential_blocks()
             .find_first(Password::is_valid)
             .expect("to find a valid password")
     }
