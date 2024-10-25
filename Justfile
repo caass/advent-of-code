@@ -10,9 +10,6 @@ default:
 run year day part: decrypt-inputs
     cargo run --release -- {{year}} {{day}} {{part}} tests/fixtures/{{year}}/{{day}}
 
-build-wasm:
-    cargo +nightly build --release -Z build-std=std,panic_abort --target wasm64-unknown-unknown --lib
-
 # Check for outdated dependencies
 outdated *ARGS:
     cargo outdated {{ARGS}}
