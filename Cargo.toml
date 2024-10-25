@@ -13,6 +13,7 @@ codegen-units = 1
 
 [profile.fast-test]
 inherits = "release"
+lto = "thin"
 debug = true
 debug-assertions = true
 overflow-checks = true
