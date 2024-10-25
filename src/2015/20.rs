@@ -3,11 +3,17 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
+#[cfg(not(target_pointer_width = "16"))]
+const U32_MAX: usize = u32::MAX as usize;
+
+#[cfg(target_pointer_width = "16")]
+const U32_MAX: usize = compile_error!("Cannot compile for 16-bit targets; answer would overflow");
+
 /// https://adventofcode.com/2015/day/20
 pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = Problem::solved(
     &|input| {
         let n = input.trim().parse::<usize>()?;
-        (0..=usize::MAX)
+        (0..=U32_MAX)
             .into_par_iter()
             .map(|address| House { address })
             .find_first(|house| {
@@ -20,7 +26,7 @@ pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = Problem::solved(
     },
     &|input| {
         let n = input.trim().parse::<usize>()?;
-        (0..=usize::MAX)
+        (0..=U32_MAX)
             .into_par_iter()
             .map(|address| House { address })
             .find_first(|house| {

@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use eyre::{OptionExt, Result};
+use eyre::{bail, Context, OptionExt, Result};
 use itertools::Itertools;
 use rayon::prelude::*;
 
@@ -13,14 +13,12 @@ pub const IT_HANGS_IN_THE_BALANCE: Problem = Problem::solved(
             .parse::<PackingList>()?
             .pack(3)
             .map(|list| list.quantum_entanglement())
-            .ok_or_eyre("impossible to pack sleigh")
     },
     &|input| {
         input
             .parse::<PackingList>()?
             .pack(4)
             .map(|list| list.quantum_entanglement())
-            .ok_or_eyre("impossible to pack sleigh")
     },
 );
 
@@ -30,27 +28,30 @@ struct PackingList {
 }
 
 impl PackingList {
-    fn pack(&self, num_compartments: usize) -> Option<PackingList> {
+    fn pack(&self, num_compartments: usize) -> Result<PackingList> {
         if self.weight() % num_compartments != 0 {
-            return None;
+            bail!("Cannot balance packages")
         };
 
         let target_weight = self.weight() / num_compartments;
+        let num_packages: u8 = self
+            .packages
+            .len()
+            .try_into()
+            .wrap_err_with(|| "more than 255 packages in packing list")?;
 
-        (1..self.packages.len())
+        (1..(num_packages.div_ceil(2)))
             .into_par_iter()
             .find_map_first(|k| {
-                let lists_of_len_k = self
-                    .packages
+                self.packages
                     .iter()
                     .copied()
-                    .combinations(k)
-                    .map(|packages| PackingList { packages });
-
-                lists_of_len_k
+                    .combinations(k.into())
+                    .map(|packages| PackingList { packages })
                     .filter(|list| list.weight() == target_weight)
                     .min_by_key(PackingList::quantum_entanglement)
             })
+            .ok_or_eyre("Couldn't find a way to balance packages")
     }
 
     fn weight(&self) -> usize {
