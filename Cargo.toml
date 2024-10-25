@@ -11,6 +11,11 @@ harness = false
 lto = "fat"
 codegen-units = 1
 
+[profile.fast-test]
+inherits = "release"
+debug = true
+debug-assertions = true
+overflow-checks = true
 
 [dependencies]
 enum-iterator = "2.1.0"

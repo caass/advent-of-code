@@ -18,7 +18,7 @@ outdated *ARGS:
 
 # Run unit & integration tests
 test *ARGS: decrypt-inputs
-    cargo nextest run --no-tests=fail {{ARGS}}
+    cargo nextest run --no-tests=fail --cargo-profile=fast-test {{ARGS}}
 
 # Benchmark against inputs in `tests/fixtures.gz.age`
 bench *ARGS: decrypt-inputs
