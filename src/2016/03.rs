@@ -51,7 +51,7 @@ struct VerticalChunks<'input> {
     c: Option<Triangle>,
 }
 
-impl<'input> Iterator for VerticalChunks<'input> {
+impl Iterator for VerticalChunks<'_> {
     type Item = Result<Triangle>;
 
     fn next(&mut self) -> Option<Self::Item> {
