@@ -1,13 +1,9 @@
 use rayon::prelude::*;
-use void::Void;
 
 use crate::meta::Problem;
 
 /// <https://adventofcode.com/2015/day/5>
-pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem =
-    Problem::solved(&|input| Ok::<_, Void>(part_1(input)), &|input| {
-        Ok::<_, Void>(part_2(input))
-    });
+pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = Problem::solved(&part_1, &part_2);
 
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 const BANNED_PAIRS: [&[u8]; 4] = [b"ab", b"cd", b"pq", b"xy"];

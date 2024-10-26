@@ -1,18 +1,17 @@
-use eyre::{OptionExt, Result};
+use eyre::OptionExt;
 use rayon::prelude::*;
-use void::Void;
 use wide::u8x16;
 
 use crate::meta::Problem;
 
 /// <https://adventofcode.com/2015/day/1>
 pub const NOT_QUITE_LISP: Problem = Problem::solved(
-    &|input| -> Result<isize, Void> {
-        Ok(input
+    &|input| {
+        input
             .as_bytes()
             .par_chunks(u8x16::LANES.into())
             .map(sum_chunk)
-            .sum())
+            .sum::<isize>()
     },
     &|input| {
         let mut floor = 0;
