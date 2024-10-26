@@ -84,13 +84,11 @@ impl Password {
 
     /// Construct a password generator that applies `F` to find valid hashes,
     /// and then `U` to use that hash to update the password.
-    fn generator<
+    fn generator<F, U>(finder: F, updater: U) -> impl Fn(&str) -> Result<Self>
+    where
         F: Sync + Fn(&Output<Md5>, &[Option<NonZeroU8>; 8]) -> bool,
         U: Fn(Output<Md5>, &mut [Option<NonZeroU8>; 8]),
-    >(
-        f: F,
-        u: U,
-    ) -> impl Fn(&str) -> Result<Self> {
+    {
         move |door_id| {
             let mut digits = [None; 8];
             let mut hash_idx_start = 0;
@@ -110,12 +108,12 @@ impl Password {
                         Digest::update(&mut hasher, slice);
                         let result = Digest::finalize(hasher);
 
-                        (f)(&result, &digits).then_some((result, index))
+                        (finder)(&result, &digits).then_some((result, index))
                     })
                     .ok_or_eyre("ran out of hashes")?;
 
                 hash_idx_start = hash_idx + 1;
-                (u)(hash, &mut digits);
+                (updater)(hash, &mut digits);
             }
 
             Self::from_hex_digits(digits)
@@ -161,5 +159,6 @@ const fn bits_to_hex<const UPPER: bool>(byte: u8) -> NonZeroU8 {
 
 #[test]
 fn example() {
-    assert_eq!(&*Password::for_door_1("abc").unwrap(), "18f47a30")
+    assert_eq!(&*Password::for_door_1("abc").unwrap(), "18f47a30");
+    assert_eq!(&*Password::for_door_2("abc").unwrap(), "05ace8e3");
 }
