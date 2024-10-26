@@ -1,12 +1,10 @@
-use std::{
-    collections::HashMap,
-    fmt::{self, Display, Formatter, Write},
-    hash::Hash,
-    iter::repeat,
-    mem::transmute,
-    ops::{AddAssign, Deref},
-    str::{self, FromStr},
-};
+use std::collections::HashMap;
+use std::fmt::{self, Display, Formatter, Write};
+use std::hash::Hash;
+use std::iter::repeat;
+use std::mem::transmute;
+use std::ops::{AddAssign, Deref};
+use std::str::{self, FromStr};
 
 use eyre::{bail, eyre, OptionExt, Report, Result};
 use itertools::Itertools;

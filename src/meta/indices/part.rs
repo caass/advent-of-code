@@ -1,9 +1,7 @@
-use std::{
-    fmt::{self, Debug, Display, Formatter},
-    hash::{Hash, Hasher},
-    num::ParseIntError,
-    str::FromStr,
-};
+use std::fmt::{self, Debug, Display, Formatter};
+use std::hash::{Hash, Hasher};
+use std::num::ParseIntError;
+use std::str::FromStr;
 
 use enum_map::Enum;
 use thiserror::Error;

@@ -1,9 +1,7 @@
-use std::{
-    collections::{HashMap, HashSet},
-    fmt::{self, Display, Formatter},
-    hash::{Hash, Hasher},
-    ops::{Add, AddAssign},
-};
+use std::collections::{HashMap, HashSet};
+use std::fmt::{self, Display, Formatter};
+use std::hash::{Hash, Hasher};
+use std::ops::{Add, AddAssign};
 
 use eyre::{eyre, OptionExt, Report, Result};
 use fnv::FnvBuildHasher;

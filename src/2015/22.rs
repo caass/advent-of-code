@@ -1,8 +1,6 @@
-use std::{
-    collections::{HashSet, VecDeque},
-    hash::Hash,
-    num::NonZeroU8,
-};
+use std::collections::{HashSet, VecDeque};
+use std::hash::Hash;
+use std::num::NonZeroU8;
 
 use either::Either;
 use eyre::{OptionExt, Result};
@@ -182,7 +180,8 @@ impl GameState {
 }
 
 mod boss {
-    use std::{num::NonZeroU8, str::FromStr};
+    use std::num::NonZeroU8;
+    use std::str::FromStr;
 
     use eyre::{OptionExt, Report, Result};
 
@@ -289,11 +288,9 @@ mod player {
 }
 
 mod spell {
-    use std::{
-        fmt::{self, Display, Formatter},
-        hash::{Hash, Hasher},
-        num::NonZeroU8,
-    };
+    use std::fmt::{self, Display, Formatter};
+    use std::hash::{Hash, Hasher};
+    use std::num::NonZeroU8;
 
     use enum_map::{Enum, EnumMap};
 

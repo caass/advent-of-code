@@ -1,7 +1,5 @@
-use std::{
-    ops::{Bound, RangeBounds},
-    str::FromStr,
-};
+use std::ops::{Bound, RangeBounds};
+use std::str::FromStr;
 
 use eyre::{eyre, Report, Result};
 use rayon::prelude::*;

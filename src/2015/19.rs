@@ -1,9 +1,7 @@
-use std::{
-    collections::{HashMap, HashSet},
-    ops::Deref,
-    str::FromStr,
-    sync::atomic::{AtomicUsize, Ordering},
-};
+use std::collections::{HashMap, HashSet};
+use std::ops::Deref;
+use std::str::FromStr;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use eyre::{bail, eyre, OptionExt, Report};
 use fnv::FnvBuildHasher;

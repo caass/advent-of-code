@@ -1,4 +1,6 @@
-use std::{collections::HashMap, str::FromStr, sync::OnceLock};
+use std::collections::HashMap;
+use std::str::FromStr;
+use std::sync::OnceLock;
 
 use eyre::{eyre, OptionExt, Report, Result};
 use fnv::FnvBuildHasher;

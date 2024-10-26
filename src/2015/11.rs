@@ -1,9 +1,7 @@
-use std::{
-    fmt::{self, Display, Formatter, Write},
-    iter::FusedIterator,
-    ops::{Add, AddAssign, Sub, SubAssign},
-    str::FromStr,
-};
+use std::fmt::{self, Display, Formatter, Write};
+use std::iter::FusedIterator;
+use std::ops::{Add, AddAssign, Sub, SubAssign};
+use std::str::FromStr;
 
 use eyre::{bail, eyre, Report, Result};
 use rayon::iter::plumbing::{bridge, Producer};

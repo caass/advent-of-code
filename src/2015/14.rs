@@ -1,8 +1,6 @@
-use std::{
-    collections::HashMap,
-    hash::{Hash, Hasher},
-    ops::AddAssign,
-};
+use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
+use std::ops::AddAssign;
 
 use eyre::{eyre, OptionExt, Report, Result};
 use fnv::FnvBuildHasher;

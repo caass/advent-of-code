@@ -1,8 +1,6 @@
-use std::{
-    fmt::{self, Display, Formatter},
-    num::NonZeroUsize,
-    str::FromStr,
-};
+use std::fmt::{self, Display, Formatter};
+use std::num::NonZeroUsize;
+use std::str::FromStr;
 
 use eyre::{eyre, Report, Result};
 

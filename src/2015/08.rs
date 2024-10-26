@@ -1,7 +1,5 @@
-use std::{
-    fmt::{self, Debug, Display, Formatter, Write},
-    str::FromStr,
-};
+use std::fmt::{self, Debug, Display, Formatter, Write};
+use std::str::FromStr;
 
 use eyre::{bail, eyre, Report, Result};
 use rayon::prelude::*;

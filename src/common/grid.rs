@@ -1,8 +1,6 @@
-use std::{
-    fmt::{self, Display, Formatter},
-    marker::PhantomData,
-    ops::{Bound, Index, IndexMut, RangeBounds},
-};
+use std::fmt::{self, Display, Formatter};
+use std::marker::PhantomData;
+use std::ops::{Bound, Index, IndexMut, RangeBounds};
 
 use either::Either;
 use itertools::Itertools;

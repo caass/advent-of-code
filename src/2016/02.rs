@@ -1,7 +1,5 @@
-use std::{
-    fmt::{self, Display, Formatter},
-    str::FromStr,
-};
+use std::fmt::{self, Display, Formatter};
+use std::str::FromStr;
 
 use eyre::{bail, eyre, Report, Result};
 

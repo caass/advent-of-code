@@ -1,5 +1,5 @@
-use std::ops::Index;
-use std::{ops::IndexMut, str::FromStr};
+use std::ops::{Index, IndexMut};
+use std::str::FromStr;
 
 use eyre::{bail, eyre, OptionExt, Report};
 
