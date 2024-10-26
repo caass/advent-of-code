@@ -12,7 +12,7 @@ use winnow::{
 use crate::common::grid::{Coordinate, Grid};
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/6
+/// <https://adventofcode.com/2015/day/6>
 pub const PROBABLY_A_FIRE_HAZARD: Problem = Problem::solved(&part_1, &part_2);
 
 const SIDE_LENGTH: usize = 1000;

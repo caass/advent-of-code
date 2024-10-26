@@ -13,7 +13,7 @@ impl ProblemSet {
     }
 
     pub fn days(&self) -> impl Iterator<Item = (Day, &Problem)> {
-        Day::iter().flat_map(|day| self.day(day).map(|problem| (day, problem)))
+        Day::iter().filter_map(|day| self.day(day).map(|problem| (day, problem)))
     }
 
     pub(crate) const fn with_day(mut self, day: Day, problem: Problem) -> Self {

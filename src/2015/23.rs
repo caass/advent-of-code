@@ -5,19 +5,19 @@ use eyre::{bail, eyre, OptionExt, Report};
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/23
+/// <https://adventofcode.com/2015/day/23>
 pub const OPENING_THE_TURING_LOCK: Problem = Problem::solved(
     &|input| {
         input.parse().map(|program: Program| {
             let mut computer = Computer::default();
-            computer.run(program);
+            computer.run(&program);
             computer.b
         })
     },
     &|input| {
         input.parse().map(|program: Program| {
             let mut computer = Computer::new(1, 0);
-            computer.run(program);
+            computer.run(&program);
             computer.b
         })
     },
@@ -58,7 +58,7 @@ impl IndexMut<Register> for Computer {
 }
 
 impl Computer {
-    fn run(&mut self, program: Program) {
+    fn run(&mut self, program: &Program) {
         let mut cursor = 0isize;
         while let Some(instruction) = cursor
             .try_into()

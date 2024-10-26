@@ -28,7 +28,7 @@ impl Deref for Password {
 impl Display for Password {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(self.deref(), f)
+        Display::fmt(&**self, f)
     }
 }
 
@@ -50,7 +50,7 @@ impl Password {
             // Update the password digit-by-digit.
             |hash, digits| {
                 if let Some(slot) = digits.iter_mut().find(|opt| opt.is_none()) {
-                    *slot = Some(lower_bits_to_hex(hash[2]))
+                    *slot = Some(lower_bits_to_hex(hash[2]));
                 };
             },
         );
@@ -121,12 +121,12 @@ impl Password {
     }
 }
 
-#[inline(always)]
+#[inline]
 const fn lower_bits_to_hex(byte: u8) -> NonZeroU8 {
     bits_to_hex::<false>(byte)
 }
 
-#[inline(always)]
+#[inline]
 const fn upper_bits_to_hex(byte: u8) -> NonZeroU8 {
     bits_to_hex::<true>(byte)
 }

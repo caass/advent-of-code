@@ -11,7 +11,7 @@ use winnow::{ascii::dec_uint, prelude::*};
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/16
+/// <https://adventofcode.com/2015/day/16>
 pub const AUNT_SUE: Problem = Problem::solved(
     &|input| input.parse::<Aunts>()?.find(|sue| sue.matches(&READOUT)),
     &|input| {
@@ -124,27 +124,27 @@ impl Sue {
     }
 
     fn matches_range(&self, readout: &MfcsamReadout) -> bool {
-        self.children.map(|n| n == readout.children).unwrap_or(true)
-            && self.samoyeds.map(|n| n == readout.samoyeds).unwrap_or(true)
-            && self.akitas.map(|n| n == readout.akitas).unwrap_or(true)
-            && self.vizslas.map(|n| n == readout.vizslas).unwrap_or(true)
-            && self.cars.map(|n| n == readout.cars).unwrap_or(true)
-            && self.perfumes.map(|n| n == readout.perfumes).unwrap_or(true)
+        self.children.map_or(true, |n| n == readout.children)
+            && self.samoyeds.map_or(true, |n| n == readout.samoyeds)
+            && self.akitas.map_or(true, |n| n == readout.akitas)
+            && self.vizslas.map_or(true, |n| n == readout.vizslas)
+            && self.cars.map_or(true, |n| n == readout.cars)
+            && self.perfumes.map_or(true, |n| n == readout.perfumes)
 
             // compensate for nuclear decay of cat dander and tree pollen
-            && self.trees.map(|n| n > readout.trees).unwrap_or(true)
-            && self.cats.map(|n| n > readout.cats).unwrap_or(true)
+            && self.trees.map_or(true, |n| n > readout.trees)
+            && self.cats.map_or(true, |n| n > readout.cats)
 
             // compensate for modial interaction of magnetoreluctance
-            && self.pomeranians.map(|n| n < readout.pomeranians).unwrap_or(true)
-            && self.goldfish.map(|n| n < readout.goldfish).unwrap_or(true)
+            && self.pomeranians.map_or(true, |n| n < readout.pomeranians)
+            && self.goldfish.map_or(true, |n| n < readout.goldfish)
     }
 }
 
 impl FromIterator<Compound> for Sue {
     fn from_iter<T: IntoIterator<Item = Compound>>(iter: T) -> Self {
         let mut children = None;
-        let mut cats = None;
+        let mut kitties = None;
         let mut samoyeds = None;
         let mut pomeranians = None;
         let mut akitas = None;
@@ -157,7 +157,7 @@ impl FromIterator<Compound> for Sue {
         for Compound { kind, count } in iter {
             let opt = match kind {
                 CompoundKind::Children => &mut children,
-                CompoundKind::Cats => &mut cats,
+                CompoundKind::Cats => &mut kitties,
                 CompoundKind::Samoyeds => &mut samoyeds,
                 CompoundKind::Pomeranians => &mut pomeranians,
                 CompoundKind::Akitas => &mut akitas,
@@ -173,7 +173,7 @@ impl FromIterator<Compound> for Sue {
 
         Sue {
             children,
-            cats,
+            cats: kitties,
             samoyeds,
             pomeranians,
             akitas,

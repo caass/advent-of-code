@@ -87,7 +87,7 @@ impl<const N: usize, T> Grid<N, T> {
     }
 
     pub fn neighbors(&self, coordinate: Coordinate) -> impl Iterator<Item = &T> {
-        coordinate.neighbors().flat_map(|coord| self.get(coord))
+        coordinate.neighbors().filter_map(|coord| self.get(coord))
     }
 }
 

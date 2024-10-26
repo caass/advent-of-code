@@ -6,13 +6,13 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/21
+/// <https://adventofcode.com/2015/day/21>
 pub const RPG_SIMULATOR_20XX: Problem = Problem::solved(
     &|input: &str| {
         let player = Character::PLAYER;
         let boss = input.parse()?;
         let loadout = player
-            .best_loadout(&boss)
+            .best_loadout(boss)
             .ok_or_eyre("impossible to beat boss")?;
 
         Ok::<_, Report>(loadout.cost())
@@ -21,7 +21,7 @@ pub const RPG_SIMULATOR_20XX: Problem = Problem::solved(
         let player = Character::PLAYER;
         let boss = input.parse()?;
         let loadout = player
-            .worst_loadout(&boss)
+            .worst_loadout(boss)
             .ok_or_eyre("impossible to lose to boss")?;
 
         Ok::<_, Report>(loadout.cost())
@@ -37,17 +37,13 @@ struct Loadout {
 
 impl Loadout {
     fn cost(&self) -> u16 {
-        self.weapon.cost as u16
-            + self
-                .armor
-                .as_ref()
-                .map(|armor| armor.cost as u16)
-                .unwrap_or(0)
+        u16::from(self.weapon.cost)
+            + self.armor.as_ref().map_or(0, |armor| u16::from(armor.cost))
             + self
                 .rings
                 .iter()
                 .flatten()
-                .map(|ring| ring.cost as u16)
+                .map(|ring| u16::from(ring.cost))
                 .sum::<u16>()
     }
 }
@@ -66,7 +62,7 @@ impl Character {
         damage: 0,
     };
 
-    fn damage_to(&self, enemy: &Character) -> u8 {
+    fn damage_to(self, enemy: Character) -> u8 {
         if self.damage <= enemy.armor {
             1
         } else {
@@ -74,26 +70,26 @@ impl Character {
         }
     }
 
-    fn best_loadout(&self, enemy: &Character) -> Option<Loadout> {
+    fn best_loadout(self, enemy: Character) -> Option<Loadout> {
         loadouts()
             .filter(|loadout| self.with_loadout(loadout).wins_against(enemy))
-            .min_by_key(|loadout| loadout.cost())
+            .min_by_key(Loadout::cost)
     }
 
-    fn worst_loadout(&self, enemy: &Character) -> Option<Loadout> {
+    fn worst_loadout(self, enemy: Character) -> Option<Loadout> {
         loadouts()
             .filter(|loadout| self.with_loadout(loadout).loses_to(enemy))
-            .max_by_key(|loadout| loadout.cost())
+            .max_by_key(Loadout::cost)
     }
 
     /// Returns `true` if `self` loses a fight against `enemy`
     #[inline]
-    fn loses_to(&self, enemy: &Character) -> bool {
+    fn loses_to(self, enemy: Character) -> bool {
         !self.wins_against(enemy)
     }
 
     /// Returns `true` if `self` wins a fight against `enemy`
-    fn wins_against(&self, enemy: &Character) -> bool {
+    fn wins_against(self, enemy: Character) -> bool {
         // this is like a linear equation:
         //
         // let f(t) = the damage dealt by the opponent
@@ -111,7 +107,7 @@ impl Character {
         // The winner is whoever has a higher `t` when f(t) <= self.hp, where ties go to the player.
 
         #[inline]
-        fn rounds_survived(protagonist: &Character, antagonist: &Character) -> u8 {
+        fn rounds_survived(protagonist: Character, antagonist: Character) -> u8 {
             (0..=u8::MAX)
                 .into_par_iter()
                 .by_exponential_blocks()

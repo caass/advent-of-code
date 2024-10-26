@@ -4,9 +4,13 @@ use void::Void;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/10
+/// <https://adventofcode.com/2015/day/10>
 pub const ELVES_LOOK_ELVES_SAY: Problem = Problem::solved(&look_and_say::<40>, &look_and_say::<50>);
 
+#[allow(
+    clippy::unnecessary_wraps,
+    reason = "TODO: find an ergonomic way to return either `T` or `Result<T>`"
+)]
 fn look_and_say<const N: usize>(n: &str) -> Result<usize, Void> {
     let mut n = n.to_string();
     for _ in 0..N {

@@ -16,7 +16,7 @@ impl Problem {
     }
 
     pub fn parts(&self) -> impl Iterator<Item = (Part, &dyn Solution)> {
-        Part::iter().flat_map(|part| self.part(part).map(|solution| (part, solution)))
+        Part::iter().filter_map(|part| self.part(part).map(|solution| (part, solution)))
     }
 
     #[allow(dead_code, reason = "Sometimes unused depending on solution progress")]

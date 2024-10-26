@@ -6,7 +6,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/24
+/// <https://adventofcode.com/2015/day/24>
 pub const IT_HANGS_IN_THE_BALANCE: Problem = Problem::solved(
     &|input| {
         input
@@ -67,7 +67,7 @@ impl PackingList {
             .iter()
             .copied()
             .map(|Package { weight }| u64::from(weight))
-            .reduce(|a, b| a.saturating_mul(b))
+            .reduce(u64::saturating_mul)
             .unwrap_or_default()
     }
 }

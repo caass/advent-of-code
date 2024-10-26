@@ -61,7 +61,7 @@ struct Position {
 
 impl Position {
     #[inline]
-    fn distance_from_origin(&self) -> u16 {
+    fn distance_from_origin(self) -> u16 {
         self.x.unsigned_abs() + self.y.unsigned_abs()
     }
 
@@ -82,7 +82,7 @@ impl Position {
 
     #[inline]
     fn west(&mut self, steps: i16) {
-        self.x -= steps
+        self.x -= steps;
     }
 
     fn walk(&mut self, steps: u8, orientation: Orientation) {

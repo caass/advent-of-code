@@ -15,14 +15,18 @@ use winnow::{
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/7
+type WireName = TinyAsciiStr<4>;
+const A: WireName = unsafe { WireName::from_bytes_unchecked(*b"a\0\0\0") };
+const B: WireName = unsafe { WireName::from_bytes_unchecked(*b"b\0\0\0") };
+
+/// <https://adventofcode.com/2015/day/7>
 pub const SOME_ASSEMBLY_REQUIRED: Problem = Problem::solved(
     &|input| {
         input
             .par_lines()
             .map(|line| line.trim().parse())
             .collect::<Result<WireKit>>()?
-            .measure(&A)
+            .measure(A)
             .ok_or_eyre("failed to measure wire A")
     },
     &|input| {
@@ -31,24 +35,20 @@ pub const SOME_ASSEMBLY_REQUIRED: Problem = Problem::solved(
             .map(|line| line.trim().parse())
             .collect::<Result<WireKit>>()?;
 
-        let a = kit.measure(&A).ok_or_eyre("failed to measure wire A")?;
+        let a = kit.measure(A).ok_or_eyre("failed to measure wire A")?;
         kit.reset();
         kit.set(B, a)?;
 
-        kit.measure(&A).ok_or_eyre("failed to measure wire A")
+        kit.measure(A).ok_or_eyre("failed to measure wire A")
     },
 );
-
-type WireName = TinyAsciiStr<4>;
-const A: WireName = unsafe { WireName::from_bytes_unchecked(*b"a\0\0\0") };
-const B: WireName = unsafe { WireName::from_bytes_unchecked(*b"b\0\0\0") };
 
 #[derive(Debug)]
 struct WireKit(HashMap<WireName, MeasuredInput, FnvBuildHasher>);
 
 impl WireKit {
-    fn measure(&self, wire: &WireName) -> Option<u16> {
-        self.0.get(wire)?.measure(self)
+    fn measure(&self, wire: WireName) -> Option<u16> {
+        self.0.get(&wire)?.measure(self)
     }
 
     fn reset(&mut self) {
@@ -89,15 +89,15 @@ impl MeasuredInput {
         self.measured
             .get_or_init(|| match self.input {
                 Input::Constant(Source::Constant(n)) => Some(n),
-                Input::Constant(Source::Wire(ref w)) => kit.measure(w),
+                Input::Constant(Source::Wire(w)) => kit.measure(w),
                 Input::Not(Source::Constant(n)) => Some(!n),
-                Input::Not(Source::Wire(ref w)) => kit.measure(w).map(|n| !n),
+                Input::Not(Source::Wire(w)) => kit.measure(w).map(|n| !n),
                 Input::And(Source::Constant(n), Source::Constant(m)) => Some(n & m),
-                Input::And(Source::Constant(n), Source::Wire(ref w))
-                | Input::And(Source::Wire(ref w), Source::Constant(n)) => {
+                Input::And(Source::Constant(n), Source::Wire(w))
+                | Input::And(Source::Wire(w), Source::Constant(n)) => {
                     kit.measure(w).map(move |m| m & n)
                 }
-                Input::And(Source::Wire(ref w1), Source::Wire(ref w2)) => std::thread::scope(|s| {
+                Input::And(Source::Wire(w1), Source::Wire(w2)) => std::thread::scope(|s| {
                     let m_handle = s.spawn(move || kit.measure(w1));
                     let n_handle = s.spawn(move || kit.measure(w2));
 
@@ -107,11 +107,11 @@ impl MeasuredInput {
                     Some(m & n)
                 }),
                 Input::Or(Source::Constant(n), Source::Constant(m)) => Some(n | m),
-                Input::Or(Source::Constant(n), Source::Wire(ref w))
-                | Input::Or(Source::Wire(ref w), Source::Constant(n)) => {
+                Input::Or(Source::Constant(n), Source::Wire(w))
+                | Input::Or(Source::Wire(w), Source::Constant(n)) => {
                     kit.measure(w).map(move |m| m | n)
                 }
-                Input::Or(Source::Wire(ref w1), Source::Wire(ref w2)) => std::thread::scope(|s| {
+                Input::Or(Source::Wire(w1), Source::Wire(w2)) => std::thread::scope(|s| {
                     let m_handle = s.spawn(move || kit.measure(w1));
                     let n_handle = s.spawn(move || kit.measure(w2));
 
@@ -121,13 +121,9 @@ impl MeasuredInput {
                     Some(m | n)
                 }),
                 Input::LShift(Source::Constant(n), shift) => Some(n << shift),
-                Input::LShift(Source::Wire(ref w), shift) => {
-                    kit.measure(w).map(move |n| n << shift)
-                }
+                Input::LShift(Source::Wire(w), shift) => kit.measure(w).map(move |n| n << shift),
                 Input::RShift(Source::Constant(n), shift) => Some(n >> shift),
-                Input::RShift(Source::Wire(ref w), shift) => {
-                    kit.measure(w).map(move |n| n >> shift)
-                }
+                Input::RShift(Source::Wire(w), shift) => kit.measure(w).map(move |n| n >> shift),
             })
             .as_ref()
             .copied()

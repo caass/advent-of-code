@@ -4,6 +4,7 @@ use std::hash::Hash;
 use std::iter::repeat;
 use std::mem::transmute;
 use std::ops::{AddAssign, Deref};
+use std::ptr;
 use std::str::{self, FromStr};
 
 use eyre::{bail, eyre, OptionExt, Report, Result};
@@ -69,19 +70,16 @@ impl Room {
             .letters()
             .for_each(|letter| frequencies.entry(letter).or_default().add_assign(1));
 
-        let Some((a, b, c, d, e)) = frequencies
+        let expected_checksum = frequencies
             .into_iter()
             .map(|(letter, count)| LetterFrequency { letter, count })
             .sorted()
             .rev()
             .map(|LetterFrequency { letter, .. }| letter)
             .take(5)
-            .collect_tuple()
-        else {
-            return false;
-        };
+            .collect::<Checksum>();
 
-        Checksum([a, b, c, d, e]) == self.checksum
+        expected_checksum == self.checksum
     }
 
     fn decrypt(self) -> DecryptedName {
@@ -143,7 +141,7 @@ struct EncryptedName(Vec<NamePart>);
 
 impl EncryptedName {
     fn letters(&self) -> impl Iterator<Item = Letter> + use<'_> {
-        self.0.iter().flat_map(|part| part.letters())
+        self.0.iter().flat_map(NamePart::letters)
     }
 
     fn decrypt(mut self, shift: u16) -> DecryptedName {
@@ -231,7 +229,8 @@ impl Deref for NamePart {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        let bytes = unsafe { transmute::<&[Letter], &[u8]>(&self.0) };
+        let bytes_ptr = ptr::from_ref::<[Letter]>(&self.0) as *const [u8];
+        let bytes = unsafe { &*bytes_ptr };
         unsafe { str::from_utf8_unchecked(bytes) }
     }
 }
@@ -280,7 +279,7 @@ impl Letter {
         let ascii_byte = self as u8;
         let zeroed_byte = ascii_byte - b'a';
 
-        let shifted = zeroed_byte as u16 + by;
+        let shifted = u16::from(zeroed_byte) + by;
         let rotated_byte = (shifted % 26) as u8;
 
         let shifted_ascii_byte = rotated_byte + b'a';
@@ -322,6 +321,15 @@ impl TryFrom<char> for Letter {
 #[derive(Debug, PartialEq, Eq)]
 struct Checksum([Letter; 5]);
 
+impl FromIterator<Letter> for Checksum {
+    fn from_iter<T: IntoIterator<Item = Letter>>(iter: T) -> Self {
+        let mut it = iter.into_iter();
+        Self(std::array::from_fn(|_| {
+            it.next().expect("iterator to contain 5 letters")
+        }))
+    }
+}
+
 impl FromStr for Checksum {
     type Err = Report;
 
@@ -343,7 +351,8 @@ impl Deref for Checksum {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        let bytes = unsafe { transmute::<&[Letter], &[u8]>(&self.0) };
+        let bytes_ptr = ptr::from_ref::<[Letter]>(&self.0) as *const [u8];
+        let bytes = unsafe { &*bytes_ptr };
         unsafe { str::from_utf8_unchecked(bytes) }
     }
 }

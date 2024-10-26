@@ -11,9 +11,9 @@ use crate::meta::Problem;
 
 use self::boss::Boss;
 use self::player::Player;
-use self::spell::{Action, Effects, Instant, Spell, SpellKind};
+use self::spell::{Action, Effects, Instant, Kind, Spell};
 
-/// https://adventofcode.com/2015/day/22
+/// <https://adventofcode.com/2015/day/22>
 pub const WIZARD_SIMULATOR_20XX: Problem = Problem::solved(
     &|input| {
         let boss: Boss = input.parse()?;
@@ -164,15 +164,15 @@ impl GameState {
         self.total_mana_spent = self.total_mana_spent.saturating_add(spell.cost.into());
 
         match spell.kind {
-            SpellKind::Instant(Instant::Damage) => self.boss.defend(spell.value()),
-            SpellKind::Instant(Instant::Drain) => {
+            Kind::Instant(Instant::Damage) => self.boss.defend(spell.value()),
+            Kind::Instant(Instant::Drain) => {
                 self.boss.defend(spell.value());
                 self.player.heal(spell.value());
             }
-            SpellKind::Effect { turns, action } if !self.effects.is_active(&action) => {
-                self.effects.cast(action, turns)
+            Kind::Effect { turns, action } if !self.effects.is_active(action) => {
+                self.effects.cast(action, turns);
             }
-            SpellKind::Effect { .. } => return None,
+            Kind::Effect { .. } => return None,
         };
 
         Some(self)
@@ -200,7 +200,7 @@ mod boss {
 
         /// Attack, returning the amount of damage dealt to the player after taking armor into account.
         #[inline]
-        pub(super) fn attack(&self, armor: u8) -> NonZeroU8 {
+        pub(super) fn attack(self, armor: u8) -> NonZeroU8 {
             match self.damage.saturating_sub(armor) {
                 0 => unsafe { NonZeroU8::new_unchecked(1) },
                 n @ 1.. => unsafe { NonZeroU8::new_unchecked(n) },
@@ -209,7 +209,7 @@ mod boss {
 
         /// Returns `true` if the boss is dead.
         #[inline]
-        pub(super) fn is_dead(&self) -> bool {
+        pub(super) fn is_dead(self) -> bool {
             self.hp == 0
         }
     }
@@ -251,7 +251,7 @@ mod player {
 
         /// Check if the player is dead
         #[inline]
-        pub(super) fn is_dead(&self) -> bool {
+        pub(super) fn is_dead(self) -> bool {
             self.mana < Spell::MAGIC_MISSILE.cost.into() || self.hp == 0
         }
 
@@ -263,7 +263,7 @@ mod player {
 
         /// Return a list of all the spells this player can cast with their current mana.
         #[inline]
-        pub(super) fn options(&self) -> [Option<Spell>; 5] {
+        pub(super) fn options(self) -> [Option<Spell>; 5] {
             std::array::from_fn(|i| (u16::from(SPELLS[i].cost) <= self.mana).then_some(SPELLS[i]))
         }
 
@@ -298,7 +298,7 @@ mod spell {
     pub(super) struct Spell {
         pub(super) name: &'static str,
         pub(super) cost: u8,
-        pub(super) kind: SpellKind,
+        pub(super) kind: Kind,
     }
 
     impl Display for Spell {
@@ -325,19 +325,19 @@ mod spell {
         pub const MAGIC_MISSILE: Spell = Spell {
             name: "Magic Missile",
             cost: 53,
-            kind: SpellKind::Instant(Instant::Damage),
+            kind: Kind::Instant(Instant::Damage),
         };
 
         pub const DRAIN: Spell = Spell {
             name: "Drain",
             cost: 73,
-            kind: SpellKind::Instant(Instant::Drain),
+            kind: Kind::Instant(Instant::Drain),
         };
 
         pub const SHIELD: Spell = Spell {
             name: "Shield",
             cost: 113,
-            kind: SpellKind::Effect {
+            kind: Kind::Effect {
                 turns: 6,
                 action: Action::Shield,
             },
@@ -346,7 +346,7 @@ mod spell {
         pub const POISON: Spell = Spell {
             name: "Poison",
             cost: 173,
-            kind: SpellKind::Effect {
+            kind: Kind::Effect {
                 turns: 6,
                 action: Action::Poison,
             },
@@ -355,7 +355,7 @@ mod spell {
         pub const RECHARGE: Spell = Spell {
             name: "Recharge",
             cost: 229,
-            kind: SpellKind::Effect {
+            kind: Kind::Effect {
                 turns: 5,
                 action: Action::Recharge,
             },
@@ -368,17 +368,17 @@ mod spell {
     }
 
     #[derive(Debug, Clone, Copy)]
-    pub enum SpellKind {
+    pub enum Kind {
         Instant(Instant),
         Effect { turns: u8, action: Action },
     }
 
-    impl SpellKind {
+    impl Kind {
         #[inline]
-        pub const fn value(&self) -> u8 {
+        pub const fn value(self) -> u8 {
             match self {
-                SpellKind::Instant(instant) => instant.value(),
-                SpellKind::Effect { action, .. } => action.value(),
+                Kind::Instant(instant) => instant.value(),
+                Kind::Effect { action, .. } => action.value(),
             }
         }
     }
@@ -391,7 +391,7 @@ mod spell {
 
     impl Instant {
         #[inline]
-        pub const fn value(&self) -> u8 {
+        pub const fn value(self) -> u8 {
             match self {
                 Instant::Damage => 4,
                 Instant::Drain => 2,
@@ -408,7 +408,7 @@ mod spell {
 
     impl Action {
         #[inline]
-        pub const fn value(&self) -> u8 {
+        pub const fn value(self) -> u8 {
             match self {
                 Action::Shield => 7,
                 Action::Poison => 3,
@@ -423,8 +423,8 @@ mod spell {
     impl Effects {
         /// Returns `true` if the given action is already in effect.
         #[inline]
-        pub(super) fn is_active(&self, action: &Action) -> bool {
-            self.0[*action].is_some()
+        pub(super) fn is_active(self, action: Action) -> bool {
+            self.0[action].is_some()
         }
 
         /// Cast the given spell action for the given number of turns.

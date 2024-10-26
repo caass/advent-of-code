@@ -11,7 +11,7 @@ use winnow::prelude::*;
 use crate::common::{TryFromStr, TryParse};
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/13
+/// <https://adventofcode.com/2015/day/13>
 pub const KNIGHTS_OF_THE_DINNER_TABLE: Problem = Problem::solved(
     &|input| input.try_parse().and_then(Table::max_happiness),
     &|input| input.try_parse().and_then(Table::max_happiness_with_self),
@@ -87,13 +87,11 @@ impl<'s> FromIterator<Relationship<'s>> for Table<'s> {
             let a = graph
                 .node_weights()
                 .position(|&name| name == subject)
-                .map(NodeIndex::<u8>::new)
-                .unwrap_or_else(|| graph.add_node(subject));
+                .map_or_else(|| graph.add_node(subject), NodeIndex::<u8>::new);
             let b = graph
                 .node_weights()
                 .position(|&name| name == object)
-                .map(NodeIndex::<u8>::new)
-                .unwrap_or_else(|| graph.add_node(object));
+                .map_or_else(|| graph.add_node(object), NodeIndex::<u8>::new);
 
             graph.add_edge(a, b, feeling);
         }

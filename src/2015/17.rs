@@ -6,7 +6,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/17
+/// <https://adventofcode.com/2015/day/17>
 pub const NO_SUCH_THING_AS_TOO_MUCH: Problem = Problem::solved(
     &|input| {
         input
@@ -50,7 +50,7 @@ impl ContainerCombinationSet {
         let mut n = usize::MAX;
         let mut k = 0;
 
-        for combination in self.combinations.iter() {
+        for combination in &self.combinations {
             let m = combination.len();
 
             match m.cmp(&n) {
@@ -275,7 +275,7 @@ impl FromIterator<u8> for ContainerCollection {
             .enumerate()
             .map(|(id, volume)| Container {
                 volume,
-                id: id as u8,
+                id: u8::try_from(id).expect("to have fewer than 256 elements in iterator"),
             })
             .collect();
         // No need to sort, since the ids are assigned in order

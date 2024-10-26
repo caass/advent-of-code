@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/2
+/// <https://adventofcode.com/2015/day/2>
 pub const I_WAS_TOLD_THERE_WOULD_BE_NO_MATH: Problem = Problem::solved(
     &|input| {
         input
@@ -30,11 +30,11 @@ impl Dimensions {
     /// enough to cover all six sides plus extra equal to the area of the smallest side.
     #[inline]
     fn wrapping_paper(self) -> usize {
-        let Dimensions([l, w, h]) = self;
+        let Dimensions([length, width, height]) = self;
 
-        let a = l * w;
-        let b = w * h;
-        let c = h * l;
+        let a = length * width;
+        let b = width * height;
+        let c = height * length;
 
         2 * a + 2 * b + 2 * c + a.min(b).min(c)
     }
@@ -43,13 +43,13 @@ impl Dimensions {
     /// enough to wrap around the smallest size, plus bow-material equal to the volume of the present.
     #[inline]
     fn ribbon(self) -> usize {
-        let Dimensions([l, w, h]) = self;
+        let Dimensions([length, width, height]) = self;
 
-        let volume = l * w * h;
+        let volume = length * width * height;
 
-        let a = 2 * (l + w);
-        let b = 2 * (w + h);
-        let c = 2 * (h + l);
+        let a = 2 * (length + width);
+        let b = 2 * (width + height);
+        let c = 2 * (height + length);
         let smallest_side = a.min(b).min(c);
 
         smallest_side + volume

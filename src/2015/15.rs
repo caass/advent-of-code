@@ -19,7 +19,7 @@ use crate::{
     meta::Problem,
 };
 
-/// https://adventofcode.com/2015/day/15
+/// <https://adventofcode.com/2015/day/15>
 pub const SCIENCE_FOR_HUNGRY_PEOPLE: Problem = Problem::solved(
     &|input| {
         input
@@ -316,7 +316,7 @@ fn example() {
     );
 
     let expected_score = sum.score();
-    assert_eq!(expected_score, 62842880);
+    assert_eq!(expected_score, 62_842_880);
 
     let actual_score = actual_kitchen.best_cookie(None).unwrap().score();
     assert_eq!(actual_score, expected_score);

@@ -11,7 +11,7 @@ use winnow::prelude::*;
 use crate::common::{TryFromStr, TryParse};
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/9
+/// <https://adventofcode.com/2015/day/9>
 pub const ALL_IN_A_SINGLE_NIGHT: Problem = Problem::solved(
     &|input| input.try_parse().map(Locations::shortest_distance),
     &|input| input.try_parse().map(Locations::longest_distance),
@@ -84,14 +84,12 @@ impl<'s> FromIterator<Leg<'s>> for Locations<'s> {
             let from_idx = graph
                 .node_weights()
                 .position(|&weight| weight == from)
-                .map(NodeIndex::<u8>::new)
-                .unwrap_or_else(|| graph.add_node(from));
+                .map_or_else(|| graph.add_node(from), NodeIndex::<u8>::new);
 
             let to_idx = graph
                 .node_weights()
                 .position(|&weight| weight == to)
-                .map(NodeIndex::<u8>::new)
-                .unwrap_or_else(|| graph.add_node(to));
+                .map_or_else(|| graph.add_node(to), NodeIndex::<u8>::new);
 
             graph.add_edge(from_idx, to_idx, distance);
         });

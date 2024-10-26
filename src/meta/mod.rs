@@ -15,13 +15,14 @@ pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST +
 
 impl AdventOfCode {
     #[inline]
+    #[must_use]
     pub const fn year(&self, year: Year) -> Option<&ProblemSet> {
         let idx = (year.as_u16() - Year::FIRST) as usize;
         self.0[idx].as_ref()
     }
 
     pub fn years(&self) -> impl Iterator<Item = (Year, &ProblemSet)> {
-        Year::iter().flat_map(|year| self.year(year).map(|set| (year, set)))
+        Year::iter().filter_map(|year| self.year(year).map(|set| (year, set)))
     }
 
     pub(crate) const fn with_year(mut self, year: Year, problems: ProblemSet) -> Self {

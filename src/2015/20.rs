@@ -4,7 +4,7 @@ use rayon::prelude::*;
 use crate::common::U32_MAX;
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/20
+/// <https://adventofcode.com/2015/day/20>
 pub const INFINITE_ELVES_AND_INFINITE_HOUSES: Problem = Problem::solved(
     &|input| {
         let n = input.trim().parse::<usize>()?;
@@ -81,6 +81,15 @@ struct Factors {
 impl Factors {
     fn of(n: usize) -> Self {
         // limit is sqrt of `n`, since sqrt(`n`) * sqrt(`n`) == of
+        #[allow(
+            clippy::cast_sign_loss,
+            clippy::cast_precision_loss,
+            clippy::cast_possible_truncation,
+            reason = "clippy has a lot of complaints about this line, but they're mostly overblown:
+                - cast_sign_loss: we're guaranteed to have a positive number
+                - cast_precision_loss: the 51 bits of the mantissa in `n` can fit in the 64 bits of `usize`
+                - cast_possible_truncation: the square root of `usize` always fits in a `usize`"
+        )]
         let limit = (n as f64).sqrt().trunc() as usize;
 
         Self {

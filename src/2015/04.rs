@@ -5,7 +5,7 @@ use rayon::prelude::*;
 use crate::common::U32_MAX;
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/4
+/// <https://adventofcode.com/2015/day/4>
 pub const THE_IDEAL_STOCKING_STUFFER: Problem = Problem::solved(
     &|input| {
         find(input, |hash| hash[0] == 0 && hash[1] == 0 && hash[2] < 0x10)

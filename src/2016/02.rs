@@ -76,9 +76,9 @@ impl Display for Digit {
 }
 
 impl Digit {
-    fn mental_next(&self, moove: Move) -> Option<Self> {
-        use Digit::*;
-        use Move::*;
+    fn mental_next(self, moove: Move) -> Option<Self> {
+        use Digit::{Eight, Five, Four, Nine, One, Seven, Six, Three, Two, A, B, C, D};
+        use Move::{Down, Left, Right, Up};
 
         // 1 2 3
         // 4 5 6
@@ -106,9 +106,9 @@ impl Digit {
         }
     }
 
-    fn actual_next(&self, moove: Move) -> Option<Digit> {
-        use Digit::*;
-        use Move::*;
+    fn actual_next(self, moove: Move) -> Option<Digit> {
+        use Digit::{Eight, Five, Four, Nine, One, Seven, Six, Three, Two, A, B, C, D};
+        use Move::{Down, Left, Right, Up};
 
         //     1
         //   2 3 4

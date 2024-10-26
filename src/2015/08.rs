@@ -12,7 +12,7 @@ use winnow::{
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/8
+/// <https://adventofcode.com/2015/day/8>
 pub const MATCHSTICKS: Problem = Problem::solved(
     &|input| {
         input
@@ -101,6 +101,10 @@ fn literal(input: &mut &str) -> PResult<Char> {
     any.context(StrContext::Label("character literal"))
         .map(|c: char| {
             debug_assert!(c.is_ascii());
+            #[allow(
+                clippy::cast_possible_truncation,
+                reason = "ASCII characters are all 1 byte long"
+            )]
             let byte = c as u32 as u8;
             Char::Literal(byte)
         })
@@ -159,10 +163,9 @@ impl Debug for Char {
 impl Display for Char {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
-            Char::Literal(c) => f.write_char(c as char),
             Char::Backslash => f.write_char('\\'),
             Char::Quote => f.write_char('"'),
-            Char::Hex(c) => f.write_char(c as char),
+            Char::Hex(c) | Char::Literal(c) => f.write_char(c as char),
         }
     }
 }
@@ -172,8 +175,7 @@ impl Char {
     const fn code_len(&self) -> usize {
         match self {
             Char::Literal(_) => 1,
-            Char::Backslash => 2,
-            Char::Quote => 2,
+            Char::Backslash | Char::Quote => 2,
             Char::Hex(_) => 4,
         }
     }
@@ -182,8 +184,7 @@ impl Char {
     const fn re_encoded_len(&self) -> usize {
         match self {
             Char::Literal(_) => 1,
-            Char::Backslash => 4,
-            Char::Quote => 4,
+            Char::Backslash | Char::Quote => 4,
             Char::Hex(_) => 5,
         }
     }

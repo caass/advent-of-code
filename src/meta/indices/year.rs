@@ -44,6 +44,7 @@ impl Year {
 
     /// Returns a u16 represenation of `Self` guaranteed to be between [`FIRST_YEAR`] and [`LAST_YEAR`].
     #[inline]
+    #[must_use]
     pub const fn as_u16(self) -> u16 {
         self as u16
     }

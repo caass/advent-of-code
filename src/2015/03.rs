@@ -6,7 +6,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/3
+/// <https://adventofcode.com/2015/day/3>
 pub const PERFECTLY_SPHERICAL_HOUSES_IN_A_VACUUM: Problem = Problem::solved(&part_1, &part_2);
 
 fn part_1(input: &str) -> Result<usize> {

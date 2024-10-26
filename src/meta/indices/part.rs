@@ -39,8 +39,8 @@ impl Part {
     pub const ONE: Part = Part(true);
     pub const TWO: Part = Part(false);
 
-    pub(crate) const fn as_u8(&self) -> u8 {
-        match *self {
+    pub(crate) const fn as_u8(self) -> u8 {
+        match self {
             Part::ONE => 1,
             Part::TWO => 2,
         }

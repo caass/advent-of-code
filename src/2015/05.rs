@@ -1,22 +1,25 @@
-use eyre::Result;
 use rayon::prelude::*;
+use void::Void;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/5
-pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem = Problem::solved(&part_1, &part_2);
+/// <https://adventofcode.com/2015/day/5>
+pub const DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS: Problem =
+    Problem::solved(&|input| Ok::<_, Void>(part_1(input)), &|input| {
+        Ok::<_, Void>(part_2(input))
+    });
 
 const VOWELS: [char; 5] = ['a', 'e', 'i', 'o', 'u'];
 const BANNED_PAIRS: [&[u8]; 4] = [b"ab", b"cd", b"pq", b"xy"];
 
-fn part_1(input: &str) -> Result<usize> {
+fn part_1(input: &str) -> usize {
     // A nice string is one with all of the following properties:
     //
     // - It contains at least three vowels (aeiou only), like aei, xazegov, or aeiouaeiouaeiou.
     // - It contains at least one letter that appears twice in a row, like xx, abcdde (dd), or aabbccdd (aa, bb, cc, or dd).
     // - It does not contain the strings ab, cd, pq, or xy, even if they are part of one of the other requirements.
 
-    Ok(input
+    input
         .par_lines()
         .filter(|line| {
             std::thread::scope(|s| {
@@ -36,11 +39,11 @@ fn part_1(input: &str) -> Result<usize> {
                 has_three_vowels && has_paired_letter && !has_banned_pair
             })
         })
-        .count())
+        .count()
 }
 
-fn part_2(input: &str) -> Result<usize> {
-    Ok(input
+fn part_2(input: &str) -> usize {
+    input
         .par_lines()
         .filter(|line| {
             std::thread::scope(|s| {
@@ -59,5 +62,5 @@ fn part_2(input: &str) -> Result<usize> {
                 has_nonoverlapping_pair && has_sandwich_pair
             })
         })
-        .count())
+        .count()
 }

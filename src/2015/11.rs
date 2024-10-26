@@ -9,7 +9,7 @@ use rayon::prelude::*;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/11
+/// <https://adventofcode.com/2015/day/11>
 pub const CORPORATE_POLICY: Problem =
     Problem::solved(&|input| input.parse().map(Password::next), &|input| {
         input.parse().map(Password::next).map(Password::next)
@@ -136,7 +136,7 @@ impl Iterator for PasswordIter {
 impl ExactSizeIterator for PasswordIter {
     #[inline]
     fn len(&self) -> usize {
-        match self.from.distance(&self.to) {
+        match self.from.distance(self.to) {
             // We're done iterating, we've hit every password
             0 if self.done => 0,
 
@@ -246,11 +246,11 @@ impl Password {
         self.increment();
         self.into_par_iter()
             .by_exponential_blocks()
-            .find_first(Password::is_valid)
+            .find_first(|pwd| pwd.is_valid())
             .expect("to find a valid password")
     }
 
-    fn is_valid(&self) -> bool {
+    fn is_valid(self) -> bool {
         let has_increasing_straight = self.letters().windows(3).any(|window| {
             window[0] <= Letter::X && window[0] + 1 == window[1] && window[1] + 1 == window[2]
         });
@@ -266,7 +266,7 @@ impl Password {
     }
 
     /// Returns the numerical `value` of this password, where `AAAAAAAA.value() == 0`.
-    const fn value(&self) -> usize {
+    const fn value(self) -> usize {
         let mut exp = 7;
         let mut i = 0;
         let mut out = 0;
@@ -286,7 +286,7 @@ impl Password {
 
     /// Returns the numerical `distance` between this password and `other`, representing the number of passwords
     /// needed to increment from `self` to `other`.
-    fn distance(&self, other: &Password) -> usize {
+    fn distance(self, other: Password) -> usize {
         const BASE: usize = Password::ZZZZZZZZ.value();
 
         let lhs = other.value();
@@ -459,14 +459,14 @@ impl Letter {
 
     /// Returns the [`char`] representation of this `Letter`
     #[inline]
-    const fn char(&self) -> char {
-        *self as u8 as char
+    const fn char(self) -> char {
+        self as u8 as char
     }
 
     /// Returns the base 10 value of this `Letter`, where `Letter::A.value() == 0` and `Letter::Z.value() == 25`.
     #[inline]
-    const fn value(&self) -> u8 {
-        *self as u8 - ASCII_LETTER_OFFSET
+    const fn value(self) -> u8 {
+        self as u8 - ASCII_LETTER_OFFSET
     }
 
     /// Increments this `Letter` by 1 wrapping at `Z`.
@@ -650,25 +650,26 @@ mod test {
         }
     }
 
+    #[allow(clippy::similar_names, reason = "they're similar passwords")]
     #[test]
     fn password_distance() {
-        let a: Password = "aaaaaaaa".parse().unwrap();
-        let b: Password = "aaaaaaaa".parse().unwrap();
+        let aaaaaaaa: Password = "aaaaaaaa".parse().unwrap();
+        let aaaaaaaa2: Password = "aaaaaaaa".parse().unwrap();
 
-        assert_eq!(a.distance(&b), 0);
-        assert_eq!(b.distance(&a), 0);
+        assert_eq!(aaaaaaaa.distance(aaaaaaaa2), 0);
+        assert_eq!(aaaaaaaa2.distance(aaaaaaaa), 0);
 
-        let c: Password = "aaaaaaab".parse().unwrap();
-        assert_eq!(a.distance(&c), 1);
-        assert_eq!(c.distance(&a), Password::ZZZZZZZZ.value() - 1);
+        let aaaaaaab: Password = "aaaaaaab".parse().unwrap();
+        assert_eq!(aaaaaaaa.distance(aaaaaaab), 1);
+        assert_eq!(aaaaaaab.distance(aaaaaaaa), Password::ZZZZZZZZ.value() - 1);
 
-        let d: Password = "aaaaaaaz".parse().unwrap();
-        assert_eq!(a.distance(&d), 25);
-        assert_eq!(d.distance(&a), Password::ZZZZZZZZ.value() - 25);
+        let aaaaaaaz: Password = "aaaaaaaz".parse().unwrap();
+        assert_eq!(aaaaaaaa.distance(aaaaaaaz), 25);
+        assert_eq!(aaaaaaaz.distance(aaaaaaaa), Password::ZZZZZZZZ.value() - 25);
 
-        let e: Password = "aaaaaaba".parse().unwrap();
-        assert_eq!(a.distance(&e), 26);
-        assert_eq!(e.distance(&a), Password::ZZZZZZZZ.value() - 26);
+        let aaaaaaba: Password = "aaaaaaba".parse().unwrap();
+        assert_eq!(aaaaaaaa.distance(aaaaaaba), 26);
+        assert_eq!(aaaaaaba.distance(aaaaaaaa), Password::ZZZZZZZZ.value() - 26);
     }
 
     #[test]

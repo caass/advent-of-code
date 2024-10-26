@@ -18,7 +18,7 @@ use crate::{
     meta::Problem,
 };
 
-/// https://adventofcode.com/2015/day/14
+/// <https://adventofcode.com/2015/day/14>
 pub const REINDEER_OLYMPICS: Problem = Problem::solved(&race, &tick_race);
 
 const RACE_DURATION: usize = 2503;

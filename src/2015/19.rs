@@ -10,7 +10,7 @@ use tinystr::TinyAsciiStr;
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/19
+/// <https://adventofcode.com/2015/day/19>
 pub const MEDICINE_FOR_RUDOLPH: Problem = Problem::solved(
     &|input| input.parse().map(|lab: Lab| lab.plus_ultra().len()),
     &|input| input.parse().map(|lab: Lab| lab.num_steps()),
@@ -93,8 +93,7 @@ impl FromStr for Molecule {
         while !remaining.is_empty() {
             let next_atom_start = remaining[1..]
                 .find(|ch: char| ch.is_ascii_uppercase())
-                .map(|up| up + 1)
-                .unwrap_or(remaining.len());
+                .map_or(remaining.len(), |up| up + 1);
 
             let (this_atom, rest) = remaining.split_at(next_atom_start);
 
@@ -128,7 +127,11 @@ impl Deref for Atom {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
-        self.0.deref()
+        #[allow(
+            clippy::explicit_auto_deref,
+            reason = "the compiler actually won't auto-deref here for some reason"
+        )]
+        &*self.0
     }
 }
 
@@ -147,13 +150,13 @@ impl FromStr for Lab {
     type Err = Report;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut lines = s.trim().lines().map(|line| line.trim());
+        let mut lines = s.trim().lines().map(str::trim);
         let target = lines
             .next_back()
             .ok_or_eyre("puzzle input was empty")?
             .parse()?;
 
-        if !lines.next_back().is_some_and(|line| line.is_empty()) {
+        if !lines.next_back().is_some_and(str::is_empty) {
             bail!("Expected a blank line before target molecule");
         }
 

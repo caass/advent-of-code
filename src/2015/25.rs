@@ -6,7 +6,7 @@ use eyre::{eyre, Report, Result};
 
 use crate::meta::Problem;
 
-/// https://adventofcode.com/2015/day/25
+/// <https://adventofcode.com/2015/day/25>
 pub const LET_IT_SNOW: Problem =
     Problem::partially_solved(&|input| input.parse().map(|coord: Coordinate| coord.value()));
 
@@ -79,7 +79,9 @@ struct Values {
 impl Values {
     #[inline]
     const fn new() -> Self {
-        Values { current: 20151125 }
+        Values {
+            current: 20_151_125,
+        }
     }
 }
 
@@ -89,7 +91,7 @@ impl Iterator for Values {
     #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         let current = self.current;
-        self.current = (current * 252533) % 33554393;
+        self.current = (current * 252_533) % 33_554_393;
         Some(current)
     }
 }
@@ -188,45 +190,45 @@ mod test {
     //  5 |   77061  17552253  28094349   6899651   9250759  31663883
     //  6 |33071741   6796745  25397450  24659492   1534922  27995004
 
-    coordinate_to_value!((1, 1), 20151125);
-    coordinate_to_value!((2, 1), 31916031);
-    coordinate_to_value!((3, 1), 16080970);
-    coordinate_to_value!((4, 1), 24592653);
-    coordinate_to_value!((5, 1), 77061);
-    coordinate_to_value!((6, 1), 33071741);
+    coordinate_to_value!((1, 1), 20_151_125);
+    coordinate_to_value!((2, 1), 31_916_031);
+    coordinate_to_value!((3, 1), 16_080_970);
+    coordinate_to_value!((4, 1), 24_592_653);
+    coordinate_to_value!((5, 1), 77_061);
+    coordinate_to_value!((6, 1), 33_071_741);
 
-    coordinate_to_value!((1, 2), 18749137);
-    coordinate_to_value!((2, 2), 21629792);
-    coordinate_to_value!((3, 2), 8057251);
-    coordinate_to_value!((4, 2), 32451966);
-    coordinate_to_value!((5, 2), 17552253);
-    coordinate_to_value!((6, 2), 6796745);
+    coordinate_to_value!((1, 2), 18_749_137);
+    coordinate_to_value!((2, 2), 21_629_792);
+    coordinate_to_value!((3, 2), 8_057_251);
+    coordinate_to_value!((4, 2), 32_451_966);
+    coordinate_to_value!((5, 2), 17_552_253);
+    coordinate_to_value!((6, 2), 6_796_745);
 
-    coordinate_to_value!((1, 3), 17289845);
-    coordinate_to_value!((2, 3), 16929656);
-    coordinate_to_value!((3, 3), 1601130);
-    coordinate_to_value!((4, 3), 21345942);
-    coordinate_to_value!((5, 3), 28094349);
-    coordinate_to_value!((6, 3), 25397450);
+    coordinate_to_value!((1, 3), 17_289_845);
+    coordinate_to_value!((2, 3), 16_929_656);
+    coordinate_to_value!((3, 3), 1_601_130);
+    coordinate_to_value!((4, 3), 21_345_942);
+    coordinate_to_value!((5, 3), 28_094_349);
+    coordinate_to_value!((6, 3), 25_397_450);
 
-    coordinate_to_value!((1, 4), 30943339);
-    coordinate_to_value!((2, 4), 7726640);
-    coordinate_to_value!((3, 4), 7981243);
-    coordinate_to_value!((4, 4), 9380097);
-    coordinate_to_value!((5, 4), 6899651);
-    coordinate_to_value!((6, 4), 24659492);
+    coordinate_to_value!((1, 4), 30_943_339);
+    coordinate_to_value!((2, 4), 7_726_640);
+    coordinate_to_value!((3, 4), 7_981_243);
+    coordinate_to_value!((4, 4), 9_380_097);
+    coordinate_to_value!((5, 4), 6_899_651);
+    coordinate_to_value!((6, 4), 24_659_492);
 
-    coordinate_to_value!((1, 5), 10071777);
-    coordinate_to_value!((2, 5), 15514188);
-    coordinate_to_value!((3, 5), 11661866);
-    coordinate_to_value!((4, 5), 10600672);
-    coordinate_to_value!((5, 5), 9250759);
-    coordinate_to_value!((6, 5), 1534922);
+    coordinate_to_value!((1, 5), 10_071_777);
+    coordinate_to_value!((2, 5), 15_514_188);
+    coordinate_to_value!((3, 5), 11_661_866);
+    coordinate_to_value!((4, 5), 10_600_672);
+    coordinate_to_value!((5, 5), 9_250_759);
+    coordinate_to_value!((6, 5), 1_534_922);
 
-    coordinate_to_value!((1, 6), 33511524);
-    coordinate_to_value!((2, 6), 4041754);
-    coordinate_to_value!((3, 6), 16474243);
-    coordinate_to_value!((4, 6), 31527494);
-    coordinate_to_value!((5, 6), 31663883);
-    coordinate_to_value!((6, 6), 27995004);
+    coordinate_to_value!((1, 6), 33_511_524);
+    coordinate_to_value!((2, 6), 4_041_754);
+    coordinate_to_value!((3, 6), 16_474_243);
+    coordinate_to_value!((4, 6), 31_527_494);
+    coordinate_to_value!((5, 6), 31_663_883);
+    coordinate_to_value!((6, 6), 27_995_004);
 }

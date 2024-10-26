@@ -72,6 +72,7 @@ impl AsRef<Path> for Day {
 
 impl Day {
     #[inline]
+    #[must_use]
     pub const fn as_u8(self) -> u8 {
         self as u8
     }
@@ -167,7 +168,7 @@ impl FromStr for Day {
 
 impl Hash for Day {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        state.write_u8(self.as_u8())
+        state.write_u8(self.as_u8());
     }
 }
 
