@@ -1,3 +1,4 @@
+use std::collections::hash_map;
 use std::fmt::Display;
 use std::ops::{AddAssign, Deref};
 use std::str;
@@ -9,36 +10,25 @@ use rayon::prelude::*;
 use crate::meta::Problem;
 
 pub const SIGNALS_AND_NOISE: Problem = Problem::solved(
-    &DecryptedMessage::from_most_common,
-    &DecryptedMessage::from_least_common,
+    &|message| DecryptedMessage::decrypt(message, |iter| iter.max_by_key(|(_, freq)| *freq)),
+    &|message| DecryptedMessage::decrypt(message, |iter| iter.min_by_key(|(_, freq)| *freq)),
 );
 
 type FrequencyMap = IntMap<usize, IntMap<u8, u8>>;
+type Frequencies = hash_map::IntoIter<u8, u8>;
 
 struct DecryptedMessage([u8; 8]);
 
 impl DecryptedMessage {
-    fn from_most_common(message: &str) -> Result<Self> {
-        DecryptedMessage::decrypt(message, |iter| {
-            *iter.max_by_key(|(_, freq)| *freq).unwrap().0
-        })
-    }
-
-    fn from_least_common(message: &str) -> Result<Self> {
-        DecryptedMessage::decrypt(message, |iter| {
-            *iter.min_by_key(|(_, freq)| *freq).unwrap().0
-        })
-    }
-
     fn decrypt<F>(message: &str, decryptor: F) -> Result<Self>
     where
-        F: Fn(<&IntMap<u8, u8> as IntoIterator>::IntoIter) -> u8,
+        F: Fn(Frequencies) -> Option<(u8, u8)>,
     {
         if !message.is_ascii() {
             bail!("Invalid input; need ascii characters");
         }
 
-        let frequencies = message
+        let index_frequencies = message
             .trim()
             .par_lines()
             .flat_map_iter(|line| line.as_bytes().iter().copied().enumerate())
@@ -64,22 +54,16 @@ impl DecryptedMessage {
                 b
             });
 
-        Ok(Self::via(&frequencies, decryptor))
-    }
+        let mut inner = [0; 8];
+        for (idx, freqs) in index_frequencies {
+            let Some((ch, _)) = decryptor(freqs.into_iter()) else {
+                bail!("Couldn't determine which car lives at index {idx}");
+            };
 
-    fn via<F>(map: &FrequencyMap, f: F) -> Self
-    where
-        F: Fn(<&IntMap<u8, u8> as IntoIterator>::IntoIter) -> u8,
-    {
-        let inner = std::array::from_fn(|i| {
-            let freqs = map.get(&i).unwrap_or_else(|| {
-                panic!("expected map to have frequencies for {} positions", i + 1)
-            });
+            inner[idx] = ch;
+        }
 
-            f(freqs.iter())
-        });
-
-        Self(inner)
+        Ok(Self(inner))
     }
 }
 
