@@ -8,7 +8,7 @@ use winnow::combinator::seq;
 use winnow::error::{ContextError, ErrMode, ParseError, StrContext};
 use winnow::prelude::*;
 
-use crate::common::from_str_ext::{TryFromStr, TryParse};
+use crate::common::{TryFromStr, TryParse};
 use crate::meta::Problem;
 
 /// https://adventofcode.com/2015/day/9

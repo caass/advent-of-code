@@ -2,7 +2,7 @@ use std::str::Lines;
 
 use eyre::{bail, eyre, OptionExt, Result};
 
-use crate::common::bool_ext::BoolExt;
+use crate::common::BoolExt;
 use crate::meta::Problem;
 
 pub const SQUARES_WITH_THREE_SIDES: Problem = Problem::solved(

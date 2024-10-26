@@ -15,7 +15,7 @@ use winnow::{
 };
 
 use crate::{
-    common::from_str_ext::{TryFromStr, TryParse},
+    common::{TryFromStr, TryParse},
     meta::Problem,
 };
 

@@ -7,6 +7,10 @@ pub const U32_MAX: usize = u32::MAX as usize;
 pub const U32_MAX: usize =
     compile_error!("Cannot compile for 16-bit targets; answer would overflow");
 
-pub mod bool_ext;
-pub mod from_str_ext;
-pub mod grid;
+mod bool_ext;
+mod from_str_ext;
+
+pub(crate) mod grid;
+
+pub(crate) use bool_ext::BoolExt;
+pub(crate) use from_str_ext::{TryFromStr, TryParse};
