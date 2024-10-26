@@ -1,3 +1,5 @@
+#![warn(clippy::pedantic)]
+
 pub(crate) mod common;
 pub mod meta;
 
