@@ -17,6 +17,7 @@ dependencies = [
  "itertools 0.13.0",
  "itoa",
  "md-5",
+ "memchr",
  "nohash-hasher",
  "paste",
  "petgraph",
