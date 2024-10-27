@@ -123,7 +123,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install `bencher`
-        uses: bencherdev/bencher@v0.4.23
+        uses: bencherdev/bencher@main
       - name: Run benchmarks
         run: just bencher ${{ matrix.os }}
         env:

@@ -37,7 +37,7 @@ bencher testbed="adhoc" *ARGS='': decrypt-inputs
     --err \
     --adapter rust_criterion \
     --testbed {{testbed}} \
-    "just bench --color always {{ARGS}}" || exit 0
+    "just bench --color always {{ARGS}}"
 
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
