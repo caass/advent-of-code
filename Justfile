@@ -18,11 +18,11 @@ outdated *ARGS:
 
 # Test solutions
 test *ARGS: decrypt-inputs
-    cargo nextest run --no-tests=fail --cargo-profile=fast-test --test=integration {{ARGS}}
+    cargo nextest run --no-tests=fail --cargo-profile=fast-test {{ARGS}}
 
 # Benchmark solutions
 bench *ARGS: decrypt-inputs
-    cargo bench --bench bench -- {{ARGS}}
+    cargo criterion --bench bench {{ARGS}}
 
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
