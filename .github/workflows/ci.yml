@@ -7,6 +7,7 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  NEXTEST_PROFILE: ci
 
 jobs:
   lint:
@@ -61,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
-        run: just test --profile ci
+        run: just test --test=integration
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 
@@ -92,6 +93,41 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
-        run: just test --profile ci --bench bench
+        run: just test --bench=bench
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
+  bench:
+    name: Bench
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install stable toolchain
+        run: rustup install stable
+      - name: Set stable toolchain as default
+        run: rustup default stable
+      - name: Populate Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+      - name: Install `cargo-binstall`
+        uses: cargo-bins/cargo-binstall@v1.10.8
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install `cargo-nextest`, `rage`, `just`, `cargo-criterion`
+        run: cargo binstall cargo-nextest rage just cargo-criterion --secure --no-confirm --force
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run benchmarks
+        run: just bench --message-format=json --color=always > benchmarks.jsonl
+        env:
+          AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
+      - name: Upload benchmarks
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: benchmark-results-${{ github.sha }}
+          path: benchmarks.jsonl
+          if-no-files-found: error
