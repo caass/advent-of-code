@@ -195,7 +195,10 @@ impl Screen<5, 6> {
             U => Ok('U'),
             Y => Ok('Y'),
             Z => Ok('Z'),
-            other => bail!("Don't know what letter this is:\n\n{other}\n"),
+            other => bail!(
+                "Don't know what letter this is:\n\n{}",
+                other.escape_debug()
+            ),
         }
     }
 }
