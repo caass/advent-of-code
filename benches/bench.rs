@@ -10,7 +10,7 @@ use advent_of_code::AOC;
 
 static FIXTURES_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
     let crate_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    crate_dir.join("tests").join("fixtures")
+    crate_dir.join("tests").join("inputs")
 });
 
 fn read_input(year: Year, day: Day) -> Result<String> {
