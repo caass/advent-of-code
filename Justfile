@@ -16,11 +16,11 @@ run year day part: decrypt-inputs
 outdated *ARGS:
     cargo outdated {{ARGS}}
 
-# Run unit & integration tests
+# Test solutions
 test *ARGS: decrypt-inputs
     cargo nextest run --no-tests=fail --cargo-profile=fast-test --test=integration {{ARGS}}
 
-# Benchmark against inputs in `fixtures/inputs.gz.age`
+# Benchmark solutions
 bench *ARGS: decrypt-inputs
     cargo bench --bench bench -- {{ARGS}}
 
