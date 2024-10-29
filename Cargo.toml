@@ -29,6 +29,7 @@ memchr = "2.7.4"
 # Binary-only
 clap = { version = "4.5.20", features = ["derive"] }
 clap-stdin = "0.5.1"
+pathsep = "0.1.1"
 
 [target.'cfg(windows)'.dependencies]
 md-5 = "0.10.6"

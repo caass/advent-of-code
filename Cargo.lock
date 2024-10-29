@@ -20,6 +20,7 @@ dependencies = [
  "memchr",
  "nohash-hasher",
  "paste",
+ "pathsep",
  "petgraph",
  "pretty_assertions",
  "rayon",
@@ -577,6 +578,12 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
+name = "pathsep"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fa223c370cb326ed75922e69aef96c669a2021545115bfa9778bb640ea575499"
 
 [[package]]
 name = "petgraph"
