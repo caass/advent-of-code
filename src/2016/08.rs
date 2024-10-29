@@ -1,9 +1,8 @@
-use std::{
-    fmt::{self, Display, Formatter, Write},
-    str::FromStr,
-};
+use std::fmt::{self, Display, Formatter, Write};
+use std::str::FromStr;
 
 use eyre::{bail, eyre, Report, Result};
+use newline_converter::AsRefStrExt;
 use rayon::prelude::*;
 use winnow::{
     ascii::dec_uint,
@@ -159,24 +158,26 @@ impl<const W: usize> Screen<W, 6> {
 impl Screen<5, 6> {
     fn letter(&self) -> Result<char> {
         macro_rules! LETTERS {
-            ($($letter:ident),+) => {$(
-                const $letter: &str = include_str!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    ::pathsep::path_separator!(),
-                    "fixtures",
-                    ::pathsep::path_separator!(),
-                    "2016",
-                    ::pathsep::path_separator!(),
-                    "08",
-                    ::pathsep::path_separator!(),
-                    stringify!($letter)
-                ));
-            )+};
+            ($($letter:ident),+) => {
+                $(
+                    const $letter: &str = include_str!(concat!(
+                        env!("CARGO_MANIFEST_DIR"),
+                        ::pathsep::path_separator!(),
+                        "fixtures",
+                        ::pathsep::path_separator!(),
+                        "2016",
+                        ::pathsep::path_separator!(),
+                        "08",
+                        ::pathsep::path_separator!(),
+                        stringify!($letter)
+                    ));
+                )+
+            };
         }
 
         LETTERS!(A, B, C, D, E, F, I, J, K, L, O, P, R, S, U, Y, Z);
 
-        match self.to_string().as_str() {
+        match self.to_string().to_unix().as_ref() {
             A => Ok('A'),
             B => Ok('B'),
             C => Ok('C'),
