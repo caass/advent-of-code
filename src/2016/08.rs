@@ -174,11 +174,13 @@ impl Screen<5, 6> {
             )+};
         }
 
-        LETTERS!(B, C, E, F, I, J, K, L, O, R, U, Y, Z);
+        LETTERS!(A, B, C, D, E, F, I, J, K, L, O, P, R, S, U, Y, Z);
 
         match self.to_string().as_str() {
+            A => Ok('A'),
             B => Ok('B'),
             C => Ok('C'),
+            D => Ok('D'),
             E => Ok('E'),
             F => Ok('F'),
             I => Ok('I'),
@@ -186,7 +188,9 @@ impl Screen<5, 6> {
             K => Ok('K'),
             L => Ok('L'),
             O => Ok('O'),
+            P => Ok('P'),
             R => Ok('R'),
+            S => Ok('S'),
             U => Ok('U'),
             Y => Ok('Y'),
             Z => Ok('Z'),
