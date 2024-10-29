@@ -97,7 +97,7 @@ mod util {
                             ::std::env!("CARGO_MANIFEST_DIR").parse().unwrap();
 
                         crate_dir.push("tests");
-                        crate_dir.push("fixtures");
+                        crate_dir.push("inputs");
                         crate_dir.push(stringify!($year));
                         crate_dir.push(two_digit_day);
 

@@ -10,7 +10,7 @@ default:
 
 # Run the advent of code binary
 run year day part: decrypt-inputs
-    cargo run --release -- {{year}} {{day}} {{part}} tests/fixtures/{{year}}/{{day}}
+    cargo run --release -- {{year}} {{day}} {{part}} tests/inputs/{{year}}/{{day}}
 
 # Check for outdated dependencies
 outdated *ARGS:
@@ -20,24 +20,9 @@ outdated *ARGS:
 test *ARGS: decrypt-inputs
     cargo nextest run --no-tests=fail --cargo-profile=fast-test --test=integration {{ARGS}}
 
-# Benchmark against inputs in `tests/fixtures.gz.age`
+# Benchmark against inputs in `fixtures/inputs.gz.age`
 bench *ARGS: decrypt-inputs
     cargo bench --bench bench -- {{ARGS}}
-
-# Run benchmarks under `bencher` i.e. on CI
-bencher testbed="adhoc" *ARGS='': decrypt-inputs
-    bencher run \
-    --project adventofcode \
-    --branch {{branch}} \
-    --threshold-measure latency \
-    --threshold-test t_test \
-    --threshold-max-sample-size 64 \
-    --threshold-upper-boundary 0.99 \
-    --thresholds-reset \
-    --err \
-    --adapter rust_criterion \
-    --testbed {{testbed}} \
-    "just bench --color always {{ARGS}}"
 
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
@@ -48,9 +33,9 @@ get-inputs: download-inputs
         printf "Need AOC_INPUTS_PUBKEY to be set to encrypt puzzle inputs.\n" && exit 1
     fi
 
-    {{tar}} cz ./tests/fixtures | rage -r $AOC_INPUTS_PUBKEY > ./tests/fixtures.gz.age
+    {{tar}} cz ./tests/inputs | rage -r $AOC_INPUTS_PUBKEY > ./fixtures/inputs.gz.age
 
-# Clean `target/` and `tests/fixtures/`
+# Clean `target/` and `tests/inputs/`
 clean: clean-inputs
     cargo clean
 
@@ -63,11 +48,11 @@ decrypt-inputs:
         printf "Need AOC_INPUTS_SECRET to be set to decrypt puzzle inputs.\n" && exit 1
     fi
 
-    printenv AOC_INPUTS_SECRET | rage -d -i - ./tests/fixtures.gz.age | {{tar}} xz ./tests/fixtures
+    printenv AOC_INPUTS_SECRET | rage -d -i - ./fixtures/inputs.gz.age | {{tar}} xz ./tests/inputs
 
 [private]
 clean-inputs:
-    rm -rf tests/fixtures
+    rm -rf tests/inputs
 
 [private]
 download-inputs: clean-inputs
@@ -78,7 +63,7 @@ download-inputs: clean-inputs
         (printf "Install the \`cookies\` command from https://github.com/barnardb/cookies to continue.\n" >&2 && exit 1)
 
     SESSION_COOKIE="$(cookies https://adventofcode.com session)"
-    FIXTURES_PATH="./tests/fixtures"
+    UNPACKED_FIXTURES_PATH="./tests/inputs"
 
     THIS_YEAR="$(date +%Y)"
     THIS_MONTH="$(date +%m)"
@@ -95,15 +80,15 @@ download-inputs: clean-inputs
             -s
     }
 
-    if [ ! -d $FIXTURES_PATH ]; then
-        mkdir $FIXTURES_PATH
+    if [ ! -d $UNPACKED_FIXTURES_PATH ]; then
+        mkdir $UNPACKED_FIXTURES_PATH
     fi
 
     printf "Downloading inputs...\n"
 
     for year in `seq 2015 $(( $THIS_YEAR - 1 ))`; do
         printf '%s: ' $year
-        year_path="${FIXTURES_PATH}/$year"
+        year_path="${UNPACKED_FIXTURES_PATH}/$year"
 
         if [ ! -d $year_path ]; then
             mkdir $year_path
