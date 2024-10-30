@@ -101,6 +101,8 @@ jobs:
     needs:
       - test-bench
       - test-integration
+    env:
+      CRITERION_OUTPUT_FILE: benchmarks.json
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -125,12 +127,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run benchmarks
-        run: just bench --message-format=json --color=always > benchmarks.jsonl
+        run: just bench --message-format=json --color=always > ${{ env.CRITERION_OUTPUT_FILE }}
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
       - name: Upload benchmarks
         uses: actions/upload-artifact@v4.4.3
         with:
           name: benchmark-results-${{ github.sha }}
-          path: benchmarks.jsonl
+          path: ${{ env.CRITERION_OUTPUT_FILE }}
           if-no-files-found: error
