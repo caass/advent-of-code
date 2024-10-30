@@ -34,9 +34,9 @@ jobs:
       - name: Check formatting
         run: cargo fmt --check
 
-  test:
+  test-integration:
     needs: lint
-    name: Test
+    name: Test (Integration)
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -61,8 +61,8 @@ jobs:
         run: cargo binstall cargo-nextest rage just --secure --no-confirm --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Run tests
-        run: just test
+      - name: Run integration tests
+        run: just test --test=integration
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 
@@ -98,7 +98,9 @@ jobs:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
   bench:
     name: Bench
-    needs: test-bench
+    needs:
+      - test-bench
+      - test-integration
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
