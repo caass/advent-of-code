@@ -1,8 +1,11 @@
+use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter, Write};
 use std::str::FromStr;
+use std::sync::LazyLock;
 
 use eyre::{bail, eyre, Report, Result};
-use newline_converter::AsRefStrExt;
+use fnv::FnvBuildHasher;
+use itertools::Itertools;
 use rayon::prelude::*;
 use winnow::{
     ascii::dec_uint,
@@ -35,7 +38,7 @@ pub const TWO_FACTOR_AUTHENTICATION: Problem = Problem::solved(
     },
 );
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct Screen<const W: usize, const H: usize>([[bool; H]; W]);
 
 impl<const W: usize, const H: usize> Display for Screen<W, H> {
@@ -157,49 +160,64 @@ impl<const W: usize> Screen<W, 6> {
 
 impl Screen<5, 6> {
     fn letter(&self) -> Result<char> {
-        macro_rules! LETTERS {
-            ($($letter:ident),+) => {
-                $(
-                    const $letter: &str = include_str!(concat!(
-                        env!("CARGO_MANIFEST_DIR"),
-                        ::pathsep::path_separator!(),
-                        "fixtures",
-                        ::pathsep::path_separator!(),
-                        "2016",
-                        ::pathsep::path_separator!(),
-                        "08",
-                        ::pathsep::path_separator!(),
-                        stringify!($letter)
-                    ));
-                )+
-            };
-        }
+        static LETTERS: LazyLock<HashMap<String, char, FnvBuildHasher>> = LazyLock::new(|| {
+            macro_rules! include_letters {
+                    ($($letter:ident),+) => {
+                        $(
+                            const $letter: &str = include_str!(concat!(
+                                env!("CARGO_MANIFEST_DIR"),
+                                ::pathsep::path_separator!(),
+                                "fixtures",
+                                ::pathsep::path_separator!(),
+                                "2016",
+                                ::pathsep::path_separator!(),
+                                "08",
+                                ::pathsep::path_separator!(),
+                                stringify!($letter)
+                            ));
+                        )+
+                    };
+                }
 
-        LETTERS!(A, B, C, D, E, F, I, J, K, L, O, P, R, S, U, Y, Z);
+            include_letters!(A, B, C, D, E, F, I, J, K, L, O, P, R, S, U, Y, Z);
 
-        match self.to_string().to_unix().as_ref() {
-            A => Ok('A'),
-            B => Ok('B'),
-            C => Ok('C'),
-            D => Ok('D'),
-            E => Ok('E'),
-            F => Ok('F'),
-            I => Ok('I'),
-            J => Ok('J'),
-            K => Ok('K'),
-            L => Ok('L'),
-            O => Ok('O'),
-            P => Ok('P'),
-            R => Ok('R'),
-            S => Ok('S'),
-            U => Ok('U'),
-            Y => Ok('Y'),
-            Z => Ok('Z'),
-            other => bail!(
-                "Don't know what letter this is:\n\n{}",
-                other.escape_debug()
-            ),
-        }
+            let mut map = HashMap::default();
+
+            for (key, value) in [
+                (A, 'A'),
+                (B, 'B'),
+                (C, 'C'),
+                (D, 'D'),
+                (E, 'E'),
+                (F, 'F'),
+                (I, 'I'),
+                (J, 'J'),
+                (K, 'K'),
+                (L, 'L'),
+                (O, 'O'),
+                (P, 'P'),
+                (R, 'R'),
+                (S, 'S'),
+                (U, 'U'),
+                (Y, 'Y'),
+                (Z, 'Z'),
+            ] {
+                let trimmed: String =
+                    Itertools::intersperse(key.lines().map(str::trim), "\n").collect();
+                assert!(
+                    map.insert(trimmed, value).is_none(),
+                    "Overwrote previous value"
+                );
+            }
+
+            map
+        });
+
+        let this_letter = self.to_string();
+        LETTERS
+            .get(&this_letter)
+            .copied()
+            .ok_or_else(|| eyre!("Didn't recognize this letter:\n\n{this_letter}\n"))
     }
 }
 
