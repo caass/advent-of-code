@@ -1,11 +1,11 @@
-use std::{borrow::Cow, iter::FusedIterator, mem, sync::LazyLock};
+use std::{borrow::Cow, iter::FusedIterator, mem, num::TryFromIntError, sync::LazyLock};
 
 use regex::{Regex, RegexBuilder};
 
 use crate::meta::Problem;
 
 pub const EXPLOSIVES_IN_CYBERSPACE: Problem =
-    Problem::solved(&str::decompressed_size::<V1>, &str::decompressed_size::<V2>);
+    Problem::solved(&str::decompressed_len::<V1>, &str::decompressed_len::<V2>);
 
 static MARKER_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     RegexBuilder::new(r"\(\d+x\d+\)")
@@ -16,20 +16,9 @@ static MARKER_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 
 trait DecompressionStrategy {
     type Decompressor<'a>: Iterator<Item = Cow<'a, str>> + From<&'a str>;
-}
 
-trait Decompressable {
-    fn decompress<S: DecompressionStrategy>(&self) -> Cow<str>;
-
-    #[inline]
-    fn decompressed_size<S: DecompressionStrategy>(&self) -> usize {
-        self.decompress::<S>().len()
-    }
-}
-
-impl<T: AsRef<str> + ?Sized> Decompressable for T {
-    fn decompress<S: DecompressionStrategy>(&self) -> Cow<str> {
-        let mut decompressor = S::Decompressor::from(self.as_ref());
+    fn decompress(compressed: &str) -> Cow<str> {
+        let mut decompressor = Self::Decompressor::from(compressed);
 
         let Some(first_chunk) = decompressor.next() else {
             return Cow::Borrowed("");
@@ -47,6 +36,20 @@ impl<T: AsRef<str> + ?Sized> Decompressable for T {
         }
 
         Cow::Owned(out)
+    }
+
+    fn decompressed_len(compressed: &str) -> Result<u64, TryFromIntError> {
+        Self::decompress(compressed).len().try_into()
+    }
+}
+
+trait Decompressable {
+    fn decompressed_len<S: DecompressionStrategy>(&self) -> Result<u64, TryFromIntError>;
+}
+
+impl<T: AsRef<str> + ?Sized> Decompressable for T {
+    fn decompressed_len<S: DecompressionStrategy>(&self) -> Result<u64, TryFromIntError> {
+        S::decompressed_len(self.as_ref())
     }
 }
 
@@ -173,6 +176,73 @@ struct V2;
 
 impl DecompressionStrategy for V2 {
     type Decompressor<'a> = V2Decompressor<'a>;
+
+    // fn decompressed_len(compressed: &str) -> Result<u64, TryFromIntError> {
+    //     // Example 1:
+    //     //
+    //     // X(8x2)(3x3)ABCY -> XABCABCABCABCABCABCY (len 20)
+    //     //
+    //     // Start with an uncompressed section: 1 * len(uncompressed section)
+    //     // then a compressed segment: check the window
+    //     //
+    //     // (8x2) (3x3)ABC Y
+    //     //      ^--------^
+    //     //
+    //     // There's a nested repeat, so check that window
+    //     //
+    //     // (8x2) (3x3) ABC  Y
+    //     //            ^---^
+    //     //      ^----------^
+    //     //
+    //     // There's no more nested windows, so calculate decompressed len as
+    //     //
+    //     // let n = the len of the innermost non-marker string (ABC)
+    //     // let R1 = the number of repetitions of that string
+    //     // let R2 = the number of repetitions of R1 + ABC
+    //     //
+    //     // len (R2(R1(n))) = n * R1 * R2 = 3 * 3 * 2 = 18
+    //     //
+    //     // Finally, `Y` is uncompressed for an additional length of 1.
+    //     //
+    //     // Final length: 20
+    //     //
+    //     // Example 2:
+    //     //
+    //     // (27x12)(20x12)(13x14)(7x10)(1x12)A
+    //     //
+    //     // Find the windows:
+    //     //
+    //     // (27x12) (20x12) (13x14) (7x10) (1x12) A
+    //     //                                      ^-^
+    //     //                               ^--------^
+    //     //                        ^---------------^
+    //     //                ^-----------------------^
+    //     //        ^-------------------------------^
+    //     //
+    //     // len(uncompressed) = 1
+    //     // R1 = 12
+    //     // R2 = 10
+    //     // R3 = 14
+    //     // R4 = 12
+    //     // R5 = 12
+    //     //
+    //     // 1 * 12 * 10 * 14 * 12 * 12 = 241920
+    //     //
+    //     // Example 3:
+    //     //
+    //     // Note that non-overlapping sub-repeats are added together
+    //     //
+    //     // (25x3)(3x3)ABC(2x3)XY(5x2)PQRSTX(18x9)(3x2)TWO(5x7)SEVEN
+    //     //
+    //     // Windows:
+    //     //
+    //     // (25x3) (3x3) ABC (2x3) XY (5x2) PQRST X (18x9) (3x2) TWO (5x7) SEVEN
+    //     //             ^---^     ^--^     ^-----^              ^---^     ^-----^
+    //     //       ^------------------------------^        ^---------------------^
+    //     //
+    //     // (3 * ((3 * 3) + (3 * 2) + (5 * 2))) + 1 + (9 * ((3 * 2) + (5 * 7))) = 445
+    //     todo!()
+    // }
 }
 
 #[derive(Debug)]
