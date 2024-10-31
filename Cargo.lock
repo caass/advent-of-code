@@ -24,6 +24,7 @@ dependencies = [
  "petgraph",
  "pretty_assertions",
  "rayon",
+ "regex",
  "serde_json",
  "thiserror",
  "tinystr",

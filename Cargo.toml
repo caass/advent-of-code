@@ -8,6 +8,11 @@ name = "bench"
 harness = false
 
 [dependencies]
+# Binary-only
+clap = { version = "4.5.20", features = ["derive"] }
+clap-stdin = "0.5.1"
+
+# Library + Binary
 enum-iterator = "2.1.0"
 paste = "1.0.15"
 rayon = "1.10.0"
@@ -25,11 +30,8 @@ serde_json = "1.0.132"
 enum-map = "2.7.3"
 either = "1.13.0"
 memchr = "2.7.4"
-
-# Binary-only
-clap = { version = "4.5.20", features = ["derive"] }
-clap-stdin = "0.5.1"
 pathsep = "0.1.1"
+regex = "1.11.1"
 
 [target.'cfg(windows)'.dependencies]
 md-5 = "0.10.6"

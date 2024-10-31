@@ -35,7 +35,8 @@ util::tests! {
         5:  ["801b56a7", "424a0197"],
         6:  ["tzstqsua", "myregdnr"],
         7:  [115, 231],
-        8:  [115, "EFEYKFRFIJ"]
+        8:  [115, "EFEYKFRFIJ"],
+        9:  [102239, 10780403063u64]
     }
 }
 
