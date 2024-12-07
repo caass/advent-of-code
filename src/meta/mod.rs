@@ -32,7 +32,7 @@ impl AdventOfCode {
     }
 
     pub(crate) const fn new() -> Self {
-        Self([None, None, None, None, None, None, None, None, None])
+        Self([None, None, None, None, None, None, None, None, None, None])
     }
 }
 

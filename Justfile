@@ -112,6 +112,7 @@ download-inputs: clean-inputs
     done
 
     if [ $THIS_MONTH -eq 12 ]; then
+        printf '%s: ' $THIS_YEAR
         for day in `seq 1 $TODAY`; do
             printf '%s, ' $day
 
@@ -125,4 +126,6 @@ download-inputs: clean-inputs
 
             get_input $year $day > $input_path
         done
+
+        printf 'Done!\n'
     fi

@@ -40,3 +40,9 @@ macro_rules! impl_return_value_for {
 }
 
 impl_return_value_for!(usize, isize);
+
+impl ReturnValue for () {
+    fn into_result(self) -> Result<String, Report> {
+        unimplemented!()
+    }
+}
