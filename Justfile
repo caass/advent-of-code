@@ -73,6 +73,7 @@ download-inputs: clean-inputs
         year=$1
         day=$2
 
+        sleep 0.5
         curl "https://adventofcode.com/$year/day/$day/input" \
             --cookie "session=${SESSION_COOKIE}" \
             -X "GET" \
