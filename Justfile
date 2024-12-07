@@ -113,6 +113,12 @@ download-inputs: clean-inputs
 
     if [ $THIS_MONTH -eq 12 ]; then
         printf '%s: ' $THIS_YEAR
+        year_path="${UNPACKED_FIXTURES_PATH}/$THIS_YEAR"
+
+        if [ ! -d $year_path ]; then
+            mkdir $year_path
+        fi
+
         for day in `seq 1 $TODAY`; do
             printf '%s, ' $day
 
@@ -124,7 +130,7 @@ download-inputs: clean-inputs
 
             input_path="$year_path/$two_digit_day"
 
-            get_input $year $day > $input_path
+            get_input $THIS_YEAR $day > $input_path
         done
 
         printf 'Done!\n'
