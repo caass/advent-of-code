@@ -133,6 +133,6 @@ jobs:
       - name: Upload benchmarks
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: benchmark-results-${{ github.sha }}
+          name: benchmark-results-${{ github.sha }}-${{ matrix.os }}
           path: ${{ env.CRITERION_OUTPUT_FILE }}
           if-no-files-found: error
