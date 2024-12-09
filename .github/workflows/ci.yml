@@ -104,9 +104,9 @@ jobs:
     env:
       CRITERION_OUTPUT_FILE: benchmarks.json
     strategy:
-      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # windows-latest is broken, see https://github.com/bheisler/criterion.rs/issues/517
+        os: [ubuntu-latest, macos-latest]
         year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
     runs-on: ${{ matrix.os }}
     steps:
