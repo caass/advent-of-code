@@ -29,6 +29,7 @@ impl Report<()> {
 }
 
 impl<I: Iterator<Item = u8>> Report<I> {
+    #[allow(clippy::wrong_self_convention, reason = "what else would i name it?")]
     fn is_safe(self) -> bool {
         let mut decreases_globally = Option::None;
 
