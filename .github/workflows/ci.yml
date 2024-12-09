@@ -106,6 +106,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+        year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -127,7 +128,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run benchmarks
-        run: just bench --message-format=json --color=always > ${{ env.CRITERION_OUTPUT_FILE }}
+        run: just bench --message-format=json --color=always > ${{ env.CRITERION_OUTPUT_FILE }} -- ${{ matrix.year }}
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
       - name: Upload benchmarks
