@@ -39,7 +39,7 @@ impl CorruptedMemory<'_> {
             .map(|chunk| {
                 chunk
                     .split_once("don't()")
-                    .map_or(chunk, |(multiply_this, ..)| multiply_this)
+                    .map_or(chunk, |(inner_chunk, ..)| inner_chunk)
             })
             .map(sum_products_in_str)
             .try_fold(0, |a, res| res.map(|b| a + b))
@@ -50,11 +50,11 @@ fn sum_products_in_str(s: &str) -> Result<usize> {
     MUL_RE.with(|re| {
         re.captures_iter(s)
             .map(|cap| -> Result<usize> {
-                let (_, [n_str, m_str]) = cap.extract();
+                let (_, [a_str, b_str]) = cap.extract();
 
-                let n = n_str.parse::<usize>()?;
-                let m = m_str.parse::<usize>()?;
-                Ok(n * m)
+                let a = a_str.parse::<usize>()?;
+                let b = b_str.parse::<usize>()?;
+                Ok(a * b)
             })
             .try_fold(0usize, |a, res| res.map(|b| a + b))
     })
