@@ -10,8 +10,8 @@ The [`meta`](./src/meta) subfolder in [`src`](./src) contains things that are mo
 
 ## Inputs & Descriptions
 
-To comply with Eric's [rules about copying](https://adventofcode.com/about#faq_copying), I don't copy any text from the problems in my solutions or provide my puzzle inputs. Each problem's documentation contains a link to the original problem text, so you can get some context as to what exactly is happening. Similarly, I encrypt my puzzle inputs into `./tests/fixtures.gz.age`.
+To comply with Eric's [rules about copying](https://adventofcode.com/about#faq_copying), I don't copy any text from the problems in my solutions or provide my puzzle inputs.
 
 ## Running
 
-The crate also has a binary, which you can run with `cargo run -- <YEAR> <DAY> <PART> < path/to/input`.
+The crate also has a binary, which you can run with `just run <YEAR> <DAY> <PART> < path/to/input`. To see all available commands, run `just` with no arguments.
