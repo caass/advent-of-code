@@ -16,8 +16,8 @@ use winnow::{
 use crate::meta::Problem;
 
 type WireName = TinyAsciiStr<4>;
-const A: WireName = unsafe { WireName::from_bytes_unchecked(*b"a\0\0\0") };
-const B: WireName = unsafe { WireName::from_bytes_unchecked(*b"b\0\0\0") };
+const A: WireName = unsafe { WireName::from_utf8_unchecked(*b"a\0\0\0") };
+const B: WireName = unsafe { WireName::from_utf8_unchecked(*b"b\0\0\0") };
 
 /// <https://adventofcode.com/2015/day/7>
 pub const SOME_ASSEMBLY_REQUIRED: Problem = Problem::solved(

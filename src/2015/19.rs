@@ -109,9 +109,9 @@ impl FromStr for Molecule {
 struct Atom(TinyAsciiStr<2>);
 
 impl Atom {
-    const RN: Atom = Atom(unsafe { TinyAsciiStr::from_bytes_unchecked(*b"Rn") });
-    const AR: Atom = Atom(unsafe { TinyAsciiStr::from_bytes_unchecked(*b"Ar") });
-    const Y: Atom = Atom(unsafe { TinyAsciiStr::from_bytes_unchecked(*b"Y\0") });
+    const RN: Atom = Atom(unsafe { TinyAsciiStr::from_utf8_unchecked(*b"Rn") });
+    const AR: Atom = Atom(unsafe { TinyAsciiStr::from_utf8_unchecked(*b"Ar") });
+    const Y: Atom = Atom(unsafe { TinyAsciiStr::from_utf8_unchecked(*b"Y\0") });
 }
 
 impl FromStr for Atom {
