@@ -211,11 +211,13 @@ impl FromStr for Instruction {
 }
 
 #[derive(Debug)]
-struct City([[bool; 512]; 512]);
+struct City(Box<[[bool; 512]; 512]>);
 
 impl Default for City {
     fn default() -> Self {
-        Self([[false; 512]; 512])
+        let v = vec![[false; 512]; 512];
+        let boxed = v.into_boxed_slice().try_into().unwrap();
+        Self(boxed)
     }
 }
 
