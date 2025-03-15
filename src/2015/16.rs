@@ -124,20 +124,20 @@ impl Sue {
     }
 
     fn matches_range(&self, readout: &MfcsamReadout) -> bool {
-        self.children.map_or(true, |n| n == readout.children)
-            && self.samoyeds.map_or(true, |n| n == readout.samoyeds)
-            && self.akitas.map_or(true, |n| n == readout.akitas)
-            && self.vizslas.map_or(true, |n| n == readout.vizslas)
-            && self.cars.map_or(true, |n| n == readout.cars)
-            && self.perfumes.map_or(true, |n| n == readout.perfumes)
+        self.children.is_none_or(|n| n == readout.children)
+            && self.samoyeds.is_none_or(|n| n == readout.samoyeds)
+            && self.akitas.is_none_or(|n| n == readout.akitas)
+            && self.vizslas.is_none_or(|n| n == readout.vizslas)
+            && self.cars.is_none_or(|n| n == readout.cars)
+            && self.perfumes.is_none_or(|n| n == readout.perfumes)
 
             // compensate for nuclear decay of cat dander and tree pollen
-            && self.trees.map_or(true, |n| n > readout.trees)
-            && self.cats.map_or(true, |n| n > readout.cats)
+            && self.trees.is_none_or(|n| n > readout.trees)
+            && self.cats.is_none_or(|n| n > readout.cats)
 
             // compensate for modial interaction of magnetoreluctance
-            && self.pomeranians.map_or(true, |n| n < readout.pomeranians)
-            && self.goldfish.map_or(true, |n| n < readout.goldfish)
+            && self.pomeranians.is_none_or(|n| n < readout.pomeranians)
+            && self.goldfish.is_none_or(|n| n < readout.goldfish)
     }
 }
 
