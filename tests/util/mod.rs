@@ -2,28 +2,28 @@
 
 /// Helper macro for more easily writing advent of code integration tests.
 macro_rules! tests {
+    // Shorthand for constructing tests against years, days, and parts.
     {$($year:literal: {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*}),+} => {
         ::paste::paste!{
             $(
                 mod [<_ $year>] {
                     $(
-                        crate::util::tests_impl!(year: $year, day: $day, parts: [$($(#[$attrs])* $part),+]);
+                        crate::util::tests!(year: $year, day: $day, parts: [$($(#[$attrs])* $part),+]);
                     )*
                 }
             )+
         }
     };
-}
 
-/// Implementation detail of the `tests` macro to handle cases where there's either 1 or 2 solved parts of a day.
-#[doc(hidden)]
-macro_rules! tests_impl {
+    // Since there's no `.enumerate()` for macro iterations (as far as i can tell), the following is helper code
+    // to generate the appropriate test cases for days where either 1 or 2 parts have been solved.
+
     // Construct a module named `d{$day}` that contains tests for both parts of a given day
     (year: $year:literal, day: $day:literal, parts: [$(#[$attrs1:meta])* $part1:literal, $(#[$attrs2:meta])* $part2:literal]) => {
         ::paste::paste!{
             mod [<day $day>] {
-                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attrs1)*);
-                crate::util::tests_impl!(year: $year, day: $day, part: 2, solution: $part2, meta: $($attrs2)*);
+                crate::util::tests!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attrs1)*);
+                crate::util::tests!(year: $year, day: $day, part: 2, solution: $part2, meta: $($attrs2)*);
             }
         }
     };
@@ -32,7 +32,7 @@ macro_rules! tests_impl {
     (year: $year:literal, day: $day:literal, parts: [$(#[$attrs:meta])* $part1:literal]) => {
         ::paste::paste!{
             mod [<day $day>] {
-                crate::util::tests_impl!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attrs)*);
+                crate::util::tests!(year: $year, day: $day, part: 1, solution: $part1, meta: $($attrs)*);
             }
         }
     };
@@ -49,7 +49,6 @@ macro_rules! tests_impl {
                     ::std::stringify!($day)
                 };
 
-                // Read input from ENV in CI, or from disk locally.
                 let input = {
                     let input_file = {
                         let mut crate_dir: ::std::path::PathBuf =
@@ -82,5 +81,3 @@ macro_rules! tests_impl {
 }
 
 pub(crate) use tests;
-#[doc(hidden)]
-pub(crate) use tests_impl;
