@@ -29,7 +29,7 @@ pub const BALANCE_BOTS: Problem = Problem::solved(
 struct Factory<G> {
     robots: IntMap<u8, Robot>,
     actions: Vec<Action>,
-    outputs: IntMap<u8, Vec<u8>>,
+    outputs: IntMap<u8, u8>,
     goal: G,
 }
 
@@ -79,7 +79,11 @@ impl<G: Goal> Factory<G> {
                         bot.take(chip)?;
                     }
                 }
-                Destination::Output(id) => self.outputs.entry(id).or_default().push(chip),
+                Destination::Output(id) => {
+                    if self.outputs.insert(id, chip).is_some() {
+                        bail!("inserted microchip into already-full output")
+                    }
+                }
             }
         }
 
@@ -225,10 +229,10 @@ impl<T: AsRef<[u8]>> Goal for T {
         let mut product = 1;
         let mut num_outputs_left = this.len();
 
-        for (id, output) in &factory.outputs {
+        for (id, &output) in &factory.outputs {
             if this.contains(id) {
                 num_outputs_left -= 1;
-                product *= output.first().copied()? as usize;
+                product *= usize::from(output);
             }
         }
 
