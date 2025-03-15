@@ -36,7 +36,8 @@ util::tests! {
         6:  ["tzstqsua", "myregdnr"],
         7:  [115, 231],
         8:  [115, "EFEYKFRFIJ"],
-        9:  [102239, #[ignore = "slow implementation"] 10780403063u64]
+        9:  [102239, #[ignore = "slow implementation"] 10780403063u64],
+        10: [161]
     },
 
     2024: {

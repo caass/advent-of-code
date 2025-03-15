@@ -10,9 +10,10 @@ use winnow::prelude::*;
 use crate::meta::Problem;
 
 pub const BALANCE_BOTS: Problem = Problem::partially_solved(&|input| {
-    Factory::new(Comparison::new(61, 17)?)
-        .with_instructions(input.lines().map(Instruction::from_str))?
-        .run()
+    let target = Comparison::new(61, 17)?;
+    let instructions = input.lines().map(Instruction::from_str);
+
+    Factory::new(target).with_instructions(instructions)?.run()
 });
 
 #[derive(Debug)]
