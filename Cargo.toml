@@ -10,7 +10,7 @@ harness = false
 [dependencies]
 # Binary-only
 clap = { version = "4.5.20", features = ["derive"] }
-clap-stdin = "0.5.1"
+clap-stdin = "0.6.0"
 
 # Library + Binary
 enum-iterator = "2.1.0"
@@ -24,8 +24,8 @@ itoa = "1.0"
 winnow = { version = "0.6.20", features = ["simd"] }
 tinystr = { version = "0.8.0", features = ["std"] }
 fnv = "1.0.7"
-petgraph = { version = "0.6.5", features = ["rayon"] }
-itertools = "0.13.0"
+petgraph = { version = "0.7.1", features = ["rayon"] }
+itertools = "0.14.0"
 serde_json = "1.0.132"
 enum-map = "2.7.3"
 either = "1.13.0"
@@ -37,6 +37,11 @@ void = "1.0.2"
 [target.'cfg(windows)'.dependencies]
 md-5 = "0.10.6"
 
+# Once version 0.11 is released, these can be merged as the problematic dependency is removed.
+# See:
+# - https://github.com/RustCrypto/hashes/issues/283
+# - https://github.com/RustCrypto/asm-hashes/issues/17
+# - https://github.com/RustCrypto/hashes/issues/315#issuecomment-1889285706
 [target.'cfg(not(windows))'.dependencies]
 md-5 = { version = "0.10.6", features = ["asm"] }
 
