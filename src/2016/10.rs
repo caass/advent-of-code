@@ -10,12 +10,20 @@ use winnow::prelude::*;
 
 use crate::meta::Problem;
 
-pub const BALANCE_BOTS: Problem = Problem::partially_solved(&|input| {
-    let goal = Comparison::new(61, 17)?;
-    let instructions = input.lines().map(Instruction::from_str);
+pub const BALANCE_BOTS: Problem = Problem::solved(
+    &|input| {
+        let goal = Comparison::new(61, 17)?;
+        let instructions = input.lines().map(Instruction::from_str);
 
-    Factory::new(goal).with_instructions(instructions)?.run()
-});
+        Factory::new(goal).with_instructions(instructions)?.run()
+    },
+    &|input| {
+        let goal = [0, 1, 2];
+        let instructions = input.lines().map(Instruction::from_str);
+
+        Factory::new(goal).with_instructions(instructions)?.run()
+    },
+);
 
 #[derive(Debug)]
 struct Factory<G> {
@@ -202,6 +210,33 @@ impl Goal for Comparison {
         factory.robots.iter().find_map(|(&id, robot)| {
             matches!(robot.hands, Hands::Full(comparison) if comparison == *self).then_some(id)
         })
+    }
+}
+
+impl<T: AsRef<[u8]>> Goal for T {
+    type Output = usize;
+
+    fn check(&self, factory: &Factory<Self>) -> Option<Self::Output>
+    where
+        Self: Sized,
+    {
+        let this = self.as_ref();
+
+        let mut product = 1;
+        let mut num_outputs_left = this.len();
+
+        for (id, output) in &factory.outputs {
+            if this.contains(id) {
+                num_outputs_left -= 1;
+                product *= output.first().copied()? as usize;
+            }
+        }
+
+        if num_outputs_left == 0 {
+            Some(product)
+        } else {
+            None
+        }
     }
 }
 
