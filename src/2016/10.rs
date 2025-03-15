@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use std::fmt::Display;
 use std::str::FromStr;
 
 use eyre::{bail, eyre, Result};
@@ -10,27 +11,27 @@ use winnow::prelude::*;
 use crate::meta::Problem;
 
 pub const BALANCE_BOTS: Problem = Problem::partially_solved(&|input| {
-    let target = Comparison::new(61, 17)?;
+    let goal = Comparison::new(61, 17)?;
     let instructions = input.lines().map(Instruction::from_str);
 
-    Factory::new(target).with_instructions(instructions)?.run()
+    Factory::new(goal).with_instructions(instructions)?.run()
 });
 
 #[derive(Debug)]
-struct Factory {
+struct Factory<G> {
     robots: IntMap<u8, Robot>,
     actions: Vec<Action>,
     outputs: IntMap<u8, Vec<u8>>,
-    target: Comparison,
+    goal: G,
 }
 
-impl Factory {
-    fn new(target: Comparison) -> Self {
+impl<G: Goal> Factory<G> {
+    fn new(goal: G) -> Self {
         Self {
             robots: IntMap::default(),
             actions: Vec::default(),
             outputs: IntMap::default(),
-            target,
+            goal,
         }
     }
 
@@ -53,15 +54,10 @@ impl Factory {
 
         Ok(self)
     }
-}
 
-impl Factory {
-    fn tick(&mut self) -> Result<Option<u8>> {
-        let mut comparator = None;
-        for (&id, robot) in &mut self.robots {
-            if robot.queue(&mut self.actions, self.target)? {
-                comparator = Some(id);
-            }
+    fn tick(&mut self) -> Result<Option<G::Output>> {
+        for robot in &mut self.robots.values_mut() {
+            robot.queue(&mut self.actions)?;
         }
 
         if self.actions.is_empty() {
@@ -79,13 +75,13 @@ impl Factory {
             }
         }
 
-        Ok(comparator)
+        Ok(self.goal.check(self))
     }
 
-    fn run(&mut self) -> Result<u8> {
+    fn run(&mut self) -> Result<G::Output> {
         loop {
-            if let Some(id) = self.tick()? {
-                return Ok(id);
+            if let Some(output) = self.tick()? {
+                return Ok(output);
             }
         }
     }
@@ -98,13 +94,13 @@ struct Robot {
 }
 
 impl Robot {
-    fn queue(&mut self, actions: &mut Vec<Action>, target: Comparison) -> Result<bool> {
+    fn queue(&mut self, actions: &mut Vec<Action>) -> Result<()> {
         let Hands::Full(Comparison {
             high: hi_chip,
             low: lo_chip,
         }) = self.hands
         else {
-            return Ok(false);
+            return Ok(());
         };
 
         self.hands = Hands::Empty;
@@ -125,7 +121,7 @@ impl Robot {
             to: lo_dest,
         });
 
-        Ok(target.high == hi_chip && target.low == lo_chip)
+        Ok(())
     }
 
     fn take(&mut self, a: u8) -> Result<()> {
@@ -188,6 +184,24 @@ impl Comparison {
             Ordering::Equal => Err(eyre!("Got handed two of the same microchip")),
             Ordering::Greater => Ok(Self { high: a, low: b }),
         }
+    }
+}
+
+trait Goal {
+    type Output: Display;
+
+    fn check(&self, factory: &Factory<Self>) -> Option<Self::Output>
+    where
+        Self: Sized;
+}
+
+impl Goal for Comparison {
+    type Output = u8;
+
+    fn check(&self, factory: &Factory<Self>) -> Option<Self::Output> {
+        factory.robots.iter().find_map(|(&id, robot)| {
+            matches!(robot.hands, Hands::Full(comparison) if comparison == *self).then_some(id)
+        })
     }
 }
 
