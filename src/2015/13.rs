@@ -5,7 +5,7 @@ use petgraph::{Directed, Graph};
 use rayon::prelude::*;
 use winnow::ascii::{alpha1, digit1};
 use winnow::combinator::{alt, eof, preceded, separated_pair, seq};
-use winnow::error::{ContextError, ParseError};
+use winnow::error::{ContextError, ErrMode};
 use winnow::prelude::*;
 
 use crate::common::{TryFromStr, TryParse};
@@ -108,7 +108,7 @@ struct Relationship<'s> {
 }
 
 impl<'s> TryFromStr<'s> for Relationship<'s> {
-    type Err = ParseError<&'s str, ContextError>;
+    type Err = ErrMode<ContextError>;
 
     fn try_from_str(value: &'s str) -> Result<Self, Self::Err> {
         fn parse_feeling(input: &mut &str) -> ModalResult<isize> {
@@ -128,7 +128,7 @@ impl<'s> TryFromStr<'s> for Relationship<'s> {
             object: alpha1,
             _: preceded('.', eof)
         }}
-        .parse(value.trim())
+        .parse_next(&mut value.trim())
     }
 }
 

@@ -221,25 +221,25 @@ impl AddAssign for Qualities {
 impl<'s> TryFromStr<'s> for Ingredient<'s> {
     type Err = Report;
 
-    fn try_from_str(value: &'s str) -> Result<Self> {
+    fn try_from_str(mut value: &'s str) -> Result<Self> {
         seq! {Ingredient {
             name: alpha1::<_, ContextError>,
             qualities: seq!{Qualities {
                 _: ": capacity ",
-                capacity: dec_int,
+                capacity: dec_int::<_, _, ContextError>,
                 _: ", durability ",
-                durability: dec_int,
+                durability: dec_int::<_, _, ContextError>,
                 _: ", flavor ",
-                flavor: dec_int,
+                flavor: dec_int::<_, _, ContextError>,
                 _: ", texture ",
-                texture: dec_int,
+                texture: dec_int::<_, _, ContextError>,
                 _: ", calories ",
-                calories: dec_int,
+                calories: dec_int::<_, _, ContextError>,
             }},
-            _: eof
+            _: eof::<_, ContextError>
         }}
-        .parse(value)
-        .map_err(|e| eyre!("{e}"))
+        .parse_next(&mut value)
+        .map_err(|e: ContextError| eyre!("{e}"))
     }
 }
 

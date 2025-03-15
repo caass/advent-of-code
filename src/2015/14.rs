@@ -9,7 +9,7 @@ use rayon::prelude::*;
 use winnow::{
     ascii::{alpha1, digit1},
     combinator::{eof, preceded, seq},
-    error::{ContextError, ParseError},
+    error::ContextError,
     Parser,
 };
 
@@ -180,7 +180,7 @@ impl<'s> TryFromStr<'s> for Reindeer<'s> {
             rest_duration: digit1.parse_to(),
             _: preceded(" seconds.", eof)
         }}
-        .parse(value.trim())
-        .map_err(|e: ParseError<_, ContextError>| eyre!("{e}"))
+        .parse_next(&mut value.trim())
+        .map_err(|e: ContextError| eyre!("{e}"))
     }
 }

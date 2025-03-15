@@ -21,7 +21,7 @@ wide = "0.7.32"
 eyre = "0.6.12"
 nohash-hasher = "0.2.0"
 itoa = "1.0"
-winnow = { version = "0.6.26", features = ["simd"] }
+winnow = { version = "0.7.4", features = ["simd"] }
 tinystr = { version = "0.8.1", features = ["std"] }
 fnv = "1.0.7"
 petgraph = { version = "0.7.1", features = ["rayon"] }

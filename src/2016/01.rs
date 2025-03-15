@@ -200,13 +200,13 @@ impl FromStr for Instruction {
     type Err = Report;
 
     #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(mut s: &str) -> Result<Self, Self::Err> {
         seq! {Instruction {
             turn: alt::<_, _, ContextError, _>(("R", "L")).parse_to(),
-            steps: dec_uint
+            steps: dec_uint::<_, _, ContextError>
         }}
-        .parse(s)
-        .map_err(|_| eyre!("Invalid instruction: {s}"))
+        .parse_next(&mut s)
+        .map_err(|_: ContextError| eyre!("Invalid instruction: {s}"))
     }
 }
 

@@ -5,7 +5,7 @@ use rayon::prelude::*;
 
 use winnow::ascii::{alpha1, digit1};
 use winnow::combinator::seq;
-use winnow::error::{ContextError, ErrMode, ParseError, StrContext};
+use winnow::error::{ContextError, StrContext};
 use winnow::prelude::*;
 
 use crate::common::{TryFromStr, TryParse};
@@ -107,7 +107,7 @@ struct Leg<'s> {
 }
 
 impl<'s> TryFromStr<'s> for Leg<'s> {
-    type Err = ParseError<&'s str, ErrMode<ContextError>>;
+    type Err = ContextError;
 
     fn try_from_str(input: &'s str) -> Result<Self, Self::Err> {
         seq! { Leg {
@@ -117,6 +117,6 @@ impl<'s> TryFromStr<'s> for Leg<'s> {
             _: " = ",
             distance: digit1.context(StrContext::Label("distance")).parse_to()
         }}
-        .parse(input.trim())
+        .parse_next(&mut input.trim())
     }
 }
