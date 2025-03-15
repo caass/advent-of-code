@@ -235,12 +235,12 @@ fn parse_ticker_tape(line: &str) -> Result<(u16, Sue)> {
     Ok((number, sue))
 }
 
-fn parse_compound(input: &mut &str) -> PResult<Compound> {
+fn parse_compound(input: &mut &str) -> ModalResult<Compound> {
     separated_pair(alpha1.parse_to(), ": ", dec_uint)
         .map(|(kind, count)| Compound { kind, count })
         .parse_next(input)
 }
 
-fn parse_sue_number(input: &mut &str) -> PResult<u16> {
+fn parse_sue_number(input: &mut &str) -> ModalResult<u16> {
     delimited("Sue ", dec_uint, ':').parse_next(input)
 }

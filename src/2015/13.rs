@@ -111,7 +111,7 @@ impl<'s> TryFromStr<'s> for Relationship<'s> {
     type Err = ParseError<&'s str, ContextError>;
 
     fn try_from_str(value: &'s str) -> Result<Self, Self::Err> {
-        fn parse_feeling(input: &mut &str) -> PResult<isize> {
+        fn parse_feeling(input: &mut &str) -> ModalResult<isize> {
             let sign = alt(("gain".map(|_| 1isize), "lose".map(|_| -1isize)));
             let magnitude = digit1.parse_to::<isize>();
 

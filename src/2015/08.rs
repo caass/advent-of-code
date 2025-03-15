@@ -91,13 +91,13 @@ impl FromStr for Line {
     }
 }
 
-fn char(input: &mut &str) -> PResult<Char> {
+fn char(input: &mut &str) -> ModalResult<Char> {
     alt((hex, quote, backslash, literal))
         .context(StrContext::Label("char"))
         .parse_next(input)
 }
 
-fn literal(input: &mut &str) -> PResult<Char> {
+fn literal(input: &mut &str) -> ModalResult<Char> {
     any.context(StrContext::Label("character literal"))
         .map(|c: char| {
             debug_assert!(c.is_ascii());
@@ -111,21 +111,21 @@ fn literal(input: &mut &str) -> PResult<Char> {
         .parse_next(input)
 }
 
-fn backslash(input: &mut &str) -> PResult<Char> {
+fn backslash(input: &mut &str) -> ModalResult<Char> {
     "\\\\"
         .context(StrContext::Label("escaped backslash"))
         .map(|_| Char::Backslash)
         .parse_next(input)
 }
 
-fn quote(input: &mut &str) -> PResult<Char> {
+fn quote(input: &mut &str) -> ModalResult<Char> {
     preceded('\\', '"')
         .context(StrContext::Label("escaped quotation mark"))
         .map(|_| Char::Quote)
         .parse_next(input)
 }
 
-fn hex(input: &mut &str) -> PResult<Char> {
+fn hex(input: &mut &str) -> ModalResult<Char> {
     preceded(
         "\\x",
         take(2u8)

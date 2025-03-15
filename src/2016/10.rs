@@ -265,7 +265,7 @@ impl FromStr for Instruction {
     }
 }
 
-fn parse_instruction(input: &mut &str) -> PResult<Instruction> {
+fn parse_instruction(input: &mut &str) -> ModalResult<Instruction> {
     dispatch! {terminated(alpha1, ' ');
         "value" => parse_startup_instruction,
         "bot" => parse_bot_instruction,
@@ -274,7 +274,7 @@ fn parse_instruction(input: &mut &str) -> PResult<Instruction> {
     .parse_next(input)
 }
 
-fn parse_startup_instruction(input: &mut &str) -> PResult<Instruction> {
+fn parse_startup_instruction(input: &mut &str) -> ModalResult<Instruction> {
     seq! {
         Instruction::Startup {
             microchip: digit1.parse_to(),
@@ -285,7 +285,7 @@ fn parse_startup_instruction(input: &mut &str) -> PResult<Instruction> {
     .parse_next(input)
 }
 
-fn parse_bot_instruction(input: &mut &str) -> PResult<Instruction> {
+fn parse_bot_instruction(input: &mut &str) -> ModalResult<Instruction> {
     seq! {
         Instruction::Comparison {
             bot: digit1.parse_to(),
@@ -298,7 +298,7 @@ fn parse_bot_instruction(input: &mut &str) -> PResult<Instruction> {
     .parse_next(input)
 }
 
-fn parse_destination(input: &mut &str) -> PResult<Destination> {
+fn parse_destination(input: &mut &str) -> ModalResult<Destination> {
     dispatch! {terminated(alpha1, ' ');
         "bot" => digit1.parse_to().map(Destination::Bot),
         "output" => digit1.parse_to().map(Destination::Output),

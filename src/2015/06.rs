@@ -73,8 +73,8 @@ impl RangeBounds<Coordinate> for InstructionRange {
 }
 
 impl InstructionRange {
-    fn parse(input: &mut &str) -> PResult<Self> {
-        fn parse_coordinate(input: &mut &str) -> PResult<Coordinate> {
+    fn parse(input: &mut &str) -> ModalResult<Self> {
+        fn parse_coordinate(input: &mut &str) -> ModalResult<Coordinate> {
             separated_pair(digit1.parse_to(), ',', digit1.parse_to())
                 .map(|(x, y)| Coordinate { x, y })
                 .parse_next(input)
@@ -94,7 +94,7 @@ enum Action {
 }
 
 impl Action {
-    fn parse(input: &mut &str) -> PResult<Self> {
+    fn parse(input: &mut &str) -> ModalResult<Self> {
         alt((
             "turn off".map(|_| Action::TurnOff),
             "turn on".map(|_| Action::TurnOn),

@@ -175,27 +175,27 @@ enum Input {
     RShift(Source, u8),
 }
 
-fn input(input: &mut &str) -> PResult<Input> {
+fn input(input: &mut &str) -> ModalResult<Input> {
     alt((not, lshift, rshift, and, or, constant))
         .context(StrContext::Label("input"))
         .parse_next(input)
 }
 
-fn constant(input: &mut &str) -> PResult<Input> {
+fn constant(input: &mut &str) -> ModalResult<Input> {
     source
         .map(Input::Constant)
         .context(StrContext::Label("constant wire statement"))
         .parse_next(input)
 }
 
-fn not(input: &mut &str) -> PResult<Input> {
+fn not(input: &mut &str) -> ModalResult<Input> {
     ("NOT ", source)
         .map(|(_, name)| Input::Not(name))
         .context(StrContext::Label("NOT statement"))
         .parse_next(input)
 }
 
-fn lshift(input: &mut &str) -> PResult<Input> {
+fn lshift(input: &mut &str) -> ModalResult<Input> {
     separated_pair(
         source,
         " LSHIFT ",
@@ -206,7 +206,7 @@ fn lshift(input: &mut &str) -> PResult<Input> {
     .parse_next(input)
 }
 
-fn rshift(input: &mut &str) -> PResult<Input> {
+fn rshift(input: &mut &str) -> ModalResult<Input> {
     separated_pair(
         source,
         " RSHIFT ",
@@ -217,14 +217,14 @@ fn rshift(input: &mut &str) -> PResult<Input> {
     .parse_next(input)
 }
 
-fn and(input: &mut &str) -> PResult<Input> {
+fn and(input: &mut &str) -> ModalResult<Input> {
     separated_pair(source, " AND ", source)
         .map(|(a, b)| Input::And(a, b))
         .context(StrContext::Label("AND statement"))
         .parse_next(input)
 }
 
-fn or(input: &mut &str) -> PResult<Input> {
+fn or(input: &mut &str) -> ModalResult<Input> {
     separated_pair(source, " OR ", source)
         .map(|(a, b)| Input::Or(a, b))
         .context(StrContext::Label("OR statement"))
@@ -237,7 +237,7 @@ enum Source {
     Constant(u16),
 }
 
-fn source(input: &mut &str) -> PResult<Source> {
+fn source(input: &mut &str) -> ModalResult<Source> {
     alt((
         alpha1
             .parse_to()

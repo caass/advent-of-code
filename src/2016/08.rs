@@ -238,7 +238,7 @@ impl FromStr for Instruction {
     }
 }
 
-fn parse_rotate_row(input: &mut &str) -> PResult<Instruction> {
+fn parse_rotate_row(input: &mut &str) -> ModalResult<Instruction> {
     (
         preceded("rotate row y=", dec_uint),
         preceded(" by ", dec_uint),
@@ -247,7 +247,7 @@ fn parse_rotate_row(input: &mut &str) -> PResult<Instruction> {
         .parse_next(input)
 }
 
-fn parse_rotate_col(input: &mut &str) -> PResult<Instruction> {
+fn parse_rotate_col(input: &mut &str) -> ModalResult<Instruction> {
     (
         preceded("rotate column x=", dec_uint),
         preceded(" by ", dec_uint),
@@ -256,7 +256,7 @@ fn parse_rotate_col(input: &mut &str) -> PResult<Instruction> {
         .parse_next(input)
 }
 
-fn parse_rect(input: &mut &str) -> PResult<Instruction> {
+fn parse_rect(input: &mut &str) -> ModalResult<Instruction> {
     preceded(
         "rect ",
         separated_pair(dec_uint, "x", dec_uint)
