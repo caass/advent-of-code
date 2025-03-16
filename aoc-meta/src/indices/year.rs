@@ -51,7 +51,7 @@ impl Year {
         self as u16
     }
 
-    pub(crate) const fn from_u16(year: u16) -> Result<Self, FromU16Error> {
+    pub const fn from_u16(year: u16) -> Result<Self, FromU16Error> {
         match year {
             ..=2014 => Err(FromU16Error::Early(year)),
             2015 => Ok(Year::Fifteen),

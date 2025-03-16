@@ -19,9 +19,8 @@ impl Problem {
         Part::iter().filter_map(|part| self.part(part).map(|solution| (part, solution)))
     }
 
-    #[allow(dead_code, reason = "Sometimes unused depending on solution progress")]
     #[inline]
-    pub(crate) const fn unsolved() -> Self {
+    pub const fn unsolved() -> Self {
         Self([None, None])
     }
 
