@@ -108,6 +108,7 @@ version = "0.1.0"
 dependencies = [
  "aoc-common",
  "aoc-meta",
+ "aoc-test",
  "either",
  "enum-map",
  "eyre",
@@ -158,6 +159,9 @@ dependencies = [
 [[package]]
 name = "aoc-test"
 version = "0.1.0"
+dependencies = [
+ "paste",
+]
 
 [[package]]
 name = "autocfg"
