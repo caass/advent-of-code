@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-enum-iterator = "2.1.0"
-enum-map = "2.7.3"
-nohash-hasher = "0.2.0"
-thiserror = "2.0.12"
-eyre = "0.6.12"
-paste = "1.0.15"
+enum-iterator.workspace = true
+enum-map.workspace = true
+nohash-hasher.workspace = true
+thiserror.workspace = true
+eyre.workspace = true
+paste.workspace = true

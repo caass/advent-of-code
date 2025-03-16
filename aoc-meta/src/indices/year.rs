@@ -4,7 +4,7 @@ use std::num::ParseIntError;
 use std::path::Path;
 use std::str::FromStr;
 
-use enum_iterator::{all, Sequence};
+use enum_iterator::{Sequence, all};
 use enum_map::Enum;
 use thiserror::Error;
 

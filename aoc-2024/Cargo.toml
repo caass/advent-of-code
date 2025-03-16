@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-aoc-meta = { path = "../aoc-meta" }
-aoc-common = { path = "../aoc-common" }
+aoc-meta.workspace = true
+aoc-common.workspace = true
 
-eyre = "0.6.12"
-rayon = "1.10.0"
-nohash-hasher = "0.2.0"
-itertools = "0.14.0"
-regex = "1.11.1"
-void = "1.0.2"
+eyre.workspace = true
+rayon.workspace = true
+nohash-hasher.workspace = true
+itertools.workspace = true
+regex.workspace = true
+void.workspace = true
 
 [dev-dependencies]
-aoc-test = { path = "../aoc-test" }
-pretty_assertions = "1.4.1"
+aoc-test.workspace = true
+pretty_assertions.workspace = true

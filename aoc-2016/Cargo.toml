@@ -4,21 +4,21 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-aoc-meta = { path = "../aoc-meta" }
-aoc-common = { path = "../aoc-common" }
+aoc-meta.workspace = true
+aoc-common.workspace = true
 
-eyre = "0.6.12"
-winnow = { version = "0.7.4", features = ["simd"] }
-itertools = "0.14.0"
-rayon = "1.10.0"
-nohash-hasher = "0.2.0"
-md-5 = "0.11.0-pre.5"
-memchr = "2.7.4"
-itoa = "1.0"
-fnv = "1.0.7"
-pathsep = "0.1.1"
-regex = "1.11.1"
+eyre.workspace = true
+winnow.workspace = true
+itertools.workspace = true
+rayon.workspace = true
+nohash-hasher.workspace = true
+md-5.workspace = true
+memchr.workspace = true
+itoa.workspace = true
+fnv.workspace = true
+pathsep.workspace = true
+regex.workspace = true
 
 [dev-dependencies]
-aoc-test = { path = "../aoc-test" }
-pretty_assertions = "1.4.1"
+aoc-test.workspace = true
+pretty_assertions.workspace = true
