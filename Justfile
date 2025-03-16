@@ -10,7 +10,7 @@ default:
 
 # Run the advent of code binary
 run year day part: decrypt-inputs
-    cargo run --release -- {{year}} {{day}} {{part}} tests/inputs/{{year}}/{{day}}
+    cargo run --release -- {{year}} {{day}} {{part}} target/inputs/{{year}}/{{day}}
 
 # Check for outdated dependencies
 outdated *ARGS:
@@ -18,7 +18,7 @@ outdated *ARGS:
 
 # Test solutions
 test *ARGS: decrypt-inputs
-    cargo nextest run --no-tests=fail --cargo-profile=fast-test {{ARGS}}
+    cargo nextest run --all --no-tests=fail --cargo-profile=fast-test {{ARGS}}
 
 # Benchmark solutions
 bench *ARGS: decrypt-inputs
@@ -33,7 +33,7 @@ get-inputs: download-inputs
         printf "Need AOC_INPUTS_PUBKEY to be set to encrypt puzzle inputs.\n" && exit 1
     fi
 
-    {{tar}} cz ./tests/inputs | rage -r $AOC_INPUTS_PUBKEY > ./inputs.gz.age
+    {{tar}} cz ./target/inputs | rage -r $AOC_INPUTS_PUBKEY > ./inputs.gz.age
 
 # Clean `target/` and `tests/inputs/`
 clean: clean-inputs
@@ -48,7 +48,7 @@ decrypt-inputs:
         printf "Need AOC_INPUTS_SECRET to be set to decrypt puzzle inputs.\n" && exit 1
     fi
 
-    printenv AOC_INPUTS_SECRET | rage -d -i - ./fixtures/inputs.gz.age | {{tar}} xz ./tests/inputs
+    printenv AOC_INPUTS_SECRET | rage -d -i - ./inputs.gz.age | {{tar}} xz ./target/inputs
 
 [private]
 clean-inputs:
@@ -63,7 +63,7 @@ download-inputs: clean-inputs
         (printf "Install the \`cookies\` command from https://github.com/barnardb/cookies to continue.\n" >&2 && exit 1)
 
     SESSION_COOKIE="$(cookies https://adventofcode.com session)"
-    UNPACKED_FIXTURES_PATH="./tests/inputs"
+    UNPACKED_FIXTURES_PATH="./target/inputs"
 
     THIS_YEAR="$(date +%Y)"
     THIS_MONTH="$(date +%m)"
