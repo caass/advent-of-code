@@ -4,9 +4,12 @@ My solutions to [Eric Wastl](http://was.tl/)'s [Advent of Code](https://adventof
 
 ## Organization
 
-This repo is a single rust crate, `advent-of-code`, and is organized mostly according to those conventions; my solutions are located in `src` and organized by year and day, so you can find my solution to e.g. [day 9 of 2015](https://adventofcode.com/2015/day/9) in [`src/2015/09.rs`](./src/2015/09.rs). Each solution is tested in [`tests/integration.rs`](./tests/integration.rs) (via some write-only `macro_rules!` magic) and additionally there's some unit tests for certain parts of certain days that had more complex internal logic; those tests are colocated in the source files alongside the logic that they're testing.
+This repo is a [Cargo workspace](https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html) containing multiple [crates](https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html) that comprise my solutions. The workspace is organized as follows:
 
-The [`meta`](./src/meta) subfolder in [`src`](./src) contains things that are more structural to advent of code, rather than anything related to a specific problem. The [`common`](./src/common) subfoleder contains types and traits that are useful for more than one problem, e.g. 2015's days [6](./src/2015/06.rs) and [18](./src/2015/18.rs).
+- [`aoc`](./aoc): top-level wrapper crate with a runnable binary.
+- [`aoc-meta`](./aoc-meta): core types and traits for solving Advent of Code problems, such as [`Part`](aoc-meta/src/indices/part.rs) (Advent of Code problems tend to have two parts).
+- [`aoc-common`](./aoc-common): types and traits common between multiple problems, such as [`TryFromStr`](aoc-common/src/from_str_ext.rs) (which allows parsing string slices into structs containing references to the original slice).
+- [`aoc-2015`](./aoc-2015), [`aoc-2016`](./aoc-2016), [`aoc-2017`](./aoc-2017), [`aoc-2018`](./aoc-2018), [`aoc-2019`](./aoc-2019), [`aoc-2020`](./aoc-2020), [`aoc-2021`](./aoc-2021), [`aoc-2022`](./aoc-2022), [`aoc-2023`](./aoc-2023), and [`aoc-2024`](./aoc-2024): contain implementations of the Advent of Code problems from each respective year.
 
 ## Inputs & Descriptions
 
@@ -14,4 +17,4 @@ To comply with Eric's [rules about copying](https://adventofcode.com/about#faq_c
 
 ## Running
 
-The crate also has a binary, which you can run with `just run <YEAR> <DAY> <PART> < path/to/input`. To see all available commands, run `just` with no arguments.
+To run the `aoc` binary, run `just run <YEAR> <DAY> <PART>`. You can provide your puzzle input via stdin (default) or by providing a fourth argument containing the filepath of your input.
