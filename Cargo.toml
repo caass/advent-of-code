@@ -4,6 +4,13 @@ members = [
     "aoc",
     "aoc-2015",
     "aoc-2016",
+    "aoc-2017",
+    "aoc-2018",
+    "aoc-2019",
+    "aoc-2020",
+    "aoc-2021",
+    "aoc-2022",
+    "aoc-2023",
     "aoc-2024",
     "aoc-common",
     "aoc-meta",
@@ -18,7 +25,15 @@ license = "PPL"
 [workspace.dependencies]
 aoc-2015 = { path = "aoc-2015" }
 aoc-2016 = { path = "aoc-2016" }
+aoc-2017 = { path = "aoc-2017" }
+aoc-2018 = { path = "aoc-2018" }
+aoc-2019 = { path = "aoc-2019" }
+aoc-2020 = { path = "aoc-2020" }
+aoc-2021 = { path = "aoc-2021" }
+aoc-2022 = { path = "aoc-2022" }
+aoc-2023 = { path = "aoc-2023" }
 aoc-2024 = { path = "aoc-2024" }
+
 aoc-common = { path = "aoc-common" }
 aoc-meta = { path = "aoc-meta" }
 aoc-test = { path = "aoc-test" }

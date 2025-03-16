@@ -67,6 +67,13 @@ version = "0.1.0"
 dependencies = [
  "aoc-2015",
  "aoc-2016",
+ "aoc-2017",
+ "aoc-2018",
+ "aoc-2019",
+ "aoc-2020",
+ "aoc-2021",
+ "aoc-2022",
+ "aoc-2023",
  "aoc-2024",
  "aoc-meta",
  "clap",
@@ -118,6 +125,55 @@ dependencies = [
  "rayon",
  "regex",
  "winnow",
+]
+
+[[package]]
+name = "aoc-2017"
+version = "0.1.0"
+dependencies = [
+ "aoc-meta",
+]
+
+[[package]]
+name = "aoc-2018"
+version = "0.1.0"
+dependencies = [
+ "aoc-meta",
+]
+
+[[package]]
+name = "aoc-2019"
+version = "0.1.0"
+dependencies = [
+ "aoc-meta",
+]
+
+[[package]]
+name = "aoc-2020"
+version = "0.1.0"
+dependencies = [
+ "aoc-meta",
+]
+
+[[package]]
+name = "aoc-2021"
+version = "0.1.0"
+dependencies = [
+ "aoc-meta",
+]
+
+[[package]]
+name = "aoc-2022"
+version = "0.1.0"
+dependencies = [
+ "aoc-meta",
+]
+
+[[package]]
+name = "aoc-2023"
+version = "0.1.0"
+dependencies = [
+ "aoc-meta",
 ]
 
 [[package]]
