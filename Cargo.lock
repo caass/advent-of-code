@@ -101,6 +101,15 @@ dependencies = [
 [[package]]
 name = "aoc"
 version = "0.1.0"
+dependencies = [
+ "aoc-2015",
+ "aoc-2016",
+ "aoc-2024",
+ "aoc-meta",
+ "clap",
+ "clap-stdin",
+ "eyre",
+]
 
 [[package]]
 name = "aoc-2015"
@@ -130,6 +139,23 @@ dependencies = [
 [[package]]
 name = "aoc-2016"
 version = "0.1.0"
+dependencies = [
+ "aoc-common",
+ "aoc-meta",
+ "aoc-test",
+ "eyre",
+ "fnv",
+ "itertools 0.14.0",
+ "itoa",
+ "md-5",
+ "memchr",
+ "nohash-hasher",
+ "pathsep",
+ "pretty_assertions",
+ "rayon",
+ "regex",
+ "winnow",
+]
 
 [[package]]
 name = "aoc-2024"

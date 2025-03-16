@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aoc-meta = { path = "../aoc-meta" }
+aoc-2015 = { path = "../aoc-2015" }
+aoc-2016 = { path = "../aoc-2016" }
+aoc-2024 = { path = "../aoc-2024" }
+
+clap = { version = "4.5.32", features = ["derive"] }
+clap-stdin = "0.6.0"
+eyre = "0.6.12"
