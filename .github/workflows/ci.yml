@@ -34,7 +34,7 @@ jobs:
       - name: Check formatting
         run: cargo fmt --check
 
-  test:
+  test-integration:
     needs: lint
     name: Test (Integration)
     strategy:
@@ -62,7 +62,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
-        run: just test
+        run: just test --test=integration
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 

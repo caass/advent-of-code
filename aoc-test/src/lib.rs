@@ -7,16 +7,8 @@ pub use paste::paste;
 #[macro_export]
 macro_rules! tests {
     // Shorthand for constructing tests against years, days, and parts.
-    {$($year:literal: {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*}),+} => {
-        $crate::paste!{
-            $(
-                mod [<_ $year>] {
-                    $(
-                        $crate::tests_impl!(year: $year, day: $day, parts: [$($(#[$attrs])* $part),+]);
-                    )*
-                }
-            )+
-        }
+    {$year:literal: {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*}} => {
+        $($crate::tests_impl!(year: $year, day: $day, parts: [$($(#[$attrs])* $part),+]);)*
     };
 }
 
@@ -24,7 +16,6 @@ macro_rules! tests {
 #[macro_export]
 /// Implementation detail of the [`tests!`] macro.
 macro_rules! tests_impl {
-
     // Since there's no `.enumerate()` for macro iterations (as far as i can tell), the following is helper code
     // to generate the appropriate test cases for days where either 1 or 2 parts have been solved.
 
