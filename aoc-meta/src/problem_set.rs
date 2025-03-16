@@ -75,12 +75,12 @@ impl Index<Day> for ProblemSet {
 /// ```
 #[macro_export]
 macro_rules! PROBLEMS {
-    {$($day:literal => $problem:ident),+} => {
+    {$($day:literal => $problem:ident),*} => {
         $crate::paste!{
             $(
                 #[path = "" $day ".rs"]
                 mod [<day $day>];
-            )+
+            )*
 
             pub const PROBLEMS: $crate::ProblemSet = const {
                 let problems = $crate::ProblemSet::new();
@@ -91,7 +91,7 @@ macro_rules! PROBLEMS {
                         ::std::panic!("Invalid day");
                     };
                     let problems = problems.with_day(day_index, self::[<day $day>]::$problem);
-                )+
+                )*
 
                 problems
             };
