@@ -160,6 +160,18 @@ dependencies = [
 [[package]]
 name = "aoc-2024"
 version = "0.1.0"
+dependencies = [
+ "aoc-common",
+ "aoc-meta",
+ "aoc-test",
+ "eyre",
+ "itertools 0.14.0",
+ "nohash-hasher",
+ "pretty_assertions",
+ "rayon",
+ "regex",
+ "void",
+]
 
 [[package]]
 name = "aoc-common"

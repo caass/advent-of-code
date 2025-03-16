@@ -1,14 +1,8 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use aoc_meta::PROBLEMS;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+PROBLEMS! {
+ 01 => HISTORIAN_HYSTERIA,
+ 02 => RED_NOSED_REPORTS,
+ 03 => MULL_IT_OVER,
+ 04 => CERES_SEARCH
 }

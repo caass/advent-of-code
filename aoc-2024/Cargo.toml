@@ -4,3 +4,16 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aoc-meta = { path = "../aoc-meta" }
+aoc-common = { path = "../aoc-common" }
+
+eyre = "0.6.12"
+rayon = "1.10.0"
+nohash-hasher = "0.2.0"
+itertools = "0.14.0"
+regex = "1.11.1"
+void = "1.0.2"
+
+[dev-dependencies]
+aoc-test = { path = "../aoc-test" }
+pretty_assertions = "1.4.1"
