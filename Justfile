@@ -33,7 +33,7 @@ get-inputs: download-inputs
         printf "Need AOC_INPUTS_PUBKEY to be set to encrypt puzzle inputs.\n" && exit 1
     fi
 
-    {{tar}} cz ./tests/inputs | rage -r $AOC_INPUTS_PUBKEY > ./fixtures/inputs.gz.age
+    {{tar}} cz ./tests/inputs | rage -r $AOC_INPUTS_PUBKEY > ./inputs.gz.age
 
 # Clean `target/` and `tests/inputs/`
 clean: clean-inputs
