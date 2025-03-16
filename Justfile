@@ -9,8 +9,8 @@ default:
   @just --list
 
 # Run the advent of code binary
-run year day part: decrypt-inputs
-    cargo run --release -- {{year}} {{day}} {{part}} target/inputs/{{year}}/{{day}}
+run year day part input="-":
+    cargo run --release -- {{year}} {{day}} {{part}} {{input}}
 
 # Test solutions
 test *ARGS: decrypt-inputs
