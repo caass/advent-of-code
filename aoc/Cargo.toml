@@ -1,7 +1,8 @@
 [package]
 name = "aoc"
-version = "0.1.0"
-edition = "2024"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
 
 [dependencies]
 aoc-meta.workspace = true

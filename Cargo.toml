@@ -10,6 +10,11 @@ members = [
     "aoc-test",
 ]
 
+[workspace.package]
+edition = "2024"
+version = "0.1.0"
+license = "PPL"
+
 [workspace.dependencies]
 aoc-2015 = { path = "aoc-2015" }
 aoc-2016 = { path = "aoc-2016" }

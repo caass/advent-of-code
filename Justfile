@@ -12,17 +12,9 @@ default:
 run year day part: decrypt-inputs
     cargo run --release -- {{year}} {{day}} {{part}} target/inputs/{{year}}/{{day}}
 
-# Check for outdated dependencies
-outdated *ARGS:
-    cargo outdated {{ARGS}}
-
 # Test solutions
 test *ARGS: decrypt-inputs
     cargo nextest run --all --no-tests=fail --cargo-profile=fast-test {{ARGS}}
-
-# Benchmark solutions
-bench *ARGS: decrypt-inputs
-    cargo criterion --bench bench {{ARGS}}
 
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
@@ -34,10 +26,6 @@ get-inputs: download-inputs
     fi
 
     {{tar}} cz ./target/inputs | rage -r $AOC_INPUTS_PUBKEY > ./inputs.gz.age
-
-# Clean `target/` and `tests/inputs/`
-clean: clean-inputs
-    cargo clean
 
 [private]
 decrypt-inputs:
@@ -51,11 +39,7 @@ decrypt-inputs:
     printenv AOC_INPUTS_SECRET | rage -d -i - ./inputs.gz.age | {{tar}} xz ./target/inputs
 
 [private]
-clean-inputs:
-    rm -rf tests/inputs
-
-[private]
-download-inputs: clean-inputs
+download-inputs:
     #!/usr/bin/env -S bash --posix
     set -euo pipefail
 
@@ -81,11 +65,14 @@ download-inputs: clean-inputs
             -s
     }
 
+    rm -rf target/inputs/*
+
     if [ ! -d $UNPACKED_FIXTURES_PATH ]; then
-        mkdir $UNPACKED_FIXTURES_PATH
+        mkdir -p $UNPACKED_FIXTURES_PATH
     fi
 
     printf "Downloading inputs...\n"
+
 
     for year in `seq 2015 $(( $THIS_YEAR - 1 ))`; do
         printf '%s: ' $year
