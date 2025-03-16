@@ -33,17 +33,7 @@ memchr = "2.7.4"
 pathsep = "0.1.1"
 regex = "1.11.1"
 void = "1.0.2"
-
-[target.'cfg(windows)'.dependencies]
-md-5 = "0.10.6"
-
-# Once version 0.11 is released, these can be merged as the problematic dependency is removed.
-# See:
-# - https://github.com/RustCrypto/hashes/issues/283
-# - https://github.com/RustCrypto/asm-hashes/issues/17
-# - https://github.com/RustCrypto/hashes/issues/315#issuecomment-1889285706
-[target.'cfg(not(windows))'.dependencies]
-md-5 = { version = "0.10.6", features = ["asm"] }
+md-5 =  "0.11.0-pre.5"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
