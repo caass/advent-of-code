@@ -1,14 +1,56 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+use std::ops::Index;
+
+mod indices;
+mod problem;
+mod problem_set;
+mod solution;
+
+pub use indices::{Day, Part, Year};
+pub use problem::Problem;
+pub use problem_set::ProblemSet;
+pub use solution::Solution;
+
+#[doc(hidden)]
+pub use paste::paste;
+
+#[repr(transparent)]
+pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST + 1) as usize }]);
+
+impl AdventOfCode {
+    #[inline]
+    #[must_use]
+    pub const fn year(&self, year: Year) -> Option<&ProblemSet> {
+        let idx = (year.as_u16() - Year::FIRST) as usize;
+        self.0[idx].as_ref()
+    }
+
+    pub fn years(&self) -> impl Iterator<Item = (Year, &ProblemSet)> {
+        Year::iter().filter_map(|year| self.year(year).map(|set| (year, set)))
+    }
+
+    pub const fn with_year(mut self, year: Year, problems: ProblemSet) -> Self {
+        let idx = (year.as_u16() - Year::FIRST) as usize;
+        self.0[idx] = Some(problems);
+        self
+    }
+
+    pub const fn new() -> Self {
+        Self([None, None, None, None, None, None, None, None, None, None])
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl Default for AdventOfCode {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+impl Index<Year> for AdventOfCode {
+    type Output = ProblemSet;
+
+    #[inline]
+    fn index(&self, year: Year) -> &Self::Output {
+        self.year(year)
+            .unwrap_or_else(|| panic!("Haven't solved any problems from {year}"))
     }
 }

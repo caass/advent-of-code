@@ -4,3 +4,24 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+aoc-meta = { path = "../aoc-meta" }
+aoc-common = { path = "../aoc-common" }
+
+paste = "1.0.15"
+eyre = "0.6.12"
+rayon = "1.10.0"
+wide = "0.7.32"
+nohash-hasher = "0.2.0"
+itertools = "0.14.0"
+md-5 = "0.11.0-pre.5"
+itoa = "1.0"
+winnow = { version = "0.7.4", features = ["simd"] }
+tinystr = { version = "0.8.1", features = ["std"] }
+fnv = "1.0.7"
+petgraph = { version = "0.7.1", features = ["rayon"] }
+serde_json = "1.0.140"
+either = "1.15.0"
+enum-map = "2.7.3"
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"

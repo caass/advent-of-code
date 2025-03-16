@@ -1,14 +1,29 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+use aoc_meta::PROBLEMS;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+PROBLEMS! {
+    01 => NOT_QUITE_LISP,
+    02 => I_WAS_TOLD_THERE_WOULD_BE_NO_MATH,
+    03 => PERFECTLY_SPHERICAL_HOUSES_IN_A_VACUUM,
+    04 => THE_IDEAL_STOCKING_STUFFER,
+    05 => DOESNT_HE_HAVE_INTERN_ELVES_FOR_THIS,
+    06 => PROBABLY_A_FIRE_HAZARD,
+    07 => SOME_ASSEMBLY_REQUIRED,
+    08 => MATCHSTICKS,
+    09 => ALL_IN_A_SINGLE_NIGHT,
+    10 => ELVES_LOOK_ELVES_SAY,
+    11 => CORPORATE_POLICY,
+    12 => JS_ABACUS_FRAMEWORK_IO,
+    13 => KNIGHTS_OF_THE_DINNER_TABLE,
+    14 => REINDEER_OLYMPICS,
+    15 => SCIENCE_FOR_HUNGRY_PEOPLE,
+    16 => AUNT_SUE,
+    17 => NO_SUCH_THING_AS_TOO_MUCH,
+    18 => LIKE_A_GIF_FOR_YOUR_YARD,
+    19 => MEDICINE_FOR_RUDOLPH,
+    20 => INFINITE_ELVES_AND_INFINITE_HOUSES,
+    21 => RPG_SIMULATOR_20XX,
+    22 => WIZARD_SIMULATOR_20XX,
+    23 => OPENING_THE_TURING_LOCK,
+    24 => IT_HANGS_IN_THE_BALANCE,
+    25 => LET_IT_SNOW
 }

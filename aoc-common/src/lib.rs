@@ -1,14 +1,16 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+//! Types that come in handy for more than one problem
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+#[cfg(not(target_pointer_width = "16"))]
+pub const U32_MAX: usize = u32::MAX as usize;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+#[cfg(target_pointer_width = "16")]
+pub const U32_MAX: usize =
+    compile_error!("Cannot compile for 16-bit targets; answer would overflow");
+
+mod bool_ext;
+mod from_str_ext;
+
+pub mod grid;
+
+pub use bool_ext::BoolExt;
+pub use from_str_ext::{TryFromStr, TryParse};

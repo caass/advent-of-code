@@ -105,6 +105,26 @@ version = "0.1.0"
 [[package]]
 name = "aoc-2015"
 version = "0.1.0"
+dependencies = [
+ "aoc-common",
+ "aoc-meta",
+ "either",
+ "enum-map",
+ "eyre",
+ "fnv",
+ "itertools 0.14.0",
+ "itoa",
+ "md-5",
+ "nohash-hasher",
+ "paste",
+ "petgraph",
+ "pretty_assertions",
+ "rayon",
+ "serde_json",
+ "tinystr",
+ "wide",
+ "winnow",
+]
 
 [[package]]
 name = "aoc-2016"
@@ -117,10 +137,23 @@ version = "0.1.0"
 [[package]]
 name = "aoc-common"
 version = "0.1.0"
+dependencies = [
+ "either",
+ "itertools 0.14.0",
+ "rayon",
+]
 
 [[package]]
 name = "aoc-meta"
 version = "0.1.0"
+dependencies = [
+ "enum-iterator",
+ "enum-map",
+ "eyre",
+ "nohash-hasher",
+ "paste",
+ "thiserror",
+]
 
 [[package]]
 name = "aoc-test"
