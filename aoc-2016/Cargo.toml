@@ -19,6 +19,7 @@ itoa.workspace = true
 fnv.workspace = true
 pathsep.workspace = true
 regex.workspace = true
+either.workspace = true
 
 [dev-dependencies]
 aoc-test.workspace = true

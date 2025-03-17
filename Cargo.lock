@@ -113,6 +113,7 @@ dependencies = [
  "aoc-common",
  "aoc-meta",
  "aoc-test",
+ "either",
  "eyre",
  "fnv",
  "itertools",
