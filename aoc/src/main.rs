@@ -1,6 +1,6 @@
 use clap::Parser;
 use clap_stdin::FileOrStdin;
-use eyre::{Result, eyre};
+use eyre::Result;
 
 use aoc::AOC;
 use aoc_meta::{Day, Part, Year};
@@ -28,16 +28,9 @@ fn main() -> Result<()> {
         input,
     } = Args::parse();
 
-    let solution = AOC
-        .year(year)
-        .ok_or_else(|| eyre!("haven't solved year {year} yet"))?
-        .day(day)
-        .ok_or_else(|| eyre!("haven't solved day {day} of {year} yet"))?
-        .part(part)
-        .ok_or_else(|| eyre!("haven't solved part {part} of day {day} of {year} yet"))?
-        .solve(input.contents()?.trim())?;
+    let output = AOC[year][day][part].solve(input.contents()?.trim())?;
 
-    println!("{}", solution);
+    println!("{}", output);
 
     Ok(())
 }
