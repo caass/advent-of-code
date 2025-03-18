@@ -1,4 +1,6 @@
 use std::borrow::Cow;
+use std::collections::{BTreeSet, btree_set};
+use std::iter;
 
 use either::Either;
 use eyre::{OptionExt, Report, Result, bail, eyre};
@@ -18,8 +20,11 @@ pub const RADIOISOTOPE_THERMOELECTRIC_GENERATORS: Problem = Problem::partially_s
     Ok::<_, Report>(format!("{:#?}", column))
 });
 
-#[derive(Debug, Clone, Default)]
-struct Floor<'s>(FnvHashSet<Item<'s>>);
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
+struct Floor<'s>(BTreeSet<Item<'s>>);
+
+type Items<'a, 's> = iter::Copied<btree_set::Iter<'a, Item<'s>>>;
+type ItemPairs<'a, 's> = itertools::TupleCombinations<Items<'a, 's>, (Item<'s>, Item<'s>)>;
 
 impl<'s> Floor<'s> {
     #[inline]
@@ -55,24 +60,24 @@ impl<'s> Floor<'s> {
         }
     }
 
-    fn is_valid_with(&self, item: Item<'s>) -> bool {
-        self.0.iter().chain([&item]).all(Item::is_microchip)
+    fn is_valid_with(&self, item: &Item<'s>) -> bool {
+        self.0.iter().chain([item]).all(Item::is_microchip)
             || self
                 .0
                 .iter()
-                .chain([&item])
+                .chain([item])
                 .filter_map(Item::as_microchip)
                 .all(|Microchip { element }| {
                     self.has_generator_for(element) || item.is_generator_for(element)
                 })
     }
 
-    fn is_valid_with_both(&self, a: Item<'s>, b: Item<'s>) -> bool {
-        self.0.iter().chain([&a, &b]).all(Item::is_microchip)
+    fn is_valid_with_both(&self, a: &Item<'s>, b: &Item<'s>) -> bool {
+        self.0.iter().chain([a, b]).all(Item::is_microchip)
             || self
                 .0
                 .iter()
-                .chain([&a, &b])
+                .chain([a, b])
                 .filter_map(Item::as_microchip)
                 .all(|Microchip { element }| {
                     self.has_generator_for(element)
@@ -81,7 +86,7 @@ impl<'s> Floor<'s> {
                 })
     }
 
-    fn is_valid_with_either(&self, items: Either<Item<'s>, (Item<'s>, Item<'s>)>) -> bool {
+    fn is_valid_with_either(&self, items: Either<&Item<'s>, &(Item<'s>, Item<'s>)>) -> bool {
         match items {
             Either::Left(item) => self.is_valid_with(item),
             Either::Right((a, b)) => self.is_valid_with_both(a, b),
@@ -114,6 +119,13 @@ impl<'s> Floor<'s> {
                 .all(|Microchip { element }| self.has_generator_for(element))
     }
 
+    fn is_valid_without_either(&self, items: Either<&Item<'s>, &(Item<'s>, Item<'s>)>) -> bool {
+        match items {
+            Either::Left(removed) => self.is_valid_without(removed),
+            Either::Right((a, b)) => self.is_valid_without_both(a, b),
+        }
+    }
+
     fn insert(&mut self, item: Item<'s>) -> bool {
         self.0.insert(item)
     }
@@ -133,43 +145,140 @@ impl<'s> Floor<'s> {
         self.0.contains(&Item::Generator(Generator { element }))
     }
 
-    fn items(&self) -> impl Iterator<Item = Item<'s>> {
+    fn items(&self) -> Items<'_, 's> {
         self.0.iter().copied()
     }
 
-    fn candidates_for_removal(
-        &self,
-    ) -> impl Iterator<Item = Either<Item<'s>, (Item<'s>, Item<'s>)>> {
-        let singletons = self
-            .items()
-            .filter(|item| self.is_valid_without(item))
-            .map(Either::Left);
-        let pairs = self
-            .item_tuples()
-            .filter(|(a, b)| self.is_valid_without_both(a, b))
-            .map(Either::Right);
+    fn candidates_for_removal(&self) -> CandidatesForRemoval<'_, 's> {
+        let singletons = self.items();
+        let pairs = self.item_tuples();
 
-        singletons.chain(pairs)
+        CandidatesForRemoval {
+            singletons,
+            pairs,
+            floor: self,
+        }
     }
 
-    fn item_tuples(&self) -> impl Iterator<Item = (Item<'s>, Item<'s>)> {
+    fn next_valid_states<'a, 'b>(&'a self, other: &'b Floor<'s>) -> NextValidStates<'a, 'b, 's> {
+        NextValidStates {
+            this: self,
+            other,
+            candidates: self.candidates_for_removal(),
+        }
+    }
+
+    fn item_tuples(&self) -> ItemPairs<'_, 's> {
         self.0.iter().copied().tuple_combinations()
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
+struct NextValidStates<'a, 'b, 's> {
+    this: &'a Floor<'s>,
+    other: &'b Floor<'s>,
+    candidates: CandidatesForRemoval<'a, 's>,
+}
+
+impl<'s> Iterator for NextValidStates<'_, '_, 's> {
+    type Item = (Floor<'s>, Floor<'s>);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.candidates.next()?;
+        self.other
+            .is_valid_with_either(next.as_ref())
+            .then(|| {
+                let mut this = self.this.clone();
+                let mut other = self.other.clone();
+                this.remove_either(next.as_ref());
+                other.insert_either(next);
+
+                (this, other)
+            })
+            .or_else(|| self.next())
+    }
+}
+
+#[derive(Debug)]
+struct CandidatesForRemoval<'a, 's> {
+    singletons: Items<'a, 's>,
+    pairs: ItemPairs<'a, 's>,
+    floor: &'a Floor<'s>,
+}
+
+impl<'s> Iterator for CandidatesForRemoval<'_, 's> {
+    type Item = Either<Item<'s>, (Item<'s>, Item<'s>)>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self
+            .singletons
+            .next()
+            .map(Either::Left)
+            .or_else(|| self.pairs.next().map(Either::Right))?;
+
+        self.floor
+            .is_valid_without_either(next.as_ref())
+            .then_some(next)
+            .or_else(|| self.next())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct Column<'s> {
     floors: [Floor<'s>; 4],
-    elevator: u8,
+    elevator: Level,
 }
 
 impl<'s> Column<'s> {
     fn all_on_fourth_floor(&self) -> bool {
-        self.floors[..3].iter().all(Floor::is_empty)
+        self.floors[0].is_empty() && self.floors[1].is_empty() && self.floors[2].is_empty()
     }
 
-    fn next_valid_states(&self) -> ! {
-        todo!()
+    fn next_valid_states(&self) -> Box<dyn Iterator<Item = Column<'s>> + '_> {
+        match self.elevator {
+            Level::First => Box::new(self.floors[0].next_valid_states(&self.floors[1]).map(
+                |(first, second)| Column {
+                    floors: [
+                        first,
+                        second,
+                        self.floors[2].clone(),
+                        self.floors[3].clone(),
+                    ],
+                    elevator: Level::Second,
+                },
+            )),
+            Level::Second => {
+                let down =
+                    self.floors[1]
+                        .next_valid_states(&self.floors[0])
+                        .map(|(second, first)| Column {
+                            floors: [
+                                first,
+                                second,
+                                self.floors[2].clone(),
+                                self.floors[3].clone(),
+                            ],
+                            elevator: Level::First,
+                        });
+
+                let up =
+                    self.floors[1]
+                        .next_valid_states(&self.floors[2])
+                        .map(|(second, third)| Column {
+                            floors: [
+                                self.floors[0].clone(),
+                                second,
+                                third,
+                                self.floors[3].clone(),
+                            ],
+                            elevator: Level::First,
+                        });
+
+                Box::new(down.chain(up))
+            }
+            Level::Third => todo!(),
+            Level::Fourth => todo!(),
+        }
     }
 }
 
@@ -191,27 +300,27 @@ impl<'s> FromIterator<FloorDescription<'s>> for Column<'s> {
         ];
 
         for FloorDescription { level, items } in iter {
-            floors[level as usize] = items;
+            floors[level.as_usize()] = items;
         }
 
         Self {
             floors,
-            elevator: 0,
+            elevator: Level::First,
         }
     }
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 struct Microchip<'s> {
     element: &'s str,
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 struct Generator<'s> {
     element: &'s str,
 }
 
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
 enum Item<'s> {
     Microchip(Microchip<'s>),
     Generator(Generator<'s>),
@@ -236,8 +345,24 @@ impl<'s> Item<'s> {
 
 #[derive(Debug)]
 struct FloorDescription<'s> {
-    level: u8,
+    level: Level,
     items: Floor<'s>,
+}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
+enum Level {
+    #[default]
+    First = 0,
+    Second,
+    Third,
+    Fourth,
+}
+
+impl Level {
+    fn as_usize(&self) -> usize {
+        (*self) as u8 as usize
+    }
 }
 
 impl<'s> TryFromStr<'s> for FloorDescription<'s> {
@@ -260,14 +385,14 @@ fn parse_floor<'s>(input: &mut &'s str) -> ModalResult<FloorDescription<'s>> {
     seq! { FloorDescription {
         _: "The ",
         level: alt((
-            "first".map(|_| 0),
-            "second".map(|_| 1),
-            "third".map(|_| 2),
-            "fourth".map(|_| 3)
+            "first".map(|_| Level::First),
+            "second".map(|_| Level::Second),
+            "third".map(|_| Level::Third),
+            "fourth".map(|_| Level::Fourth)
         )),
         _: " floor contains ",
         items: alt((
-            "nothing relevant.".map(|_| FnvHashSet::default()),
+            "nothing relevant.".map(|_| BTreeSet::default()),
             terminated(
                 separated(
                     1..,
