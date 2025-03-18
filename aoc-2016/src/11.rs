@@ -1,10 +1,8 @@
 use std::borrow::Cow;
-use std::collections::{BTreeSet, btree_set};
-use std::iter;
+use std::collections::BTreeSet;
 
 use either::Either;
 use eyre::{OptionExt, Report, Result, bail, eyre};
-use fnv::FnvHashSet;
 use itertools::Itertools;
 use rayon::prelude::*;
 use winnow::ascii::alpha1;
@@ -22,9 +20,6 @@ pub const RADIOISOTOPE_THERMOELECTRIC_GENERATORS: Problem = Problem::partially_s
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord)]
 struct Floor<'s>(BTreeSet<Item<'s>>);
-
-type Items<'a, 's> = iter::Copied<btree_set::Iter<'a, Item<'s>>>;
-type ItemPairs<'a, 's> = itertools::TupleCombinations<Items<'a, 's>, (Item<'s>, Item<'s>)>;
 
 impl<'s> Floor<'s> {
     #[inline]
@@ -145,81 +140,42 @@ impl<'s> Floor<'s> {
         self.0.contains(&Item::Generator(Generator { element }))
     }
 
-    fn items(&self) -> Items<'_, 's> {
-        self.0.iter().copied()
+    fn iter(&self) -> iter::Iter<'_, 's> {
+        iter::Iter::new(self)
     }
 
-    fn candidates_for_removal(&self) -> CandidatesForRemoval<'_, 's> {
-        let singletons = self.items();
-        let pairs = self.item_tuples();
-
-        CandidatesForRemoval {
-            singletons,
-            pairs,
-            floor: self,
-        }
+    fn par_iter(&self) -> iter::ParIter<'_, 's> {
+        iter::ParIter::new(self)
     }
 
-    fn next_valid_states<'a, 'b>(&'a self, other: &'b Floor<'s>) -> NextValidStates<'a, 'b, 's> {
-        NextValidStates {
-            this: self,
-            other,
-            candidates: self.candidates_for_removal(),
-        }
+    fn iter_pairs(&self) -> iter::IterPairs<'_, 's> {
+        iter::IterPairs::new(self)
     }
 
-    fn item_tuples(&self) -> ItemPairs<'_, 's> {
-        self.0.iter().copied().tuple_combinations()
+    fn par_iter_pairs(&self) -> iter::ParIterPairs<'_, 's> {
+        iter::ParIterPairs::new(self)
     }
-}
 
-#[derive(Debug)]
-struct NextValidStates<'a, 'b, 's> {
-    this: &'a Floor<'s>,
-    other: &'b Floor<'s>,
-    candidates: CandidatesForRemoval<'a, 's>,
-}
-
-impl<'s> Iterator for NextValidStates<'_, '_, 's> {
-    type Item = (Floor<'s>, Floor<'s>);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = self.candidates.next()?;
-        self.other
-            .is_valid_with_either(next.as_ref())
-            .then(|| {
-                let mut this = self.this.clone();
-                let mut other = self.other.clone();
-                this.remove_either(next.as_ref());
-                other.insert_either(next);
-
-                (this, other)
-            })
-            .or_else(|| self.next())
+    fn candidates_for_removal(&self) -> iter::CandidatesForRemoval<'_, 's> {
+        iter::CandidatesForRemoval::new(self)
     }
-}
 
-#[derive(Debug)]
-struct CandidatesForRemoval<'a, 's> {
-    singletons: Items<'a, 's>,
-    pairs: ItemPairs<'a, 's>,
-    floor: &'a Floor<'s>,
-}
+    fn par_candidates_for_removal(&self) -> iter::ParCandidatesForRemoval<'_, 's> {
+        iter::ParCandidatesForRemoval::new(self)
+    }
 
-impl<'s> Iterator for CandidatesForRemoval<'_, 's> {
-    type Item = Either<Item<'s>, (Item<'s>, Item<'s>)>;
+    fn next_valid_states<'a, 'b>(
+        &'a self,
+        other: &'b Floor<'s>,
+    ) -> iter::NextValidFloorStates<'a, 'b, 's> {
+        iter::NextValidFloorStates::new(self, other)
+    }
 
-    fn next(&mut self) -> Option<Self::Item> {
-        let next = self
-            .singletons
-            .next()
-            .map(Either::Left)
-            .or_else(|| self.pairs.next().map(Either::Right))?;
-
-        self.floor
-            .is_valid_without_either(next.as_ref())
-            .then_some(next)
-            .or_else(|| self.next())
+    fn par_next_valid_states<'a, 'b>(
+        &'a self,
+        other: &'b Floor<'s>,
+    ) -> iter::ParNextValidFloorStates<'a, 'b, 's> {
+        iter::ParNextValidFloorStates::new(self, other)
     }
 }
 
@@ -230,7 +186,7 @@ struct Column<'s> {
 }
 
 impl<'s> Column<'s> {
-    fn all_on_fourth_floor(&self) -> bool {
+    fn done(&self) -> bool {
         self.floors[0].is_empty() && self.floors[1].is_empty() && self.floors[2].is_empty()
     }
 
@@ -282,31 +238,109 @@ impl<'s> Column<'s> {
     }
 }
 
-impl<'s> TryFromStr<'s> for Column<'s> {
-    type Err = Report;
-
-    fn try_from_str(s: &'s str) -> Result<Self, Self::Err> {
-        s.lines().map(FloorDescription::try_from_str).collect()
-    }
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
+enum Level {
+    #[default]
+    First = 0,
+    Second,
+    Third,
+    Fourth,
 }
 
-impl<'s> FromIterator<FloorDescription<'s>> for Column<'s> {
-    fn from_iter<T: IntoIterator<Item = FloorDescription<'s>>>(iter: T) -> Self {
-        let mut floors = [
-            Floor::default(),
-            Floor::default(),
-            Floor::default(),
-            Floor::default(),
-        ];
+mod parse {
+    use std::collections::BTreeSet;
 
-        for FloorDescription { level, items } in iter {
-            floors[level.as_usize()] = items;
-        }
+    use eyre::{Report, Result, eyre};
+    use winnow::ascii::alpha1;
+    use winnow::combinator::{alt, preceded, separated, seq, terminated};
+    use winnow::prelude::*;
 
-        Self {
-            floors,
-            elevator: Level::First,
+    use aoc_common::TryFromStr;
+
+    use super::{Column, Floor, Generator, Item, Level, Microchip};
+
+    impl<'s> TryFromStr<'s> for Column<'s> {
+        type Err = Report;
+
+        fn try_from_str(s: &'s str) -> Result<Self, Self::Err> {
+            s.lines().map(FloorDescription::try_from_str).collect()
         }
+    }
+
+    impl<'s> FromIterator<FloorDescription<'s>> for Column<'s> {
+        fn from_iter<T: IntoIterator<Item = FloorDescription<'s>>>(iter: T) -> Self {
+            let mut floors = [
+                Floor::default(),
+                Floor::default(),
+                Floor::default(),
+                Floor::default(),
+            ];
+
+            for FloorDescription { level, items } in iter {
+                floors[level.as_usize()] = items;
+            }
+
+            Self {
+                floors,
+                elevator: Level::First,
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    struct FloorDescription<'s> {
+        level: Level,
+        items: Floor<'s>,
+    }
+
+    impl Level {
+        fn as_usize(&self) -> usize {
+            (*self) as u8 as usize
+        }
+    }
+
+    impl<'s> TryFromStr<'s> for FloorDescription<'s> {
+        type Err = Report;
+
+        fn try_from_str(s: &'s str) -> Result<Self, Self::Err> {
+            parse_floor.parse(s).map_err(|e| eyre!("{e}"))
+        }
+    }
+
+    fn parse_floor<'s>(input: &mut &'s str) -> ModalResult<FloorDescription<'s>> {
+        seq! { FloorDescription {
+            _: "The ",
+            level: alt((
+                "first".map(|_| Level::First),
+                "second".map(|_| Level::Second),
+                "third".map(|_| Level::Third),
+                "fourth".map(|_| Level::Fourth)
+            )),
+            _: " floor contains ",
+            items: alt((
+                "nothing relevant.".map(|_| BTreeSet::default()),
+                terminated(
+                    separated(
+                        1..,
+                        preceded(
+                            "a ",
+                            alt((
+                                terminated(alpha1, "-compatible microchip")
+                                    .map(|element| Microchip { element })
+                                    .map(Item::Microchip),
+                                terminated(alpha1, " generator")
+                                    .map(|element| Generator { element })
+                                    .map(Item::Generator),
+                            )),
+                        ),
+                        alt((", and ", ", ", " and ")),
+                    ),
+                    '.',
+                )
+            )).map(Floor)
+        }}
+        .parse_next(input)
     }
 }
 
@@ -343,75 +377,249 @@ impl<'s> Item<'s> {
     }
 }
 
-#[derive(Debug)]
-struct FloorDescription<'s> {
-    level: Level,
-    items: Floor<'s>,
-}
+mod iter {
+    use either::Either;
+    use itertools::Itertools;
+    use rayon::prelude::*;
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-#[repr(u8)]
-enum Level {
-    #[default]
-    First = 0,
-    Second,
-    Third,
-    Fourth,
-}
+    use super::{Floor, Item};
 
-impl Level {
-    fn as_usize(&self) -> usize {
-        (*self) as u8 as usize
+    #[derive(Debug, Clone)]
+    pub(super) struct Iter<'a, 's> {
+        inner: std::iter::Copied<std::collections::btree_set::Iter<'a, Item<'s>>>,
     }
-}
 
-impl<'s> TryFromStr<'s> for FloorDescription<'s> {
-    type Err = Report;
-
-    fn try_from_str(s: &'s str) -> Result<Self, Self::Err> {
-        parse_floor.parse(s).map_err(|e| {
-            let context: String = Itertools::intersperse(
-                e.inner().context().map(ToString::to_string).map(Cow::Owned),
-                Cow::Borrowed(": "),
-            )
-            .collect();
-
-            eyre!("{context}: {}", e.input())
-        })
+    impl<'a, 's> Iter<'a, 's> {
+        pub(super) fn new(floor: &'a Floor<'s>) -> Self {
+            Self {
+                inner: floor.0.iter().copied(),
+            }
+        }
     }
-}
 
-fn parse_floor<'s>(input: &mut &'s str) -> ModalResult<FloorDescription<'s>> {
-    seq! { FloorDescription {
-        _: "The ",
-        level: alt((
-            "first".map(|_| Level::First),
-            "second".map(|_| Level::Second),
-            "third".map(|_| Level::Third),
-            "fourth".map(|_| Level::Fourth)
-        )),
-        _: " floor contains ",
-        items: alt((
-            "nothing relevant.".map(|_| BTreeSet::default()),
-            terminated(
-                separated(
-                    1..,
-                    preceded(
-                        "a ",
-                        alt((
-                            terminated(alpha1, "-compatible microchip")
-                                .map(|element| Microchip { element })
-                                .map(Item::Microchip),
-                            terminated(alpha1, " generator")
-                                .map(|element| Generator { element })
-                                .map(Item::Generator),
-                        )),
-                    ),
-                    alt((", and ", ", ", " and ")),
-                ),
-                '.',
-            )
-        )).map(Floor)
-    }}
-    .parse_next(input)
+    impl<'s> Iterator for Iter<'_, 's> {
+        type Item = Item<'s>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            self.inner.next()
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    pub(super) struct ParIter<'a, 's> {
+        inner: rayon::iter::Copied<rayon::collections::btree_set::Iter<'a, Item<'s>>>,
+    }
+
+    impl<'a, 's> ParIter<'a, 's> {
+        pub(super) fn new(floor: &'a Floor<'s>) -> Self {
+            Self {
+                inner: floor.0.par_iter().copied(),
+            }
+        }
+    }
+
+    impl<'s> ParallelIterator for ParIter<'_, 's> {
+        type Item = Item<'s>;
+
+        fn drive_unindexed<C>(self, consumer: C) -> C::Result
+        where
+            C: rayon::iter::plumbing::UnindexedConsumer<Self::Item>,
+        {
+            self.inner.drive_unindexed(consumer)
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    pub(super) struct IterPairs<'a, 's> {
+        inner: itertools::TupleCombinations<Iter<'a, 's>, (Item<'s>, Item<'s>)>,
+    }
+
+    impl<'s> Iterator for IterPairs<'_, 's> {
+        type Item = (Item<'s>, Item<'s>);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            self.inner.next()
+        }
+    }
+
+    impl<'a, 's> IterPairs<'a, 's> {
+        pub(super) fn new(floor: &'a Floor<'s>) -> Self {
+            Self {
+                inner: Iter::new(floor).tuple_combinations(),
+            }
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    pub(super) struct ParIterPairs<'a, 's> {
+        inner: rayon::iter::IterBridge<IterPairs<'a, 's>>,
+    }
+
+    impl<'s> ParallelIterator for ParIterPairs<'_, 's> {
+        type Item = (Item<'s>, Item<'s>);
+
+        fn drive_unindexed<C>(self, consumer: C) -> C::Result
+        where
+            C: rayon::iter::plumbing::UnindexedConsumer<Self::Item>,
+        {
+            self.inner.drive_unindexed(consumer)
+        }
+    }
+
+    impl<'a, 's> ParIterPairs<'a, 's> {
+        pub(super) fn new(floor: &'a Floor<'s>) -> Self {
+            Self {
+                inner: IterPairs::new(floor).par_bridge(),
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    pub(super) struct NextValidFloorStates<'a, 'b, 's> {
+        a: &'a Floor<'s>,
+        b: &'b Floor<'s>,
+        iter: CandidatesForRemoval<'a, 's>,
+    }
+
+    impl<'a, 'b, 's> NextValidFloorStates<'a, 'b, 's> {
+        pub(super) fn new(a: &'a Floor<'s>, b: &'b Floor<'s>) -> Self {
+            Self {
+                a,
+                b,
+                iter: a.candidates_for_removal(),
+            }
+        }
+    }
+
+    impl<'s> Iterator for NextValidFloorStates<'_, '_, 's> {
+        type Item = (Floor<'s>, Floor<'s>);
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let next = self.iter.next()?;
+            self.b
+                .is_valid_with_either(next.as_ref())
+                .then(|| {
+                    let mut a2 = self.a.clone();
+                    let mut b2 = self.b.clone();
+                    a2.remove_either(next.as_ref());
+                    b2.insert_either(next);
+
+                    (a2, b2)
+                })
+                .or_else(|| self.next())
+        }
+    }
+
+    #[derive(Debug)]
+    pub(super) struct ParNextValidFloorStates<'a, 'b, 's> {
+        a: &'a Floor<'s>,
+        b: &'b Floor<'s>,
+        iter: ParCandidatesForRemoval<'a, 's>,
+    }
+
+    impl<'a, 'b, 's> ParNextValidFloorStates<'a, 'b, 's> {
+        pub(super) fn new(a: &'a Floor<'s>, b: &'b Floor<'s>) -> Self {
+            Self {
+                a,
+                b,
+                iter: a.par_candidates_for_removal(),
+            }
+        }
+    }
+
+    impl<'s> ParallelIterator for ParNextValidFloorStates<'_, '_, 's> {
+        type Item = (Floor<'s>, Floor<'s>);
+
+        fn drive_unindexed<C>(self, consumer: C) -> C::Result
+        where
+            C: rayon::iter::plumbing::UnindexedConsumer<Self::Item>,
+        {
+            self.iter
+                .filter(|items| self.b.is_valid_with_either(items.as_ref()))
+                .map(|items| {
+                    let mut a2 = self.a.clone();
+                    let mut b2 = self.b.clone();
+                    a2.remove_either(items.as_ref());
+                    b2.insert_either(items);
+
+                    (a2, b2)
+                })
+                .drive_unindexed(consumer)
+        }
+    }
+
+    #[derive(Debug)]
+    pub(super) struct CandidatesForRemoval<'a, 's> {
+        singletons: Iter<'a, 's>,
+        pairs: IterPairs<'a, 's>,
+        floor: &'a Floor<'s>,
+    }
+
+    impl<'a, 's> CandidatesForRemoval<'a, 's> {
+        pub(super) fn new(floor: &'a Floor<'s>) -> Self {
+            let singletons = floor.iter();
+            let pairs = floor.iter_pairs();
+
+            Self {
+                singletons,
+                pairs,
+                floor,
+            }
+        }
+    }
+
+    impl<'s> Iterator for CandidatesForRemoval<'_, 's> {
+        type Item = Either<Item<'s>, (Item<'s>, Item<'s>)>;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            let next = self
+                .singletons
+                .next()
+                .map(Either::Left)
+                .or_else(|| self.pairs.next().map(Either::Right))?;
+
+            self.floor
+                .is_valid_without_either(next.as_ref())
+                .then_some(next)
+                .or_else(|| self.next())
+        }
+    }
+
+    #[derive(Debug)]
+    pub(super) struct ParCandidatesForRemoval<'a, 's> {
+        singletons: ParIter<'a, 's>,
+        pairs: ParIterPairs<'a, 's>,
+        floor: &'a Floor<'s>,
+    }
+
+    impl<'a, 's> ParCandidatesForRemoval<'a, 's> {
+        pub(super) fn new(floor: &'a Floor<'s>) -> Self {
+            let singletons = floor.par_iter();
+            let pairs = floor.par_iter_pairs();
+
+            Self {
+                singletons,
+                pairs,
+                floor,
+            }
+        }
+    }
+
+    impl<'s> ParallelIterator for ParCandidatesForRemoval<'_, 's> {
+        type Item = Either<Item<'s>, (Item<'s>, Item<'s>)>;
+
+        fn drive_unindexed<C>(self, consumer: C) -> C::Result
+        where
+            C: rayon::iter::plumbing::UnindexedConsumer<Self::Item>,
+        {
+            let singletons = self.singletons.map(Either::Left);
+            let pairs = self.pairs.map(Either::Right);
+
+            let iter = singletons
+                .chain(pairs)
+                .filter(|items| self.floor.is_valid_without_either(items.as_ref()));
+
+            iter.drive_unindexed(consumer)
+        }
+    }
 }
