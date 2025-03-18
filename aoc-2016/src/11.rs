@@ -1,13 +1,8 @@
-use std::borrow::Cow;
 use std::collections::BTreeSet;
 
 use either::Either;
 use eyre::{OptionExt, Report, Result, bail, eyre};
-use itertools::Itertools;
 use rayon::prelude::*;
-use winnow::ascii::alpha1;
-use winnow::combinator::{alt, preceded, separated, seq, terminated};
-use winnow::prelude::*;
 
 use aoc_common::{TryFromStr, TryParse};
 use aoc_meta::Problem;
@@ -248,6 +243,39 @@ enum Level {
     Fourth,
 }
 
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
+struct Microchip<'s> {
+    element: &'s str,
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
+struct Generator<'s> {
+    element: &'s str,
+}
+
+#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
+enum Item<'s> {
+    Microchip(Microchip<'s>),
+    Generator(Generator<'s>),
+}
+
+impl<'s> Item<'s> {
+    fn is_microchip(&self) -> bool {
+        matches!(self, Item::Microchip(_))
+    }
+
+    fn as_microchip(&self) -> Option<Microchip<'s>> {
+        match self {
+            Item::Microchip(microchip) => Some(*microchip),
+            Item::Generator(_) => None,
+        }
+    }
+
+    fn is_generator_for(&self, element: &str) -> bool {
+        matches!(self, &Item::Generator(Generator { element: element2 }) if element == element2)
+    }
+}
+
 mod parse {
     use std::collections::BTreeSet;
 
@@ -341,39 +369,6 @@ mod parse {
             )).map(Floor)
         }}
         .parse_next(input)
-    }
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
-struct Microchip<'s> {
-    element: &'s str,
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
-struct Generator<'s> {
-    element: &'s str,
-}
-
-#[derive(Debug, Hash, PartialEq, Eq, Clone, Copy, PartialOrd, Ord)]
-enum Item<'s> {
-    Microchip(Microchip<'s>),
-    Generator(Generator<'s>),
-}
-
-impl<'s> Item<'s> {
-    fn is_microchip(&self) -> bool {
-        matches!(self, Item::Microchip(_))
-    }
-
-    fn as_microchip(&self) -> Option<Microchip<'s>> {
-        match self {
-            Item::Microchip(microchip) => Some(*microchip),
-            Item::Generator(_) => None,
-        }
-    }
-
-    fn is_generator_for(&self, element: &str) -> bool {
-        matches!(self, &Item::Generator(Generator { element: element2 }) if element == element2)
     }
 }
 
