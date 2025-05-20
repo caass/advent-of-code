@@ -10,6 +10,6 @@ aoc_test::tests! {
         8:  [115, "EFEYKFRFIJ"],
         9:  [102239, #[ignore = "slow implementation"] 10780403063u64],
         10: [161, 133163],
-        11: [3]
+        12: [318117, 9227771]
     }
 }
