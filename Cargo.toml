@@ -1,5 +1,4 @@
 [workspace]
-resolver = "3"
 members = [
     "aoc",
     "aoc-2015",
@@ -16,11 +15,12 @@ members = [
     "aoc-meta",
     "aoc-test",
 ]
+resolver = "3"
 
 [workspace.package]
 edition = "2024"
-version = "0.1.0"
 license = "PPL"
+version = "0.1.0"
 
 [workspace.dependencies]
 aoc-2015 = { path = "aoc-2015" }
@@ -35,30 +35,30 @@ aoc-2023 = { path = "aoc-2023" }
 aoc-2024 = { path = "aoc-2024" }
 
 aoc-common = { path = "aoc-common" }
-aoc-meta = { path = "aoc-meta" }
-aoc-test = { path = "aoc-test" }
+aoc-meta   = { path = "aoc-meta" }
+aoc-test   = { path = "aoc-test" }
 
-clap = { version = "4.5.32", features = ["derive"] }
-clap-stdin = "0.6.0"
-either = "1.15.0"
-enum-iterator = "2.1.0"
-enum-map = "2.7.3"
-eyre = "0.6.12"
-fnv = "1.0.7"
-itertools = "0.14.0"
-itoa = "1.0"
-md-5 = "0.11.0-pre.5"
-memchr = "2.7.4"
-nohash-hasher = "0.2.0"
-paste = "1.0.15"
-pathsep = "0.1.1"
-petgraph = { version = "0.7.1", features = ["rayon"] }
+clap              = { version = "4.5.32", features = ["derive"] }
+clap-stdin        = "0.6.0"
+either            = "1.15.0"
+enum-iterator     = "2.1.0"
+enum-map          = "2.7.3"
+eyre              = "0.6.12"
+fnv               = "1.0.7"
+itertools         = "0.14.0"
+itoa              = "1.0"
+md-5              = "0.11.0-pre.5"
+memchr            = "2.7.4"
+nohash-hasher     = "0.2.0"
+paste             = "1.0.15"
+pathsep           = "0.1.1"
+petgraph          = { version = "0.8.1", features = ["rayon"] }
 pretty_assertions = "1.4.1"
-rayon = "1.10.0"
-regex = "1.11.1"
-serde_json = "1.0.140"
-thiserror = "2.0.12"
-tinystr = { version = "0.8.1", features = ["std"] }
-void = "1.0.2"
-wide = "0.7.32"
-winnow = { version = "0.7.4", features = ["simd"] }
+rayon             = "1.10.0"
+regex             = "1.11.1"
+serde_json        = "1.0.140"
+thiserror         = "2.0.12"
+tinystr           = { version = "0.8.1", features = ["std"] }
+void              = "1.0.2"
+wide              = "0.7.32"
+winnow            = { version = "0.7.4", features = ["simd"] }
