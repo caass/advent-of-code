@@ -13,34 +13,28 @@ use winnow::{
 use aoc_meta::Problem;
 
 pub const LEONARDOS_MONORAIL: Problem = Problem::solved(
+    &|input| parse_and_solve(Computer::default(), input),
     &|input| {
-        let mut computer = Computer::default();
-
-        let instructions = input
-            .par_lines()
-            .map(Instruction::from_str)
-            .collect::<Result<Vec<_>, _>>()?;
-
-        computer.execute(&instructions);
-
-        Ok::<_, Report>(computer.a.value)
-    },
-    &|input| {
-        let mut computer = Computer {
-            c: Register { value: 1 },
-            ..Computer::default()
-        };
-
-        let instructions = input
-            .par_lines()
-            .map(Instruction::from_str)
-            .collect::<Result<Vec<_>, _>>()?;
-
-        computer.execute(&instructions);
-
-        Ok::<_, Report>(computer.a.value)
+        parse_and_solve(
+            Computer {
+                c: Register { value: 1 },
+                ..Default::default()
+            },
+            input,
+        )
     },
 );
+
+fn parse_and_solve(mut computer: Computer, input: &str) -> Result<isize, Report> {
+    let instructions = input
+        .par_lines()
+        .map(Instruction::from_str)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    computer.execute(&instructions);
+
+    Ok(computer.a.value)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd, Hash, Default)]
 struct Computer {
