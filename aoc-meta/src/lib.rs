@@ -11,7 +11,7 @@ pub use problem_set::ProblemSet;
 pub use solution::Solution;
 
 #[doc(hidden)]
-pub use paste::paste;
+pub use pastey::paste;
 
 #[repr(transparent)]
 pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST + 1) as usize }]);

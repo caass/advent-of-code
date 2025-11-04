@@ -1,13 +1,13 @@
 [package]
-name = "aoc-meta"
-version.workspace = true
 edition.workspace = true
 license.workspace = true
+name              = "aoc-meta"
+version.workspace = true
 
 [dependencies]
 enum-iterator.workspace = true
-enum-map.workspace = true
+enum-map.workspace      = true
+eyre.workspace          = true
 nohash-hasher.workspace = true
-thiserror.workspace = true
-eyre.workspace = true
-paste.workspace = true
+pastey.workspace        = true
+thiserror.workspace     = true

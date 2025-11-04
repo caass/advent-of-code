@@ -1,8 +1,7 @@
 [package]
+name = "aoc-dl"
 edition.workspace = true
 license.workspace = true
-name              = "aoc-test"
 version.workspace = true
 
 [dependencies]
-pastey.workspace = true

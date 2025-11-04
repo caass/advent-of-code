@@ -1,7 +1,7 @@
 //! Utilities for integration testing.
 
 #[doc(hidden)]
-pub use paste::paste;
+pub use pastey::paste;
 
 /// Helper macro for more easily writing advent of code integration tests.
 #[macro_export]

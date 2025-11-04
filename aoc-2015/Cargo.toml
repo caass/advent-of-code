@@ -1,29 +1,29 @@
 [package]
-name = "aoc-2015"
-version.workspace = true
 edition.workspace = true
 license.workspace = true
+name              = "aoc-2015"
+version.workspace = true
 
 [dependencies]
-aoc-meta.workspace = true
 aoc-common.workspace = true
+aoc-meta.workspace   = true
 
-paste.workspace = true
-eyre.workspace = true
-rayon.workspace = true
-wide.workspace = true
+either.workspace        = true
+enum-map.workspace      = true
+eyre.workspace          = true
+fnv.workspace           = true
+itertools.workspace     = true
+itoa.workspace          = true
+md-5.workspace          = true
 nohash-hasher.workspace = true
-itertools.workspace = true
-md-5.workspace = true
-itoa.workspace = true
-winnow.workspace = true
-tinystr.workspace = true
-fnv.workspace = true
-petgraph.workspace = true
-serde_json.workspace = true
-either.workspace = true
-enum-map.workspace = true
+pastey.workspace        = true
+petgraph.workspace      = true
+rayon.workspace         = true
+serde_json.workspace    = true
+tinystr.workspace       = true
+wide.workspace          = true
+winnow.workspace        = true
 
 [dev-dependencies]
+aoc-test.workspace          = true
 pretty_assertions.workspace = true
-aoc-test.workspace = true

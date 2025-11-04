@@ -39,7 +39,7 @@ fn sum_chunk(chunk: &[u8]) -> isize {
         // This is a little confusing, but the idea is to use SIMD to process 16 bytes at a time.
         // The first thing to do is to compare the values in the SIMD register with `b'('`.
         // Values that are equal to `b'('` will be set to `u8::MAX`, others to `0u8`.
-        let max_or_zero = simd_chunk.cmp_eq(u8x16::splat(DOWN));
+        let max_or_zero = simd_chunk.simd_eq(u8x16::splat(DOWN));
 
         // The next step is to `saturating_add` one, so the values will either be `1` or `255`.
         let max_or_one = max_or_zero.saturating_add(u8x16::ONE);

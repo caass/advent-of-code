@@ -120,7 +120,7 @@ mod test {
 
     macro_rules! coordinate_to_index {
         (($row:literal, $column:literal), $index:literal) => {
-            ::paste::paste!{
+            ::pastey::paste!{
                 #[test]
                 fn [<coordinate_to_index_ $row _ $column >]() {
                     let coord = Coordinate::new($row, $column).unwrap();
@@ -167,7 +167,7 @@ mod test {
 
     macro_rules! coordinate_to_value {
         (($row:literal, $column:literal), $value:literal) => {
-            ::paste::paste!{
+            ::pastey::paste!{
                 #[test]
                 fn [<coordinate_to_value_ $row _ $column >]() {
                     let coord = Coordinate::new($row, $column).unwrap();

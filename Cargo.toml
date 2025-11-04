@@ -14,6 +14,7 @@ members = [
     "aoc-common",
     "aoc-meta",
     "aoc-test",
+    "aoc-dl",
 ]
 resolver = "3"
 
@@ -38,27 +39,28 @@ aoc-common = { path = "aoc-common" }
 aoc-meta   = { path = "aoc-meta" }
 aoc-test   = { path = "aoc-test" }
 
-clap              = { version = "4.5.32", features = ["derive"] }
-clap-stdin        = "0.6.0"
+clap              = { version = "4.5.51", features = ["derive"] }
+clap-stdin        = "0.8.0"
 either            = "1.15.0"
-enum-iterator     = "2.1.0"
+enum-iterator     = "2.3.0"
 enum-map          = "2.7.3"
 eyre              = "0.6.12"
 fnv               = "1.0.7"
 itertools         = "0.14.0"
 itoa              = "1.0"
-md-5              = "0.11.0-pre.5"
-memchr            = "2.7.4"
+md-5              = "0.11.0-rc.2"
+memchr            = "2.7.6"
 nohash-hasher     = "0.2.0"
-paste             = "1.0.15"
+pastey            = "0.1.1"
 pathsep           = "0.1.1"
-petgraph          = { version = "0.8.1", features = ["rayon"] }
+petgraph          = { version = "0.8.3", features = ["rayon"] }
 pretty_assertions = "1.4.1"
-rayon             = "1.10.0"
-regex             = "1.11.1"
-serde_json        = "1.0.140"
-thiserror         = "2.0.12"
-tinystr           = { version = "0.8.1", features = ["std"] }
+rayon             = "1.11.0"
+regex             = "1.12.2"
+reqwest           = { version = "0.12.24", features = ["cookies"] }
+serde_json        = "1.0.145"
+thiserror         = "2.0.17"
+tinystr           = { version = "0.8.2", features = ["std"] }
 void              = "1.0.2"
-wide              = "0.7.32"
-winnow            = { version = "0.7.4", features = ["simd"] }
+wide              = "0.8.1"
+winnow            = { version = "0.7.13", features = ["simd"] }
