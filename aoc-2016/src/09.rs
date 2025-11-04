@@ -17,7 +17,7 @@ static MARKER_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 trait DecompressionStrategy {
     type Decompressor<'a>: Iterator<Item = Cow<'a, str>> + From<&'a str>;
 
-    fn decompress(compressed: &str) -> Cow<str> {
+    fn decompress(compressed: &'_ str) -> Cow<'_, str> {
         let mut decompressor = Self::Decompressor::from(compressed);
 
         let Some(first_chunk) = decompressor.next() else {

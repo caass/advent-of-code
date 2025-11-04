@@ -202,12 +202,12 @@ impl ContainerCollection {
     }
 
     #[inline]
-    fn iter(&self) -> std::slice::Iter<Container> {
+    fn iter(&'_ self) -> std::slice::Iter<'_, Container> {
         self.containers().iter()
     }
 
     #[inline]
-    fn par_iter(&self) -> rayon::iter::Copied<rayon::slice::Iter<Container>> {
+    fn par_iter(&'_ self) -> rayon::iter::Copied<rayon::slice::Iter<'_, Container>> {
         self.containers().par_iter().copied()
     }
 

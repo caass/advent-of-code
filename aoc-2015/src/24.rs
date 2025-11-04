@@ -29,7 +29,7 @@ struct PackingList {
 
 impl PackingList {
     fn pack(&self, num_compartments: usize) -> Result<PackingList> {
-        if self.weight() % num_compartments != 0 {
+        if !self.weight().is_multiple_of(num_compartments) {
             bail!("Cannot balance packages")
         };
 

@@ -21,9 +21,11 @@ pub const SECURITY_THROUGH_OBSCURITY: Problem = Problem::solved(
             .par_lines()
             .map(|line| {
                 line.parse().map(|room: Room| {
-                    room.is_real()
-                        .then_some(room.sector.into())
-                        .unwrap_or_default()
+                    if room.is_real() {
+                        room.sector.into()
+                    } else {
+                        Default::default()
+                    }
                 })
             })
             .try_reduce(|| 0usize, |a, b| Ok(a + b))

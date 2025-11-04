@@ -203,13 +203,13 @@ impl Password {
 
     /// Returns an iterator over the `Letter`s in this password.
     #[inline]
-    fn iter(&self) -> std::slice::Iter<Letter> {
+    fn iter(&'_ self) -> std::slice::Iter<'_, Letter> {
         self.0.iter()
     }
 
     /// Returns an iterator over mutable references to the `Letter`s in this password.
     #[inline]
-    fn iter_mut(&mut self) -> std::slice::IterMut<Letter> {
+    fn iter_mut(&'_ mut self) -> std::slice::IterMut<'_, Letter> {
         self.0.iter_mut()
     }
 

@@ -78,7 +78,7 @@ impl Computer {
             Instruction::Increment(register) => self[register] += 1,
             Instruction::Jump { offset } => return offset.into(),
             Instruction::JumpIfEven { register, offset } => {
-                if self[register] % 2 == 0 {
+                if self[register].is_multiple_of(2) {
                     return offset.into();
                 }
             }
