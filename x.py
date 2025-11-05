@@ -81,7 +81,7 @@ def completion():
             elif part == 2:
                 years[year][day] = SolveState.Solved
 
-    rows: list[dict[str, int]] = []
+    rows: list[dict[str, int | str]] = []
     for year, days in years.items():
         available_stars = len(days) * 2
         attained_stars = 0
@@ -96,7 +96,12 @@ def completion():
             attained_stars += 1
 
         rows.append(
-            {"Year": year, "Earned ⭐️": attained_stars, "Possible ⭐️": available_stars}
+            {
+                "Year": year,
+                "Earned ⭐️": attained_stars,
+                "Possible ⭐️": available_stars,
+                "Complete": str(int(100 * attained_stars / available_stars)) + "%",
+            }
         )
 
     with open(os.path.join(root_dir, "README.md"), "r") as readme:
@@ -110,7 +115,10 @@ def completion():
         readme_str = (
             prefix
             + divider
-            + markdown_table(rows).set_params(quote=False).get_markdown()
+            + "\n"
+            + markdown_table(rows)
+            .set_params(quote=False, row_sep="markdown")
+            .get_markdown()
             + "\n"
             + divider
             + suffix
