@@ -16,6 +16,10 @@ run year day part input="-":
 test *ARGS: decrypt-inputs
     cargo nextest run --all --no-tests=fail --cargo-profile=fast-test {{ARGS}}
 
+# Print solve status
+completion: (test "--profile=ci")
+    ./x.py completion
+
 # Download and encrypt puzzle inputs from https://adventofcode.com
 get-inputs: download-inputs
     #!/usr/bin/env -S bash --posix

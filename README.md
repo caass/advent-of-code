@@ -18,3 +18,31 @@ To comply with Eric's [rules about copying](https://adventofcode.com/about#faq_c
 ## Running
 
 To run the `aoc` binary, run `just run <YEAR> <DAY> <PART>`. You can provide your puzzle input via stdin (default) or by providing a fourth argument containing the filepath of your input.
+
+## Status
+
+<!-- INSERT COMPLETION TABLE -->
++----+---------+-----------+
+|Year|Earned ⭐️|Possible ⭐️|
++----+---------+-----------+
+|2015|    50   |     50    |
++----+---------+-----------+
+|2016|    21   |     50    |
++----+---------+-----------+
+|2017|    0    |     50    |
++----+---------+-----------+
+|2018|    0    |     50    |
++----+---------+-----------+
+|2019|    0    |     50    |
++----+---------+-----------+
+|2020|    0    |     50    |
++----+---------+-----------+
+|2021|    0    |     50    |
++----+---------+-----------+
+|2022|    0    |     50    |
++----+---------+-----------+
+|2023|    0    |     50    |
++----+---------+-----------+
+|2024|    7    |     50    |
++----+---------+-----------+
+<!-- INSERT COMPLETION TABLE -->
