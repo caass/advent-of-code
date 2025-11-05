@@ -14,7 +14,6 @@ members = [
     "aoc-common",
     "aoc-meta",
     "aoc-test",
-    "aoc-dl",
 ]
 resolver = "3"
 

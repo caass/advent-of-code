@@ -203,10 +203,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aoc-dl"
-version = "0.1.0"
-
-[[package]]
 name = "aoc-meta"
 version = "0.1.0"
 dependencies = [
