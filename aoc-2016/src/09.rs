@@ -1,7 +1,7 @@
-use std::convert::Infallible;
 use std::sync::LazyLock;
 
 use regex::{Regex, RegexBuilder};
+use void::Void;
 
 use aoc_meta::Problem;
 
@@ -14,11 +14,11 @@ static MARKER_REGEX: LazyLock<Regex> = LazyLock::new(|| {
         .unwrap()
 });
 
-fn v1(compressed: &str) -> Result<usize, Infallible> {
+fn v1(compressed: &str) -> Result<usize, Void> {
     Ok(decompressed_len(false, compressed))
 }
 
-fn v2(compressed: &str) -> Result<usize, Infallible> {
+fn v2(compressed: &str) -> Result<usize, Void> {
     Ok(decompressed_len(true, compressed))
 }
 

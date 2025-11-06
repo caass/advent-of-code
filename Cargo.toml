@@ -40,6 +40,7 @@ aoc-test   = { path = "aoc-test" }
 
 clap              = { version = "4.5.51", features = ["derive"] }
 clap-stdin        = "0.8.0"
+deranged          = "0.5.5"
 either            = "1.15.0"
 enum-iterator     = "2.3.0"
 enum-map          = "2.7.3"
@@ -58,6 +59,7 @@ rayon             = "1.11.0"
 regex             = "1.12.2"
 reqwest           = { version = "0.12.24", features = ["cookies"] }
 serde_json        = "1.0.145"
+tabled            = "0.20.0"
 thiserror         = "2.0.17"
 tinystr           = { version = "0.8.2", features = ["std"] }
 void              = "1.0.2"
