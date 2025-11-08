@@ -1,123 +1,183 @@
-use std::cmp::Ordering;
-use std::fmt::{self, Display, Formatter};
-use std::str::FromStr;
+use std::collections::{BTreeSet, btree_set};
+use std::ops;
+use std::sync::mpsc;
 
+use std::array;
+use std::iter::Copied;
+use std::iter::Flatten;
+use std::slice;
+
+use aoc_common::TryFromStr;
+use aoc_common::TryParse;
+use dashmap::{DashMap, Entry};
 use deranged::RangedUsize;
 use eyre::{Report, Result, bail, eyre};
-use tabled::settings::Style;
+use fnv::FnvBuildHasher;
+use itertools::Itertools;
+use rayon::prelude::*;
 use winnow::ascii::alpha1;
 use winnow::combinator::{alt, preceded, separated, terminated};
 use winnow::error::ContextError;
 use winnow::prelude::*;
+use winnow::stream::Accumulate;
 
 use aoc_meta::Problem;
 
-use self::element::Element;
-
 pub const RADIOISOTOPE_THERMOELECTRIC_GENERATORS: Problem =
-    Problem::partially_solved(&minimum_steps);
+    Problem::solved(&minimum_steps, &minimum_steps_with_two_more_pairs);
+
+fn minimum_steps_with_two_more_pairs(input: &str) -> Result<usize> {
+    let mut column = input.try_parse::<Column>()?;
+    for item in [
+        Item::Generator { element: "elerium" },
+        Item::Microchip { element: "elerium" },
+        Item::Generator {
+            element: "dilithium",
+        },
+        Item::Microchip {
+            element: "dilithium",
+        },
+    ] {
+        column.floors[0].0.insert(item);
+    }
+
+    column.fewest_steps_to_solve()
+}
 
 fn minimum_steps(input: &str) -> Result<usize> {
-    let col: Column = input.parse()?;
-    todo!()
+    input.try_parse().and_then(Column::fewest_steps_to_solve)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Item {
-    Microchip { element: Element },
-    Generator { element: Element },
-}
-
-impl Display for Item {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            Item::Microchip { element } => write!(f, "{element}M"),
-            Item::Generator { element } => write!(f, "{element}G"),
-        }
-    }
-}
-
-impl PartialOrd for Item {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl Ord for Item {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match (self, other) {
-            (Item::Microchip { element: this }, Item::Microchip { element: that })
-            | (Item::Generator { element: this }, Item::Generator { element: that }) => {
-                this.cmp(that)
-            }
-            (Item::Microchip { element: this }, Item::Generator { element: that }) => {
-                this.cmp(that).then(Ordering::Less)
-            }
-            (Item::Generator { element: this }, Item::Microchip { element: that }) => {
-                this.cmp(that).then(Ordering::Greater)
-            }
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct Column {
-    floors: [Vec<Item>; 4],
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Column<'a> {
+    floors: [Floor<'a>; 4],
     elevator: RangedUsize<0, 3>,
 }
 
-impl Column {
-    const fn new() -> Column {
+impl<'a> Column<'a> {
+    fn fewest_steps_to_solve(self) -> Result<usize> {
+        let target_state = self.target();
+
+        let (tx, rx) = mpsc::channel();
+        let visited = DashMap::with_hasher(FnvBuildHasher::default());
+
+        tx.send((self.clone(), 0usize))
+            .expect("rx to still be open");
+        visited.insert(self, 0usize);
+
+        while let Ok((current_state, steps)) = rx.recv() {
+            if current_state == target_state {
+                return Ok(steps);
+            }
+
+            current_state.next_valid_states().for_each(|next| {
+                if let Entry::Vacant(vac) = visited.entry(next.clone()) {
+                    vac.insert(steps + 1);
+                    tx.send((next.clone(), steps + 1))
+                        .expect("rx to still be open");
+                }
+            })
+        }
+
+        Err(eyre!("no solution"))
+    }
+    fn target(&self) -> Column<'a> {
+        Column {
+            elevator: RangedUsize::new_static::<3>(),
+            floors: array::from_fn(|i| {
+                if i == 3 {
+                    self.items().collect()
+                } else {
+                    Floor::default()
+                }
+            }),
+        }
+    }
+
+    fn new() -> Column<'a> {
         Self {
-            floors: [Vec::new(), Vec::new(), Vec::new(), Vec::new()],
+            floors: array::from_fn(|_| Floor::default()),
             elevator: RangedUsize::new_static::<0>(),
         }
     }
 
-    fn len(&self) -> usize {
-        self.floors.iter().map(Vec::len).sum()
+    fn items(&self) -> Copied<Flatten<slice::Iter<'_, Floor<'a>>>> {
+        self.floors.iter().flatten().copied()
     }
 
-    fn items(&self) -> impl Iterator<Item = Item> {
-        self.floors.iter().flatten().copied()
+    fn next_valid_states(&self) -> impl ParallelIterator<Item = Column<'a>> {
+        self.elevator
+            .checked_add(1)
+            .into_par_iter()
+            .chain(self.elevator.checked_sub(1))
+            .flat_map(|to| self.valid_swaps_to_floor(to))
+    }
+
+    // returns a parallel iterator over the states this column can be in when moving 0, 1, or 2
+    // items from the floor the elevator is currently on to a given floor
+    fn valid_swaps_to_floor(
+        &self,
+        to: RangedUsize<0, 3>,
+    ) -> impl ParallelIterator<Item = Column<'a>> {
+        let from = self.elevator;
+
+        let from_floor = &self.floors[from.get()];
+        let to_floor = &self.floors[to.get()];
+
+        self.tuple_combinations_on_current_floor()
+            .map(|(a, b)| (Some(a), Some(b)))
+            .chain(self.items_on_current_floor().map(|it| (Some(it), None)))
+            .filter_map(move |(maybe_a, maybe_b)| {
+                let mut new_from = from_floor.clone();
+                let mut new_to = to_floor.clone();
+
+                if let Some(a) = maybe_a {
+                    new_from.remove(&a);
+                    new_to.insert(a);
+                }
+
+                if let Some(b) = maybe_b {
+                    new_from.remove(&b);
+                    new_to.insert(b);
+                };
+
+                (new_from.is_valid() && new_to.is_valid()).then(|| {
+                    let mut new_col = self.clone();
+
+                    new_col.floors[from.get()] = new_from;
+                    new_col.floors[to.get()] = new_to;
+                    new_col.elevator = to;
+
+                    new_col
+                })
+            })
+    }
+
+    fn tuple_combinations_on_current_floor(
+        &self,
+    ) -> impl ParallelIterator<Item = (Item<'a>, Item<'a>)> {
+        self.floors[self.elevator.get()]
+            .iter()
+            .copied()
+            .tuple_combinations()
+            .par_bridge()
+    }
+
+    fn items_on_current_floor(&self) -> impl ParallelIterator<Item = Item<'a>> {
+        self.floors[self.elevator.get()].par_iter().copied()
     }
 }
 
-impl Default for Column {
+impl Default for Column<'_> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Display for Column {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        let mut items: Vec<_> = self.items().collect();
-        items.sort();
-
-        let mut floors = vec![vec![".".to_string(); self.len() + 2]; 4];
-
-        for (i, floor) in floors.iter_mut().rev().enumerate() {
-            floor[0] = format!("F{}", i + 1);
-        }
-
-        floors[3 - self.elevator.get()][1] = "E".to_string();
-
-        for (i, floor) in self.floors.iter().rev().enumerate() {
-            for item in floor.iter().copied() {
-                floors[i][items.iter().position(|it| *it == item).unwrap() + 2] = item.to_string()
-            }
-        }
-
-        let mut t = tabled::Table::from_iter(floors);
-
-        Display::fmt(t.with(Style::empty()), f)
-    }
-}
-
-impl FromStr for Column {
+impl<'a> TryFromStr<'a> for Column<'a> {
     type Err = Report;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn try_from_str(s: &'a str) -> Result<Self, Self::Err> {
         let mut col = Column::default();
 
         for (i, line) in s.lines().enumerate() {
@@ -144,21 +204,18 @@ impl FromStr for Column {
     }
 }
 
-fn parse_contains(input: &str) -> eyre::Result<Vec<Item>> {
+fn parse_contains(input: &str) -> eyre::Result<Floor<'_>> {
     terminated(
         alt((
-            "nothing relevant".map(|_| Vec::new()),
+            "nothing relevant".map(|_| Floor::default()),
             preceded(
                 "a ",
                 separated(
                     1..,
                     alt((
-                        terminated(
-                            alpha1::<_, ContextError>.parse_to(),
-                            "-compatible microchip",
-                        )
-                        .map(|elem| Item::Microchip { element: elem }),
-                        terminated(alpha1.parse_to(), " generator")
+                        terminated(alpha1::<_, ContextError>, "-compatible microchip")
+                            .map(|elem| Item::Microchip { element: elem }),
+                        terminated(alpha1, " generator")
                             .map(|elem| Item::Generator { element: elem }),
                     )),
                     alt((", and a ", ", a ", " and a ")),
@@ -171,438 +228,11 @@ fn parse_contains(input: &str) -> eyre::Result<Vec<Item>> {
     .map_err(|e| eyre!("{e:#?}"))
 }
 
-mod element {
-    use std::fmt::{self, Display, Formatter};
-    use std::str::FromStr;
-
-    use eyre::{Report, Result, eyre};
-
-    #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-    pub(super) enum Element {
-        Hydrogen,
-        Helium,
-        Lithium,
-        Beryllium,
-        Boron,
-        Carbon,
-        Nitrogen,
-        Oxygen,
-        Fluorine,
-        Neon,
-        Sodium,
-        Magnesium,
-        Aluminium,
-        Silicon,
-        Phosphorus,
-        Sulfur,
-        Chlorine,
-        Argon,
-        Potassium,
-        Calcium,
-        Scandium,
-        Titanium,
-        Vanadium,
-        Chromium,
-        Manganese,
-        Iron,
-        Cobalt,
-        Nickel,
-        Copper,
-        Zinc,
-        Gallium,
-        Germanium,
-        Arsenic,
-        Selenium,
-        Bromine,
-        Krypton,
-        Rubidium,
-        Strontium,
-        Yttrium,
-        Zirconium,
-        Niobium,
-        Molybdenum,
-        Technetium,
-        Ruthenium,
-        Rhodium,
-        Palladium,
-        Silver,
-        Cadmium,
-        Indium,
-        Tin,
-        Antimony,
-        Tellurium,
-        Iodine,
-        Xenon,
-        Cesium,
-        Barium,
-        Lanthanum,
-        Cerium,
-        Praseodymium,
-        Neodymium,
-        Promethium,
-        Samarium,
-        Europium,
-        Gadolinium,
-        Terbium,
-        Dysprosium,
-        Holmium,
-        Erbium,
-        Thulium,
-        Ytterbium,
-        Lutetium,
-        Hafnium,
-        Tantalum,
-        Tungsten,
-        Rhenium,
-        Osmium,
-        Iridium,
-        Platinum,
-        Gold,
-        Mercury,
-        Thallium,
-        Lead,
-        Bismuth,
-        Polonium,
-        Astatine,
-        Radon,
-        Francium,
-        Radium,
-        Actinium,
-        Thorium,
-        Protactinium,
-        Uranium,
-        Neptunium,
-        Plutonium,
-        Americium,
-        Curium,
-        Berkelium,
-        Californium,
-        Einsteinium,
-        Fermium,
-        Mendelevium,
-        Nobelium,
-        Lawrencium,
-        Rutherfordium,
-        Dubnium,
-        Seaborgium,
-        Bohrium,
-        Hassium,
-        Meitnerium,
-        Darmstadtium,
-        Roentgenium,
-        Copernicium,
-        Nihonium,
-        Flerovium,
-        Moscovium,
-        Livermorium,
-        Tennessine,
-        Oganesson,
-    }
-
-    impl FromStr for Element {
-        type Err = Report;
-
-        fn from_str(s: &str) -> Result<Self, Self::Err> {
-            match s {
-                "hydrogen" => Ok(Element::Hydrogen),
-                "helium" => Ok(Element::Helium),
-                "lithium" => Ok(Element::Lithium),
-                "beryllium" => Ok(Element::Beryllium),
-                "boron" => Ok(Element::Boron),
-                "carbon" => Ok(Element::Carbon),
-                "nitrogen" => Ok(Element::Nitrogen),
-                "oxygen" => Ok(Element::Oxygen),
-                "fluorine" => Ok(Element::Fluorine),
-                "neon" => Ok(Element::Neon),
-                "sodium" => Ok(Element::Sodium),
-                "magnesium" => Ok(Element::Magnesium),
-                "aluminium" => Ok(Element::Aluminium),
-                "silicon" => Ok(Element::Silicon),
-                "phosphorus" => Ok(Element::Phosphorus),
-                "sulfur" => Ok(Element::Sulfur),
-                "chlorine" => Ok(Element::Chlorine),
-                "argon" => Ok(Element::Argon),
-                "potassium" => Ok(Element::Potassium),
-                "calcium" => Ok(Element::Calcium),
-                "scandium" => Ok(Element::Scandium),
-                "titanium" => Ok(Element::Titanium),
-                "vanadium" => Ok(Element::Vanadium),
-                "chromium" => Ok(Element::Chromium),
-                "manganese" => Ok(Element::Manganese),
-                "iron" => Ok(Element::Iron),
-                "cobalt" => Ok(Element::Cobalt),
-                "nickel" => Ok(Element::Nickel),
-                "copper" => Ok(Element::Copper),
-                "zinc" => Ok(Element::Zinc),
-                "gallium" => Ok(Element::Gallium),
-                "germanium" => Ok(Element::Germanium),
-                "arsenic" => Ok(Element::Arsenic),
-                "selenium" => Ok(Element::Selenium),
-                "bromine" => Ok(Element::Bromine),
-                "krypton" => Ok(Element::Krypton),
-                "rubidium" => Ok(Element::Rubidium),
-                "strontium" => Ok(Element::Strontium),
-                "yttrium" => Ok(Element::Yttrium),
-                "zirconium" => Ok(Element::Zirconium),
-                "niobium" => Ok(Element::Niobium),
-                "molybdenum" => Ok(Element::Molybdenum),
-                "technetium" => Ok(Element::Technetium),
-                "ruthenium" => Ok(Element::Ruthenium),
-                "rhodium" => Ok(Element::Rhodium),
-                "palladium" => Ok(Element::Palladium),
-                "silver" => Ok(Element::Silver),
-                "cadmium" => Ok(Element::Cadmium),
-                "indium" => Ok(Element::Indium),
-                "tin" => Ok(Element::Tin),
-                "antimony" => Ok(Element::Antimony),
-                "tellurium" => Ok(Element::Tellurium),
-                "iodine" => Ok(Element::Iodine),
-                "xenon" => Ok(Element::Xenon),
-                "cesium" => Ok(Element::Cesium),
-                "barium" => Ok(Element::Barium),
-                "lanthanum" => Ok(Element::Lanthanum),
-                "cerium" => Ok(Element::Cerium),
-                "praseodymium" => Ok(Element::Praseodymium),
-                "neodymium" => Ok(Element::Neodymium),
-                "promethium" => Ok(Element::Promethium),
-                "samarium" => Ok(Element::Samarium),
-                "europium" => Ok(Element::Europium),
-                "gadolinium" => Ok(Element::Gadolinium),
-                "terbium" => Ok(Element::Terbium),
-                "dysprosium" => Ok(Element::Dysprosium),
-                "holmium" => Ok(Element::Holmium),
-                "erbium" => Ok(Element::Erbium),
-                "thulium" => Ok(Element::Thulium),
-                "ytterbium" => Ok(Element::Ytterbium),
-                "lutetium" => Ok(Element::Lutetium),
-                "hafnium" => Ok(Element::Hafnium),
-                "tantalum" => Ok(Element::Tantalum),
-                "tungsten" => Ok(Element::Tungsten),
-                "rhenium" => Ok(Element::Rhenium),
-                "osmium" => Ok(Element::Osmium),
-                "iridium" => Ok(Element::Iridium),
-                "platinum" => Ok(Element::Platinum),
-                "gold" => Ok(Element::Gold),
-                "mercury" => Ok(Element::Mercury),
-                "thallium" => Ok(Element::Thallium),
-                "lead" => Ok(Element::Lead),
-                "bismuth" => Ok(Element::Bismuth),
-                "polonium" => Ok(Element::Polonium),
-                "astatine" => Ok(Element::Astatine),
-                "radon" => Ok(Element::Radon),
-                "francium" => Ok(Element::Francium),
-                "radium" => Ok(Element::Radium),
-                "actinium" => Ok(Element::Actinium),
-                "thorium" => Ok(Element::Thorium),
-                "protactinium" => Ok(Element::Protactinium),
-                "uranium" => Ok(Element::Uranium),
-                "neptunium" => Ok(Element::Neptunium),
-                "plutonium" => Ok(Element::Plutonium),
-                "americium" => Ok(Element::Americium),
-                "curium" => Ok(Element::Curium),
-                "berkelium" => Ok(Element::Berkelium),
-                "californium" => Ok(Element::Californium),
-                "einsteinium" => Ok(Element::Einsteinium),
-                "fermium" => Ok(Element::Fermium),
-                "mendelevium" => Ok(Element::Mendelevium),
-                "nobelium" => Ok(Element::Nobelium),
-                "lawrencium" => Ok(Element::Lawrencium),
-                "rutherfordium" => Ok(Element::Rutherfordium),
-                "dubnium" => Ok(Element::Dubnium),
-                "seaborgium" => Ok(Element::Seaborgium),
-                "bohrium" => Ok(Element::Bohrium),
-                "hassium" => Ok(Element::Hassium),
-                "meitnerium" => Ok(Element::Meitnerium),
-                "darmstadtium" => Ok(Element::Darmstadtium),
-                "roentgenium" => Ok(Element::Roentgenium),
-                "copernicium" => Ok(Element::Copernicium),
-                "nihonium" => Ok(Element::Nihonium),
-                "flerovium" => Ok(Element::Flerovium),
-                "moscovium" => Ok(Element::Moscovium),
-                "livermorium" => Ok(Element::Livermorium),
-                "tennessine" => Ok(Element::Tennessine),
-                "oganesson" => Ok(Element::Oganesson),
-                _ => Err(eyre!("unknown element: {s}")),
-            }
-        }
-    }
-
-    impl Element {
-        fn symbol(&self) -> &'static str {
-            match self {
-                Element::Hydrogen => "H",
-                Element::Helium => "He",
-                Element::Lithium => "Li",
-                Element::Beryllium => "Be",
-                Element::Boron => "B",
-                Element::Carbon => "C",
-                Element::Nitrogen => "N",
-                Element::Oxygen => "O",
-                Element::Fluorine => "F",
-                Element::Neon => "Ne",
-                Element::Sodium => "Na",
-                Element::Magnesium => "Mg",
-                Element::Aluminium => "Al",
-                Element::Silicon => "Si",
-                Element::Phosphorus => "P",
-                Element::Sulfur => "S",
-                Element::Chlorine => "Cl",
-                Element::Argon => "Ar",
-                Element::Potassium => "K",
-                Element::Calcium => "Ca",
-                Element::Scandium => "Sc",
-                Element::Titanium => "Ti",
-                Element::Vanadium => "V",
-                Element::Chromium => "Cr",
-                Element::Manganese => "Mn",
-                Element::Iron => "Fe",
-                Element::Cobalt => "Co",
-                Element::Nickel => "Ni",
-                Element::Copper => "Cu",
-                Element::Zinc => "Zn",
-                Element::Gallium => "Ga",
-                Element::Germanium => "Ge",
-                Element::Arsenic => "As",
-                Element::Selenium => "Se",
-                Element::Bromine => "Br",
-                Element::Krypton => "Kr",
-                Element::Rubidium => "Rb",
-                Element::Strontium => "Sr",
-                Element::Yttrium => "Y",
-                Element::Zirconium => "Zr",
-                Element::Niobium => "Nb",
-                Element::Molybdenum => "Mo",
-                Element::Technetium => "Tc",
-                Element::Ruthenium => "Ru",
-                Element::Rhodium => "Rh",
-                Element::Palladium => "Pd",
-                Element::Silver => "Ag",
-                Element::Cadmium => "Cd",
-                Element::Indium => "In",
-                Element::Tin => "Sn",
-                Element::Antimony => "Sb",
-                Element::Tellurium => "Te",
-                Element::Iodine => "I",
-                Element::Xenon => "Xe",
-                Element::Cesium => "Cs",
-                Element::Barium => "Ba",
-                Element::Lanthanum => "La",
-                Element::Cerium => "Ce",
-                Element::Praseodymium => "Pr",
-                Element::Neodymium => "Nd",
-                Element::Promethium => "Pm",
-                Element::Samarium => "Sm",
-                Element::Europium => "Eu",
-                Element::Gadolinium => "Gd",
-                Element::Terbium => "Tb",
-                Element::Dysprosium => "Dy",
-                Element::Holmium => "Ho",
-                Element::Erbium => "Er",
-                Element::Thulium => "Tm",
-                Element::Ytterbium => "Yb",
-                Element::Lutetium => "Lu",
-                Element::Hafnium => "Hf",
-                Element::Tantalum => "Ta",
-                Element::Tungsten => "W",
-                Element::Rhenium => "Re",
-                Element::Osmium => "Os",
-                Element::Iridium => "Ir",
-                Element::Platinum => "Pt",
-                Element::Gold => "Au",
-                Element::Mercury => "Hg",
-                Element::Thallium => "Tl",
-                Element::Lead => "Pb",
-                Element::Bismuth => "Bi",
-                Element::Polonium => "Po",
-                Element::Astatine => "At",
-                Element::Radon => "Rn",
-                Element::Francium => "Fr",
-                Element::Radium => "Ra",
-                Element::Actinium => "Ac",
-                Element::Thorium => "Th",
-                Element::Protactinium => "Pa",
-                Element::Uranium => "U",
-                Element::Neptunium => "Np",
-                Element::Plutonium => "Pu",
-                Element::Americium => "Am",
-                Element::Curium => "Cm",
-                Element::Berkelium => "Bk",
-                Element::Californium => "Cf",
-                Element::Einsteinium => "Es",
-                Element::Fermium => "Fm",
-                Element::Mendelevium => "Md",
-                Element::Nobelium => "No",
-                Element::Lawrencium => "Lr",
-                Element::Rutherfordium => "Rf",
-                Element::Dubnium => "Db",
-                Element::Seaborgium => "Sg",
-                Element::Bohrium => "Bh",
-                Element::Hassium => "Hs",
-                Element::Meitnerium => "Mt",
-                Element::Darmstadtium => "Ds",
-                Element::Roentgenium => "Rg",
-                Element::Copernicium => "Cn",
-                Element::Nihonium => "Nh",
-                Element::Flerovium => "Fl",
-                Element::Moscovium => "Mc",
-                Element::Livermorium => "Lv",
-                Element::Tennessine => "Ts",
-                Element::Oganesson => "Og",
-            }
-        }
-    }
-
-    impl Display for Element {
-        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-            f.write_str(self.symbol())
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
-    use super::*;
-    #[test]
-    fn display() {
-        let col = Column {
-            elevator: RangedUsize::new_static::<2>(),
-            floors: [
-                vec![
-                    Item::Microchip {
-                        element: Element::Cadmium,
-                    },
-                    Item::Microchip {
-                        element: Element::Lead,
-                    },
-                ],
-                vec![
-                    Item::Generator {
-                        element: Element::Lead,
-                    },
-                    Item::Microchip {
-                        element: Element::Iron,
-                    },
-                ],
-                vec![
-                    Item::Microchip {
-                        element: Element::Helium,
-                    },
-                    Item::Generator {
-                        element: Element::Helium,
-                    },
-                ],
-                vec![],
-            ],
-        };
+    use aoc_common::TryParse;
 
-        assert_eq!(
-            col.to_string(),
-            " F4  .  .    .    .    .    .    .   
- F3  E  HeM  HeG  .    .    .    .   
- F2  .  .    .    FeM  .    .    PbG 
- F1  .  .    .    .    CdM  PbM  .   "
-        )
-    }
+    use super::*;
 
     #[test]
     fn from_str() {
@@ -611,29 +241,86 @@ The second floor contains a hydrogen generator.
 The third floor contains a lithium generator.
 The fourth floor contains nothing relevant.";
 
-        let col = input.parse::<Column>().unwrap();
+        let col = input.try_parse::<Column>().unwrap();
         assert_eq!(
             col,
             Column {
                 elevator: RangedUsize::new_static::<0>(),
                 floors: [
-                    vec![
+                    Floor::from_iter(vec![
                         Item::Microchip {
-                            element: Element::Hydrogen
+                            element: "hydrogen"
                         },
-                        Item::Microchip {
-                            element: Element::Lithium
-                        }
-                    ],
-                    vec![Item::Generator {
-                        element: Element::Hydrogen
-                    }],
-                    vec![Item::Generator {
-                        element: Element::Lithium
-                    }],
-                    vec![]
+                        Item::Microchip { element: "lithium" }
+                    ]),
+                    Floor::from_iter(vec![Item::Generator {
+                        element: "hydrogen"
+                    }]),
+                    Floor::from_iter(vec![Item::Generator { element: "lithium" }]),
+                    Floor::default()
                 ]
             }
         )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum Item<'a> {
+    Microchip { element: &'a str },
+    Generator { element: &'a str },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+struct Floor<'a>(BTreeSet<Item<'a>>);
+
+impl<'a> FromIterator<Item<'a>> for Floor<'a> {
+    fn from_iter<T: IntoIterator<Item = Item<'a>>>(iter: T) -> Self {
+        Self(BTreeSet::from_iter(iter))
+    }
+}
+
+impl<'a> Accumulate<Item<'a>> for Floor<'a> {
+    fn initial(_capacity: Option<usize>) -> Self {
+        Self(BTreeSet::new())
+    }
+
+    fn accumulate(&mut self, acc: Item<'a>) {
+        self.0.insert(acc);
+    }
+}
+
+impl<'a> Floor<'a> {
+    fn is_valid(&self) -> bool {
+        self.0
+            .iter()
+            .all(|item| matches!(item, Item::Microchip { .. }))
+            || self.0.iter().all(|&item| match item {
+                Item::Generator { .. } => true,
+                Item::Microchip { element } => self.0.contains(&Item::Generator { element }),
+            })
+    }
+}
+
+impl<'a> ops::Deref for Floor<'a> {
+    type Target = BTreeSet<Item<'a>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ops::DerefMut for Floor<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<'a, 'b> IntoIterator for &'a Floor<'b> {
+    type Item = &'a Item<'b>;
+
+    type IntoIter = btree_set::Iter<'a, Item<'b>>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
