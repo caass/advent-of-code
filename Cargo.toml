@@ -62,6 +62,7 @@ reqwest           = { version = "0.12.24", features = ["cookies"] }
 serde_json        = "1.0.145"
 thiserror         = "2.0.17"
 tinystr           = { version = "0.8.2", features = ["std"] }
+tinyvec           = { version = "1.10.0", features = ["latest_stable_rust"] }
 void              = "1.0.2"
 wide              = "0.8.1"
 winnow            = { version = "0.7.13", features = ["simd"] }

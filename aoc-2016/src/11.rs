@@ -1,20 +1,18 @@
-use std::collections::{BTreeSet, btree_set};
-use std::ops;
-use std::sync::mpsc;
+use std::collections::hash_map::Entry;
+use std::collections::{HashMap, VecDeque};
+use std::hash::{Hash, Hasher};
+use std::ops::{Deref, DerefMut};
+use std::str::FromStr;
+use std::sync::Mutex;
+use std::sync::atomic::{AtomicU8, Ordering};
+use std::{array, iter};
 
-use std::array;
-use std::iter::Copied;
-use std::iter::Flatten;
-use std::slice;
-
-use aoc_common::TryFromStr;
-use aoc_common::TryParse;
-use dashmap::{DashMap, Entry};
-use deranged::RangedUsize;
+use deranged::RangedU8;
 use eyre::{Report, Result, bail, eyre};
-use fnv::FnvBuildHasher;
+use fnv::FnvHashMap;
 use itertools::Itertools;
-use rayon::prelude::*;
+use nohash_hasher::BuildNoHashHasher;
+use tinyvec::ArrayVec;
 use winnow::ascii::alpha1;
 use winnow::combinator::{alt, preceded, separated, terminated};
 use winnow::error::ContextError;
@@ -26,159 +24,339 @@ use aoc_meta::Problem;
 pub const RADIOISOTOPE_THERMOELECTRIC_GENERATORS: Problem =
     Problem::solved(&minimum_steps, &minimum_steps_with_two_more_pairs);
 
-fn minimum_steps_with_two_more_pairs(input: &str) -> Result<usize> {
-    let mut column = input.try_parse::<Column>()?;
-    for item in [
-        Item::Generator { element: "elerium" },
-        Item::Microchip { element: "elerium" },
-        Item::Generator {
-            element: "dilithium",
-        },
-        Item::Microchip {
-            element: "dilithium",
-        },
-    ] {
-        column.floors[0].0.insert(item);
+fn minimum_steps(input: &str) -> Result<u8> {
+    input.parse().and_then(Column::fewest_steps_to_solve)
+}
+
+fn minimum_steps_with_two_more_pairs(input: &str) -> Result<u8> {
+    let mut start: Column = input.parse()?;
+    start.add_pairs(RangedU8::new_static::<0>(), 2);
+    start.fewest_steps_to_solve()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct Element(RangedU8<0, 127>);
+
+impl Element {
+    const fn new(id: RangedU8<0, 127>) -> Self {
+        Self(id)
     }
 
-    column.fewest_steps_to_solve()
+    fn next(&self) -> Option<Element> {
+        self.0.checked_add(1).map(Element)
+    }
 }
 
-fn minimum_steps(input: &str) -> Result<usize> {
-    input.try_parse().and_then(Column::fewest_steps_to_solve)
+impl Default for Element {
+    fn default() -> Self {
+        Self(RangedU8::new_static::<0>())
+    }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-struct Column<'a> {
-    floors: [Floor<'a>; 4],
-    elevator: RangedUsize<0, 3>,
+impl Hash for Element {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u8(self.0.get());
+    }
 }
 
-impl<'a> Column<'a> {
-    fn fewest_steps_to_solve(self) -> Result<usize> {
+impl nohash_hasher::IsEnabled for Element {}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+struct Item(u8);
+
+impl Item {
+    #[inline(always)]
+    const fn pair(element: Element) -> [Item; 2] {
+        [Item::generator(element), Item::microchip(element)]
+    }
+
+    #[inline(always)]
+    const fn generator(element: Element) -> Item {
+        Item(element.0.get())
+    }
+
+    #[inline(always)]
+    const fn microchip(element: Element) -> Item {
+        Item(0b1000_0000 | element.0.get())
+    }
+
+    #[inline(always)]
+    const fn element(&self) -> Element {
+        // Safety: we know that an integer bitwise-anded with a leading 0 will always be <= 127.
+        Element(unsafe { RangedU8::new_unchecked(self.0 & 0b0111_1111) })
+    }
+
+    #[inline(always)]
+    const fn set_element(&mut self, element: Element) {
+        self.0 = (self.0 & 0b1000_0000) | element.0.get()
+    }
+
+    #[inline(always)]
+    const fn is_generator(&self) -> bool {
+        self.0 >> 7 == 0
+    }
+
+    #[inline(always)]
+    const fn is_microchip(&self) -> bool {
+        !self.is_generator()
+    }
+
+    #[inline(always)]
+    const fn paired_generator(&self) -> Item {
+        Item(self.0 & 0b0111_1111)
+    }
+}
+
+impl Hash for Item {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_u8(self.0);
+    }
+}
+
+impl nohash_hasher::IsEnabled for Item {}
+
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Floor(ArrayVec<[Item; 16]>);
+
+impl Floor {
+    fn is_valid(&self) -> bool {
+        self.iter().all(Item::is_microchip)
+            || self
+                .iter()
+                .all(|item| item.is_generator() || self.contains(&item.paired_generator()))
+    }
+
+    #[inline(always)]
+    fn push(&mut self, item: Item) {
+        self.0.push(item);
+    }
+
+    #[inline(always)]
+    fn swap_remove(&mut self, idx: usize) -> Item {
+        self.0.swap_remove(idx)
+    }
+
+    fn from_str_with_parser<'s>(input: &'s str, f: impl Fn(&'s str) -> Element) -> Result<Self> {
+        terminated(
+            alt((
+                "nothing relevant".map(|_| Floor::default()),
+                preceded(
+                    "a ",
+                    separated(
+                        1..,
+                        alt((
+                            terminated(alpha1::<_, ContextError>, "-compatible microchip")
+                                .map(|elem| Item::microchip(f(elem))),
+                            terminated(alpha1, " generator").map(|elem| Item::generator(f(elem))),
+                        )),
+                        alt((", and a ", ", a ", " and a ")),
+                    ),
+                ),
+            )),
+            '.',
+        )
+        .parse(input)
+        .map_err(|e| eyre!("{e:#?}"))
+    }
+
+    fn extend<I: IntoIterator<Item = Item>>(&mut self, iter: I) {
+        self.0.extend(iter);
+    }
+}
+
+impl Deref for Floor {
+    type Target = [Item];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Floor {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl FromIterator<Item> for Floor {
+    fn from_iter<T: IntoIterator<Item = Item>>(iter: T) -> Self {
+        Self(FromIterator::from_iter(iter))
+    }
+}
+
+impl Accumulate<Item> for Floor {
+    fn initial(_capacity: Option<usize>) -> Self {
+        Self::default()
+    }
+
+    fn accumulate(&mut self, acc: Item) {
+        self.push(acc);
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Column {
+    floors: [Floor; 4],
+    elevator: RangedU8<0, 3>,
+}
+
+impl Column {
+    fn target(&self) -> Column {
+        let mut target = Column {
+            elevator: RangedU8::new_static::<3>(),
+            floors: array::from_fn(|i| {
+                if i == 3 {
+                    self.floors.iter().flat_map(|f| f.iter()).copied().collect()
+                } else {
+                    Floor(ArrayVec::new())
+                }
+            }),
+        };
+        target.canonicalize();
+
+        target
+    }
+
+    fn add_pairs(&mut self, floor: RangedU8<0, 3>, n: usize) {
+        let mut max = self
+            .floors
+            .iter()
+            .flat_map(|f| f.iter())
+            .max_by_key(|it| it.element())
+            .and_then(|it| it.element().next())
+            .unwrap_or_default();
+
+        self.floors[usize::from(floor.get())].extend(
+            iter::repeat_with(|| {
+                let elem = max;
+                max = max.next().expect("to have fewer than 127 elements");
+                elem
+            })
+            .take(n)
+            .flat_map(Item::pair),
+        )
+    }
+
+    fn len(&self) -> usize {
+        self.floors.iter().map(|f| f.len()).sum()
+    }
+
+    /// Converts this column into the equivalent canonical column.
+    fn canonicalize(&mut self) {
+        let mut map = HashMap::<_, _, BuildNoHashHasher<Element>>::with_capacity_and_hasher(
+            self.len(),
+            BuildNoHashHasher::default(),
+        );
+        let mut n = RangedU8::new_static::<0>();
+
+        for item in self.floors.iter_mut().flat_map(|f| f.iter_mut()) {
+            let new_element = *map.entry(item.element()).or_insert_with(|| {
+                let next = Element::new(n);
+                n = n.checked_add(1).expect("to have fewer than 127 elements");
+                next
+            });
+
+            item.set_element(new_element);
+        }
+
+        for floor in &mut self.floors {
+            floor.0.sort_unstable();
+        }
+    }
+
+    fn next_valid_states(&self) -> impl Iterator<Item = Column> {
+        self.elevator
+            .checked_add(1)
+            .into_iter()
+            .chain(self.elevator.checked_sub(1))
+            .flat_map(|to| self.valid_swaps_to(to))
+    }
+
+    fn fewest_steps_to_solve(mut self) -> Result<u8> {
+        self.canonicalize();
         let target_state = self.target();
 
-        let (tx, rx) = mpsc::channel();
-        let visited = DashMap::with_hasher(FnvBuildHasher::default());
+        let mut queue = VecDeque::default();
+        let mut visited = FnvHashMap::default();
 
-        tx.send((self.clone(), 0usize))
-            .expect("rx to still be open");
-        visited.insert(self, 0usize);
+        visited.insert(self, 0);
+        queue.push_back((self, 0));
 
-        while let Ok((current_state, steps)) = rx.recv() {
-            if current_state == target_state {
+        while let Some((next, steps)) = queue.pop_front() {
+            if next == target_state {
                 return Ok(steps);
             }
 
-            current_state.next_valid_states().for_each(|next| {
-                if let Entry::Vacant(vac) = visited.entry(next.clone()) {
+            for mut state in next.next_valid_states() {
+                state.canonicalize();
+
+                if let Entry::Vacant(vac) = visited.entry(state) {
                     vac.insert(steps + 1);
-                    tx.send((next.clone(), steps + 1))
-                        .expect("rx to still be open");
+                    queue.push_back((state, steps + 1));
                 }
-            })
+            }
         }
 
         Err(eyre!("no solution"))
     }
-    fn target(&self) -> Column<'a> {
-        Column {
-            elevator: RangedUsize::new_static::<3>(),
-            floors: array::from_fn(|i| {
-                if i == 3 {
-                    self.items().collect()
+
+    fn valid_swaps_to(&self, to_idx: RangedU8<0, 3>) -> impl Iterator<Item = Column> {
+        let from_idx = self.elevator;
+
+        let from = self.floors[usize::from(from_idx.get())];
+        let to = self.floors[usize::from(to_idx.get())];
+
+        (0..from.len())
+            .tuple_combinations()
+            .map(|(a, b)| (a, Some(b)))
+            .chain((0..from.len()).map(|a| (a, None)))
+            .filter_map(move |(a, maybe_b)| {
+                let mut from = from;
+                let mut to = to;
+
+                match maybe_b {
+                    Some(b) => {
+                        // Always remove the higher index first to avoid invalidating the lower one
+                        let (first, second) = if a > b { (a, b) } else { (b, a) };
+                        to.push(from.swap_remove(first));
+                        to.push(from.swap_remove(second));
+                    }
+                    None => {
+                        to.push(from.swap_remove(a));
+                    }
+                }
+
+                if from.is_valid() && to.is_valid() {
+                    let mut next = *self;
+
+                    next.elevator = to_idx;
+                    next.floors[usize::from(to_idx.get())] = to;
+                    next.floors[usize::from(from_idx.get())] = from;
+
+                    Some(next)
                 } else {
-                    Floor::default()
+                    None
                 }
-            }),
-        }
-    }
-
-    fn new() -> Column<'a> {
-        Self {
-            floors: array::from_fn(|_| Floor::default()),
-            elevator: RangedUsize::new_static::<0>(),
-        }
-    }
-
-    fn items(&self) -> Copied<Flatten<slice::Iter<'_, Floor<'a>>>> {
-        self.floors.iter().flatten().copied()
-    }
-
-    fn next_valid_states(&self) -> impl ParallelIterator<Item = Column<'a>> {
-        self.elevator
-            .checked_add(1)
-            .into_par_iter()
-            .chain(self.elevator.checked_sub(1))
-            .flat_map(|to| self.valid_swaps_to_floor(to))
-    }
-
-    // returns a parallel iterator over the states this column can be in when moving 0, 1, or 2
-    // items from the floor the elevator is currently on to a given floor
-    fn valid_swaps_to_floor(
-        &self,
-        to: RangedUsize<0, 3>,
-    ) -> impl ParallelIterator<Item = Column<'a>> {
-        let from = self.elevator;
-
-        let from_floor = &self.floors[from.get()];
-        let to_floor = &self.floors[to.get()];
-
-        self.tuple_combinations_on_current_floor()
-            .map(|(a, b)| (Some(a), Some(b)))
-            .chain(self.items_on_current_floor().map(|it| (Some(it), None)))
-            .filter_map(move |(maybe_a, maybe_b)| {
-                let mut new_from = from_floor.clone();
-                let mut new_to = to_floor.clone();
-
-                if let Some(a) = maybe_a {
-                    new_from.remove(&a);
-                    new_to.insert(a);
-                }
-
-                if let Some(b) = maybe_b {
-                    new_from.remove(&b);
-                    new_to.insert(b);
-                };
-
-                (new_from.is_valid() && new_to.is_valid()).then(|| {
-                    let mut new_col = self.clone();
-
-                    new_col.floors[from.get()] = new_from;
-                    new_col.floors[to.get()] = new_to;
-                    new_col.elevator = to;
-
-                    new_col
-                })
             })
     }
+}
 
-    fn tuple_combinations_on_current_floor(
-        &self,
-    ) -> impl ParallelIterator<Item = (Item<'a>, Item<'a>)> {
-        self.floors[self.elevator.get()]
-            .iter()
-            .copied()
-            .tuple_combinations()
-            .par_bridge()
-    }
-
-    fn items_on_current_floor(&self) -> impl ParallelIterator<Item = Item<'a>> {
-        self.floors[self.elevator.get()].par_iter().copied()
+impl Default for Column {
+    fn default() -> Column {
+        Column {
+            floors: Default::default(),
+            elevator: RangedU8::new_static::<0>(),
+        }
     }
 }
 
-impl Default for Column<'_> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl<'a> TryFromStr<'a> for Column<'a> {
+impl FromStr for Column {
     type Err = Report;
 
-    fn try_from_str(s: &'a str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut col = Column::default();
+        let n = AtomicU8::new(0);
+        let registry = Mutex::new(FnvHashMap::default());
 
         for (i, line) in s.lines().enumerate() {
             if i > 3 {
@@ -197,130 +375,19 @@ impl<'a> TryFromStr<'a> for Column<'a> {
                 _ => Err(eyre!("unexpected prefix \"{prefix}\" on floor {i}")),
             }?;
 
-            col.floors[i] = parse_contains(contains)?;
+            col.floors[i] = Floor::from_str_with_parser(contains, |elem| {
+                *registry
+                    .lock()
+                    .expect("to have fewer than 127 elements")
+                    .entry(elem)
+                    .or_insert_with(|| {
+                        let id = RangedU8::new(n.fetch_add(1, Ordering::Relaxed))
+                            .expect("to have fewer than 127 elements");
+                        Element::new(id)
+                    })
+            })?;
         }
 
         Ok(col)
-    }
-}
-
-fn parse_contains(input: &str) -> eyre::Result<Floor<'_>> {
-    terminated(
-        alt((
-            "nothing relevant".map(|_| Floor::default()),
-            preceded(
-                "a ",
-                separated(
-                    1..,
-                    alt((
-                        terminated(alpha1::<_, ContextError>, "-compatible microchip")
-                            .map(|elem| Item::Microchip { element: elem }),
-                        terminated(alpha1, " generator")
-                            .map(|elem| Item::Generator { element: elem }),
-                    )),
-                    alt((", and a ", ", a ", " and a ")),
-                ),
-            ),
-        )),
-        '.',
-    )
-    .parse(input)
-    .map_err(|e| eyre!("{e:#?}"))
-}
-
-#[cfg(test)]
-mod test {
-    use aoc_common::TryParse;
-
-    use super::*;
-
-    #[test]
-    fn from_str() {
-        let input = "The first floor contains a hydrogen-compatible microchip and a lithium-compatible microchip.
-The second floor contains a hydrogen generator.
-The third floor contains a lithium generator.
-The fourth floor contains nothing relevant.";
-
-        let col = input.try_parse::<Column>().unwrap();
-        assert_eq!(
-            col,
-            Column {
-                elevator: RangedUsize::new_static::<0>(),
-                floors: [
-                    Floor::from_iter(vec![
-                        Item::Microchip {
-                            element: "hydrogen"
-                        },
-                        Item::Microchip { element: "lithium" }
-                    ]),
-                    Floor::from_iter(vec![Item::Generator {
-                        element: "hydrogen"
-                    }]),
-                    Floor::from_iter(vec![Item::Generator { element: "lithium" }]),
-                    Floor::default()
-                ]
-            }
-        )
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-enum Item<'a> {
-    Microchip { element: &'a str },
-    Generator { element: &'a str },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-struct Floor<'a>(BTreeSet<Item<'a>>);
-
-impl<'a> FromIterator<Item<'a>> for Floor<'a> {
-    fn from_iter<T: IntoIterator<Item = Item<'a>>>(iter: T) -> Self {
-        Self(BTreeSet::from_iter(iter))
-    }
-}
-
-impl<'a> Accumulate<Item<'a>> for Floor<'a> {
-    fn initial(_capacity: Option<usize>) -> Self {
-        Self(BTreeSet::new())
-    }
-
-    fn accumulate(&mut self, acc: Item<'a>) {
-        self.0.insert(acc);
-    }
-}
-
-impl<'a> Floor<'a> {
-    fn is_valid(&self) -> bool {
-        self.0
-            .iter()
-            .all(|item| matches!(item, Item::Microchip { .. }))
-            || self.0.iter().all(|&item| match item {
-                Item::Generator { .. } => true,
-                Item::Microchip { element } => self.0.contains(&Item::Generator { element }),
-            })
-    }
-}
-
-impl<'a> ops::Deref for Floor<'a> {
-    type Target = BTreeSet<Item<'a>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl ops::DerefMut for Floor<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<'a, 'b> IntoIterator for &'a Floor<'b> {
-    type Item = &'a Item<'b>;
-
-    type IntoIter = btree_set::Iter<'a, Item<'b>>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
     }
 }

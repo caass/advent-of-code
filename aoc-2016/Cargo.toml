@@ -8,7 +8,6 @@ version.workspace = true
 aoc-common.workspace = true
 aoc-meta.workspace   = true
 
-dashmap.workspace       = true
 deranged.workspace      = true
 either.workspace        = true
 eyre.workspace          = true
@@ -21,6 +20,7 @@ nohash-hasher.workspace = true
 pathsep.workspace       = true
 rayon.workspace         = true
 regex.workspace         = true
+tinyvec.workspace       = true
 void.workspace          = true
 winnow.workspace        = true
 
