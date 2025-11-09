@@ -75,7 +75,7 @@ impl Index<Day> for ProblemSet {
 /// ```
 #[macro_export]
 macro_rules! PROBLEMS {
-    {$($day:literal => $problem:ident),*} => {
+        {$($day:literal => $problem:ident),*$(,)?} => {
         $crate::paste!{
             $(
                 #[path = "" $day ".rs"]
