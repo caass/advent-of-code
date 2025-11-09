@@ -149,7 +149,7 @@ impl<const N: usize, T: Display> Display for Grid<N, T> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Coordinate {
     pub x: usize,
     pub y: usize,
@@ -184,7 +184,18 @@ impl<R: RangeBounds<Coordinate>> From<R>
 }
 
 impl Coordinate {
-    fn neighbors(self) -> impl Iterator<Item = Coordinate> {
+    pub fn cardinal_neighbors(self) -> impl Iterator<Item = Coordinate> {
+        let Coordinate { x, y } = self;
+
+        let left = x.checked_sub(1).map(|new_x| Coordinate { x: new_x, y });
+        let right = x.checked_add(1).map(|new_x| Coordinate { x: new_x, y });
+        let top = y.checked_sub(1).map(|new_y| Coordinate { x, y: new_y });
+        let bottom = y.checked_add(1).map(|new_y| Coordinate { x, y: new_y });
+
+        [top, left, right, bottom].into_iter().flatten()
+    }
+
+    pub fn neighbors(self) -> impl Iterator<Item = Coordinate> {
         let Coordinate { x, y } = self;
         let left_x = x.checked_sub(1);
         let right_x = x.checked_add(1);
