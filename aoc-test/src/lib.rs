@@ -7,7 +7,7 @@ pub use pastey::paste;
 #[macro_export]
 macro_rules! tests {
     // Shorthand for constructing tests against years, days, and parts.
-    {$year:literal: {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*}} => {
+    {$year:literal: {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*$(,)?}} => {
         $($crate::tests_impl!(year: $year, day: $day, parts: [$($(#[$attrs])* $part),+]);)*
     };
 }
