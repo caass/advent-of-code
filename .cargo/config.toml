@@ -2,12 +2,15 @@
 frequency = "always"
 
 [profile.release]
-lto = "fat"
 codegen-units = 1
+lto           = "fat"
+
+[profile.profiling]
+debug    = true
+inherits = "release"
 
 [profile.fast-test]
-inherits = "release"
-lto = "thin"
-debug = true
 debug-assertions = true
-overflow-checks = true
+inherits         = "profiling"
+lto              = "thin"
+overflow-checks  = true
