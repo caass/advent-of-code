@@ -22,8 +22,8 @@ fn sixty_fourth_key<F: Send + Sync + Fn(&Md5, usize) -> HashInfo>(
     f: F,
 ) -> Result<usize> {
     let salt = Md5::new_with_prefix(salt);
-
     let mut hashes = Vec::with_capacity(N);
+
     (0..N)
         .into_par_iter()
         .map(|i| f(&salt, i))
