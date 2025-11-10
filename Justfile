@@ -37,10 +37,6 @@ get-inputs: download-inputs
 
     {{tar}} cz ./target/inputs | rage -r $AOC_INPUTS_PUBKEY > ./inputs.gz.age
 
-# Generate a checksum for the current platform's target CPU features.
-cpu-sum:
-    rustc --print cfg -C target-cpu=native | {{md5sum}} | awk '{print $1}'
-
 [private]
 decrypt-inputs:
     #!/usr/bin/env -S bash --posix
