@@ -26,14 +26,14 @@ jobs:
       - name: Install `clippy`, `rustfmt`
         run: rustup component add clippy rustfmt
 
-      - name: Get `target_cpu=native` hash
-        id: get-target-cpu-eq-native-hash
-        run: echo "hash=$(rustc --print cfg -C target-cpu=native | md5sum --quiet)" >> "$GITHUB_OUTPUT"
+      - name: Get `target_cpu=native` checksum
+        id: get-target-cpu-eq-native-checksum
+        run: echo "checksum=$(just cpu-sum)" >> "$GITHUB_OUTPUT"
       - name: Populate Rust cache
         uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-          key: ${{ steps.get-target-cpu-eq-native-hash.outputs.hash }}
+          key: ${{ steps.get-target-cpu-eq-native-checksum.outputs.checksum }}
       - name: Run `clippy`
         run: cargo clippy
       - name: Check formatting
@@ -55,14 +55,14 @@ jobs:
       - name: Set ${{ matrix.channel }} toolchain as default
         run: rustup default ${{ matrix.channel }}
 
-      - name: Get `target_cpu=native` hash
-        id: get-target-cpu-eq-native-hash
-        run: echo "hash=$(rustc --print cfg -C target-cpu=native | md5sum --quiet)" >> "$GITHUB_OUTPUT"
+      - name: Get `target_cpu=native` checksum
+        id: get-target-cpu-eq-native-checksum
+        run: echo "checksum=$(just cpu-sum)" >> "$GITHUB_OUTPUT"
       - name: Populate Rust cache
         uses: Swatinem/rust-cache@v2
         with:
           cache-all-crates: "true"
-          key: ${{ steps.get-target-cpu-eq-native-hash.outputs.hash }}
+          key: ${{ steps.get-target-cpu-eq-native-checksum.outputs.checksum }}
       - name: Install `cargo-binstall`
         uses: cargo-bins/cargo-binstall@v1.10.8
         env:

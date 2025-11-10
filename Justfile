@@ -2,6 +2,7 @@ export RUSTFLAGS := "-C target-cpu=native"
 
 # MacOS uses BSD tar, which can generate warnings when untarring on Linux.
 tar := if os() == "macos" { "gtar" } else { "tar" }
+md5sum := if os() == "macos" { "gmd5sum" } else { "md5sum" }
 branch := trim(`git branch --show-current --no-column`)
 
 [private]
@@ -35,6 +36,10 @@ get-inputs: download-inputs
     fi
 
     {{tar}} cz ./target/inputs | rage -r $AOC_INPUTS_PUBKEY > ./inputs.gz.age
+
+# Generate a checksum for the current platform's target CPU features.
+cpu-sum:
+    rustc --print cfg -C target-cpu=native | {{md5sum}} | awk '{print $1}'
 
 [private]
 decrypt-inputs:
