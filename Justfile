@@ -14,7 +14,7 @@ run year day part input="-":
 
 # Test solutions
 test *ARGS: decrypt-inputs
-    cargo nextest run --all --no-tests=fail --cargo-profile=fast-test {{ARGS}}
+    cargo nextest run --workspace --no-tests=fail --cargo-profile=fast-test {{ARGS}}
 
 # Print solve status
 completion: (test "--profile=ci")
