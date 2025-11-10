@@ -8,6 +8,7 @@ version.workspace = true
 aoc-common.workspace = true
 aoc-meta.workspace   = true
 
+bitvec.workspace        = true
 deranged.workspace      = true
 either.workspace        = true
 eyre.workspace          = true

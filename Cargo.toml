@@ -38,6 +38,7 @@ aoc-common = { path = "aoc-common" }
 aoc-meta   = { path = "aoc-meta" }
 aoc-test   = { path = "aoc-test" }
 
+bitvec            = "1.0.1"
 clap              = { version = "4.5.51", features = ["derive"] }
 clap-stdin        = "0.8.0"
 dashmap           = "7.0.0-rc2"
