@@ -1,5 +1,8 @@
+use std::iter::FusedIterator;
+use std::mem;
+
 use bitvec::{index::BitIdx, prelude::*};
-use eyre::{Result, eyre};
+use eyre::{OptionExt, Result};
 use itertools::Itertools;
 use md5::digest::Output;
 use md5::{Digest, Md5};
@@ -15,34 +18,114 @@ pub const ONE_TIME_PAD: Problem =
 const HEX: [u8; 16] = [
     b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'a', b'b', b'c', b'd', b'e', b'f',
 ];
-const N: usize = 0x8000;
 
-fn sixty_fourth_key<F: Send + Sync + Fn(&Md5, usize) -> HashInfo>(
-    salt: &str,
-    f: F,
-) -> Result<usize> {
-    let salt = Md5::new_with_prefix(salt);
-    let mut hashes = Vec::with_capacity(N);
-
-    (0..N)
-        .into_par_iter()
-        .map(|i| f(&salt, i))
-        .collect_into_vec(&mut hashes);
-
-    hashes
-        .iter()
-        .enumerate()
-        .filter(|(i, h)| {
-            h.triplet.is_some_and(|hex_char| {
-                (i + 1..=i + 1000)
-                    .into_par_iter()
-                    .any(|j| hashes[j].quintet_mask.get_bit::<Msb0>(hex_char))
-            })
-        })
-        .nth(63)
-        .map(|(i, _)| i)
-        .ok_or_else(|| eyre!("fewer than 64 keys in first {N} indices!"))
+fn sixty_fourth_key<F>(salt: &str, f: F) -> Result<usize>
+where
+    F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static,
+{
+    let seed = Md5::new_with_prefix(salt);
+    keys(seed, f).nth(63).ok_or_eyre("couldn't find 64 keys")
 }
+
+fn keys<F>(seed: Md5, f: F) -> Keys<F>
+where
+    F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static,
+{
+    Keys::new(seed, f)
+}
+
+struct Keys<F> {
+    hashes: Hashes<F>,
+    i: usize,
+    n: usize,
+    a: Vec<HashInfo>,
+    b: Vec<HashInfo>,
+}
+
+impl<F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static> Keys<F> {
+    fn new(seed: Md5, f: F) -> Self {
+        let mut hashes = Hashes::new(seed, f);
+        let a = hashes.next().expect("to find at least 1,000 hashes");
+        let b = hashes.next().expect("to find at least 2,000 hashes");
+
+        Self {
+            hashes,
+            i: 0,
+            n: 0,
+            a,
+            b,
+        }
+    }
+}
+
+impl<F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static> Iterator for Keys<F> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        for i in self.i..1000 {
+            let Some(hex) = self.a[i].triplet else {
+                continue;
+            };
+
+            let has_quints = self.a[i + 1..]
+                .par_iter()
+                .chain(&self.b[..i + 1])
+                .any(|h2| h2.quintet_mask.get_bit::<Msb0>(hex));
+
+            if has_quints {
+                self.i = i + 1;
+                return Some(self.n * 1000 + i);
+            }
+        }
+
+        self.i = 0;
+        self.n += 1;
+        self.a = mem::take(&mut self.b);
+        self.b = self.hashes.next()?;
+
+        self.next()
+    }
+}
+
+impl<F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static> FusedIterator for Keys<F> {}
+
+struct Hashes<F> {
+    n: Option<usize>,
+    f: F,
+    seed: Md5,
+}
+
+impl<F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static> Hashes<F> {
+    fn new(seed: Md5, f: F) -> Self {
+        Self {
+            n: Some(0),
+            f,
+            seed,
+        }
+    }
+}
+
+impl<F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static> Iterator for Hashes<F> {
+    type Item = Vec<HashInfo>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let n = self.n?;
+        self.n = n.checked_add(1);
+
+        let start = n * 1000;
+        let end = start + 1000;
+
+        let mut hashes = Vec::default();
+        (start..end)
+            .into_par_iter()
+            .map(|i| (self.f)(&self.seed, i))
+            .collect_into_vec(&mut hashes);
+
+        Some(hashes)
+    }
+}
+
+impl<F: Fn(&Md5, usize) -> HashInfo + Send + Sync + 'static> FusedIterator for Hashes<F> {}
 
 struct HashInfo {
     triplet: Option<BitIdx<u16>>,
@@ -50,17 +133,17 @@ struct HashInfo {
 }
 
 impl HashInfo {
-    fn new(salt: &Md5, index: usize) -> Self {
+    fn new(seed: &Md5, index: usize) -> Self {
         let mut buf = itoa::Buffer::new();
-        let hash = salt.clone().chain_update(buf.format(index)).finalize();
+        let hash = seed.clone().chain_update(buf.format(index)).finalize();
 
         Self::with_hash(hash)
     }
 
-    fn stretched(salt: &Md5, index: usize) -> Self {
+    fn stretched(seed: &Md5, index: usize) -> Self {
         let mut hex_hash = [0u8; 32];
         let mut bin_hash = Output::<Md5>::default();
-        let mut hasher = salt.clone().chain_update(itoa::Buffer::new().format(index));
+        let mut hasher = seed.clone().chain_update(itoa::Buffer::new().format(index));
 
         for _ in 0..=2016 {
             hasher.finalize_into_reset(&mut bin_hash);
