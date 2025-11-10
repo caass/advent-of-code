@@ -130,7 +130,7 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
                     "Year": year,
                     "Earned ⭐️": attained_stars,
                     "Possible ⭐️": available_stars,
-                    "Complete": str(int(100 * attained_stars / available_stars)) + "%",
+                    "Complete": f"{int(100 * attained_stars / available_stars)}%",
                 }
             )
 
