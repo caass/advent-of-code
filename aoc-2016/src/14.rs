@@ -1,10 +1,8 @@
 use bitvec::{index::BitIdx, prelude::*};
-use eyre::{Result, bail};
+use eyre::{Result, eyre};
 use itertools::Itertools;
-use md5::{
-    Digest, Md5,
-    digest::{Output, array::Array},
-};
+use md5::digest::Output;
+use md5::{Digest, Md5};
 use rayon::prelude::*;
 
 use aoc_meta::Problem;
@@ -14,11 +12,10 @@ pub const ONE_TIME_PAD: Problem =
         sixty_fourth_key(input, HashInfo::stretched)
     });
 
-const HEX_MAP: [u8; 16] = [
+const HEX: [u8; 16] = [
     b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'a', b'b', b'c', b'd', b'e', b'f',
 ];
-
-const N: usize = 32768;
+const N: usize = 0x8000;
 
 fn sixty_fourth_key<F: Send + Sync + Fn(&Md5, usize) -> HashInfo>(
     salt: &str,
@@ -26,24 +23,25 @@ fn sixty_fourth_key<F: Send + Sync + Fn(&Md5, usize) -> HashInfo>(
 ) -> Result<usize> {
     let salt = Md5::new_with_prefix(salt);
 
-    let mut key_count = 0;
-    let hashes = (0..N)
+    let mut hashes = Vec::with_capacity(N);
+    (0..N)
         .into_par_iter()
         .map(|i| f(&salt, i))
-        .collect::<Vec<_>>();
+        .collect_into_vec(&mut hashes);
 
-    for i in 0..N {
-        if let Some(hex_char) = hashes[i].triplet
-            && (i + 1..=i + 1000).any(|j| hashes[j].quintet_mask.get_bit::<Msb0>(hex_char))
-        {
-            key_count += 1;
-            if key_count == 64 {
-                return Ok(i);
-            }
-        }
-    }
-
-    bail!("fewer than 64 keys in first {N} indices!")
+    hashes
+        .iter()
+        .enumerate()
+        .filter(|(i, h)| {
+            h.triplet.is_some_and(|hex_char| {
+                (i + 1..=i + 1000)
+                    .into_par_iter()
+                    .any(|j| hashes[j].quintet_mask.get_bit::<Msb0>(hex_char))
+            })
+        })
+        .nth(63)
+        .map(|(i, _)| i)
+        .ok_or_else(|| eyre!("fewer than 64 keys in first {N} indices!"))
 }
 
 struct HashInfo {
@@ -61,7 +59,7 @@ impl HashInfo {
 
     fn stretched(salt: &Md5, index: usize) -> Self {
         let mut hex_hash = [0u8; 32];
-        let mut bin_hash = Array::default();
+        let mut bin_hash = Output::<Md5>::default();
         let mut hasher = salt.clone().chain_update(itoa::Buffer::new().format(index));
 
         for _ in 0..=2016 {
@@ -69,7 +67,7 @@ impl HashInfo {
             bin_hash
                 .view_bits::<Msb0>()
                 .chunks(4)
-                .map(|nibble| HEX_MAP[nibble.load::<usize>()])
+                .map(|nibble| HEX[nibble.load::<usize>()])
                 .enumerate()
                 .for_each(|(i, byte)| hex_hash[i] = byte);
             hasher.update(hex_hash);
