@@ -25,7 +25,6 @@ jobs:
         run: rustup default ${{ matrix.channel }}
       - name: Install `clippy`, `rustfmt`
         run: rustup component add clippy rustfmt
-
       - name: Get `target_cpu=native` checksum
         id: get-target-cpu-eq-native-checksum
         run: echo "checksum=$(rustc --print cfg -C target-cpu=native | md5sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
@@ -57,15 +56,7 @@ jobs:
 
       - name: Get `target_cpu=native` checksum
         id: get-target-cpu-eq-native-checksum
-        run: |
-          sum=md5sum
-
-          if [ "$RUNNER_OS" == "macOS" ]; then
-            sum=gmd5sum
-          fi
-
-          echo "checksum=$(rustc --print cfg -C target-cpu=native | sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
-
+        run: echo "checksum=$(rustc --print cfg -C target-cpu=native | md5sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
       - name: Populate Rust cache
         uses: Swatinem/rust-cache@v2
         with:
