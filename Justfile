@@ -12,6 +12,11 @@ default:
 run year day part input="-":
     cargo run --release --package aoc -- {{year}} {{day}} {{part}} {{input}}
 
+# Profile a solution
+profile year day part input="-":
+    cargo build --profile=profiling --package aoc
+    samply record ./target/profiling/aoc {{year}} {{day}} {{part}} {{input}}
+
 # Test solutions
 test *ARGS: decrypt-inputs
     cargo nextest run --workspace --no-tests=fail --cargo-profile=fast-test {{ARGS}}
