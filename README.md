@@ -17,7 +17,7 @@ To comply with Eric's [rules about copying](https://adventofcode.com/about#faq_c
 
 ## Running
 
-To run the `aoc` binary, run `just run <YEAR> <DAY> <PART>`. You can provide your puzzle input via stdin (default) or by providing a fourth argument containing the filepath of your input.
+To run the `aoc` binary, run `just run <YEAR> <DAY> <PART>`.
 
 ## Status
 

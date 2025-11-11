@@ -10,13 +10,13 @@ default:
   @just --list
 
 # Run the advent of code binary
-run year day part input="-":
-    cargo run --release --package aoc -- {{year}} {{day}} {{part}} {{input}}
+run year day part: decrypt-inputs
+    cargo run --release --package aoc -- {{year}} {{day}} {{part}} ./target/inputs/{{year}}/{{day}}
 
 # Profile a solution
-profile year day part input="-":
+profile year day part: decrypt-inputs
     cargo build --profile=profiling --package aoc
-    samply record ./target/profiling/aoc {{year}} {{day}} {{part}} {{input}}
+    samply record ./target/profiling/aoc {{year}} {{day}} {{part}} ./target/inputs/{{year}}/{{day}}
 
 # Test solutions
 test *ARGS: decrypt-inputs
