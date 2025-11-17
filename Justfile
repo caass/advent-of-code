@@ -20,7 +20,7 @@ profile year day part: decrypt-inputs
 
 # Test solutions
 test *ARGS: decrypt-inputs
-    cargo nextest run --workspace --no-tests=fail --cargo-profile=fast-test {{ARGS}}
+    RUST_BACKTRACE=1 cargo nextest run --workspace --no-tests=fail --cargo-profile=fast-test {{ARGS}}
 
 # Print solve status
 completion: (test "--profile=ci")
