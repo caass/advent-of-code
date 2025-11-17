@@ -10,7 +10,7 @@ debug    = true
 inherits = "release"
 
 [profile.fast-test]
-debug-assertions = true
-inherits         = "profiling"
-lto              = "thin"
-overflow-checks  = true
+codegen-units = 8
+incremental   = true
+inherits      = "test"
+opt-level     = 3
