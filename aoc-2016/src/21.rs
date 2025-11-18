@@ -211,8 +211,8 @@ impl FromStr for Operation {
             "rotate" => dispatch!{terminated(take_till(1.., AsChar::is_space), " ");
                 "left" => terminated(dec_uint, (" step", opt('s'))).map(|k| Operation::RotateLeft { k }),
                 "right" => terminated(dec_uint, (" step", opt('s'))).map(|k| Operation::RotateRight { k }),
-                "based" => preceded("on position of letter ", any).try_map(|ch: char| {
-                  Ok::<_, <char as TryInto<u8>>::Error>(Operation::RotateLetter { ch: ch.try_into()? })
+                "based" => preceded("on position of letter ", any).try_map(|c: char| {
+                    c.try_into().map(|ch| Operation::RotateLetter { ch })
                 }),
                 _ => fail,
             },
