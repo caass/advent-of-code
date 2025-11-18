@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::fmt::Display;
+use std::ops;
 use std::str::FromStr;
 
 use eyre::{OptionExt, Report, Result, eyre};
@@ -13,15 +14,30 @@ use aoc_meta::Problem;
 use winnow::stream::AsChar;
 use winnow::token::{any, take_till};
 
-pub const SCRAMBLED_LETTERS_AND_HASH: Problem = Problem::partially_solved(&|input| {
-    input
-        .lines()
-        .map(Operation::from_str)
-        .try_fold(Password::new(b"abcdefgh"), |pw, op| pw.apply(op?))
-});
+pub const SCRAMBLED_LETTERS_AND_HASH: Problem = Problem::solved(
+    &|input| {
+        input
+            .lines()
+            .map(Operation::from_str)
+            .try_fold(Password::new(b"abcdefgh"), |pw, op| op?.scramble(pw))
+    },
+    &|input| {
+        input
+            .lines()
+            .rev()
+            .map(Operation::from_str)
+            .try_fold(Password::new(b"fbgdceah"), |pw, op| op?.unscramble(pw))
+    },
+);
 
 #[derive(Debug, Clone, Copy)]
 struct Password([u8; 8]);
+
+impl Password {
+    const fn new(password: &[u8; 8]) -> Self {
+        Self(*password)
+    }
+}
 
 impl Display for Password {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -32,58 +48,17 @@ impl Display for Password {
     }
 }
 
-impl Password {
-    fn new(password: &[u8; 8]) -> Self {
-        Self(*password)
+impl ops::Deref for Password {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
+}
 
-    fn apply(mut self, op: Operation) -> Result<Self> {
-        match op {
-            Operation::SwapPosition { idx_a: a, idx_b: b } => self.0.swap(a.into(), b.into()),
-            Operation::SwapLetter { ch_a, ch_b } => {
-                let [a, b] = self
-                    .0
-                    .iter()
-                    .enumerate()
-                    .filter_map(|(idx, &ch)| {
-                        if ch == ch_a || ch == ch_b {
-                            Some(idx)
-                        } else {
-                            None
-                        }
-                    })
-                    .collect_array()
-                    .ok_or_eyre("couldn't find characters in password")?;
-                self.0.swap(a, b);
-            }
-            Operation::RotateLeft { k } => self.0.rotate_left(k.into()),
-            Operation::RotateRight { k } => self.0.rotate_right(k.into()),
-            Operation::RotateLetter { ch } => {
-                let k = self
-                    .0
-                    .iter()
-                    .position(|&c| c == ch)
-                    .ok_or_eyre("couldn't find character in password")?;
-                self.0.rotate_right(1);
-                self.0.rotate_right(k);
-                self.0.rotate_right((k >= 4) as u8 as usize);
-            }
-            Operation::Reverse { from, to } => self.0[from.into()..=to.into()].reverse(),
-            Operation::Move { from, to } => {
-                let (from, to): (usize, usize) = (from.into(), to.into());
-                let (src, dest) = match from.cmp(&to) {
-                    Ordering::Less => (from + 1..to + 1, from),
-                    Ordering::Equal => return Ok(self),
-                    Ordering::Greater => (to..from, to + 1),
-                };
-
-                let ch = self.0[from];
-                self.0.copy_within(src, dest);
-                self.0[to] = ch;
-            }
-        };
-
-        Ok(self)
+impl ops::DerefMut for Password {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
@@ -96,6 +71,121 @@ enum Operation {
     RotateLetter { ch: u8 },
     Reverse { from: u8, to: u8 },
     Move { from: u8, to: u8 },
+}
+
+impl Operation {
+    fn scramble(self, mut password: Password) -> Result<Password> {
+        match self {
+            Operation::SwapPosition { idx_a: a, idx_b: b } => password.swap(a.into(), b.into()),
+            Operation::SwapLetter { ch_a, ch_b } => {
+                let [a, b] = password
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(idx, &ch)| {
+                        if ch == ch_a || ch == ch_b {
+                            Some(idx)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect_array()
+                    .ok_or_else(|| {
+                        eyre!(
+                            "couldn't find characters '{}', '{}' in password \"{password}\"",
+                            char::from_u32(ch_a.into()).unwrap_or(char::REPLACEMENT_CHARACTER),
+                            char::from_u32(ch_b.into()).unwrap_or(char::REPLACEMENT_CHARACTER),
+                        )
+                    })?;
+                password.swap(a, b);
+            }
+            Operation::RotateLeft { k } => password.rotate_left(k.into()),
+            Operation::RotateRight { k } => password.rotate_right(k.into()),
+            Operation::RotateLetter { ch } => {
+                let k = password.iter().position(|&c| c == ch).ok_or_else(|| {
+                    eyre!(
+                        "couldn't find character '{}' in password \"{password}\"",
+                        char::from_u32(ch.into()).unwrap_or(char::REPLACEMENT_CHARACTER),
+                    )
+                })?;
+                password.rotate_right(1);
+                password.rotate_right(k);
+                password.rotate_right((k >= 4) as u8 as usize);
+            }
+            Operation::Reverse { from, to } => password[from.into()..=to.into()].reverse(),
+            Operation::Move { from, to } => {
+                let (from, to): (usize, usize) = (from.into(), to.into());
+                let (src, dest) = match from.cmp(&to) {
+                    Ordering::Less => (from + 1..to + 1, from),
+                    Ordering::Equal => return Ok(password),
+                    Ordering::Greater => (to..from, to + 1),
+                };
+
+                let ch = password[from];
+                password.copy_within(src, dest);
+                password[to] = ch;
+            }
+        };
+
+        Ok(password)
+    }
+
+    fn unscramble(self, mut password: Password) -> Result<Password> {
+        match self {
+            Operation::SwapPosition { idx_a: a, idx_b: b } => password.swap(a.into(), b.into()),
+            Operation::SwapLetter { ch_a, ch_b } => {
+                let [a, b] = password
+                    .iter()
+                    .enumerate()
+                    .filter_map(|(idx, &ch)| {
+                        if ch == ch_a || ch == ch_b {
+                            Some(idx)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect_array()
+                    .ok_or_else(|| {
+                        eyre!(
+                            "couldn't find characters '{}', '{}' in password \"{password}\"",
+                            char::from_u32(ch_a.into()).unwrap_or(char::REPLACEMENT_CHARACTER),
+                            char::from_u32(ch_b.into()).unwrap_or(char::REPLACEMENT_CHARACTER),
+                        )
+                    })?;
+                password.swap(a, b);
+            }
+            Operation::RotateLeft { k } => password.rotate_right(k.into()),
+            Operation::RotateRight { k } => password.rotate_left(k.into()),
+            Operation::RotateLetter { ch } => {
+                let i = password
+                    .iter()
+                    .position(|&c| c == ch)
+                    .ok_or_eyre("couldn't find character in password")?;
+
+                let k = (0..8)
+                    .find(|&j| (j + 1 + j + (j >= 4) as usize) % 8 == i)
+                    .ok_or_eyre("no forward rotations matched")?;
+
+                password.rotate_left(1);
+                password.rotate_left(k);
+                password.rotate_left((k >= 4) as usize);
+            }
+            Operation::Reverse { from, to } => password[from.into()..=to.into()].reverse(),
+            Operation::Move { from, to } => {
+                let (to, from): (usize, usize) = (from.into(), to.into());
+                let (src, dest) = match from.cmp(&to) {
+                    Ordering::Less => (from + 1..to + 1, from),
+                    Ordering::Equal => return Ok(password),
+                    Ordering::Greater => (to..from, to + 1),
+                };
+
+                let ch = password[from];
+                password.copy_within(src, dest);
+                password[to] = ch;
+            }
+        };
+
+        Ok(password)
+    }
 }
 
 impl FromStr for Operation {
