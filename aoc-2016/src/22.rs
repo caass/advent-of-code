@@ -8,9 +8,16 @@ use rayon::prelude::*;
 pub const GRID_COMPUTING: Problem = Problem::partially_solved(&viable_pairs);
 
 fn viable_pairs(input: &str) -> Result<usize> {
-    let nodes = parse_nodes(input)?;
+    let (_, after) = input
+        .split_once("Use%\n")
+        .ok_or_eyre("couldn't find \"Use%\\n\" in input")?;
 
-    Ok(nodes
+    let nodes = after
+        .par_lines()
+        .map(PositionedNode::from_str)
+        .collect::<Result<Vec<_>>>()?;
+
+    let n = nodes
         .par_iter()
         .copied()
         .filter(|a| a.used > 0)
@@ -20,7 +27,9 @@ fn viable_pairs(input: &str) -> Result<usize> {
                 .copied()
                 .filter(move |&b| !(a.x == b.x && a.y == b.y) && a.used <= b.available)
         })
-        .count())
+        .count();
+
+    Ok(n)
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -73,12 +82,4 @@ impl FromStr for PositionedNode {
                 .unwrap_or(u8::MAX),
         })
     }
-}
-
-fn parse_nodes(input: &str) -> Result<Vec<PositionedNode>> {
-    let (_, after) = input
-        .split_once("Use%\n")
-        .ok_or_eyre("couldn't find \"Use%\\n\" in input")?;
-
-    after.par_lines().map(PositionedNode::from_str).collect()
 }
