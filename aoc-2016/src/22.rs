@@ -45,22 +45,17 @@ impl FromStr for PositionedNode {
 
     fn from_str(line: &str) -> Result<PositionedNode> {
         const LINE_PREFIX: &str = "/dev/grid/node-";
-        const TERABYTE_SUFFIX_LEN: usize = "T".len();
-        const COORD_PREFIX_LEN: usize = const {
-            if "x".len() != "y".len() {
-                panic!("mismatched prefix len between 'x' and 'y'")
-            } else {
-                "x".len()
-            }
+
+        let Some((before, after)) = line.split_at_checked(LINE_PREFIX.len()) else {
+            bail!("line \"{line}\" was too short or missing prefix \"{LINE_PREFIX}\"")
         };
 
-        let trimmed = line.trim_start_matches(LINE_PREFIX);
-        if trimmed == line {
-            bail!("couldn't find prefix \"{LINE_PREFIX}\" in line \"{line}\"")
+        if before != LINE_PREFIX {
+            bail!("unexpected characters at start of line \"{line}\" (expected \"{LINE_PREFIX}\"")
         }
 
         let Some([coords, _size, used, available, _use_percent]) =
-            trimmed.split_ascii_whitespace().collect_array()
+            after.split_ascii_whitespace().collect_array()
         else {
             bail!("failed to split line \"{line}\" into components")
         };
@@ -70,13 +65,13 @@ impl FromStr for PositionedNode {
         };
 
         Ok(PositionedNode {
-            x: x[COORD_PREFIX_LEN..].parse()?,
-            y: y[COORD_PREFIX_LEN..].parse()?,
-            used: used[..used.len() - TERABYTE_SUFFIX_LEN]
+            x: x["x".len()..].parse()?,
+            y: y["y".len()..].parse()?,
+            used: used[..used.len() - "T".len()]
                 .parse::<u16>()?
                 .try_into()
                 .unwrap_or(u8::MAX),
-            available: available[..available.len() - TERABYTE_SUFFIX_LEN]
+            available: available[..available.len() - "T".len()]
                 .parse::<u16>()?
                 .try_into()
                 .unwrap_or(u8::MAX),
