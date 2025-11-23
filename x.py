@@ -11,7 +11,6 @@
 import os
 import click
 import enum
-from datetime import datetime
 from junitparser import JUnitXml
 from py_markdown_table.markdown_table import markdown_table
 
