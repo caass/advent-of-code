@@ -40,7 +40,9 @@ jobs:
       - name: Check formatting
         run: cargo fmt --check
       - name: Lint python
-        run: uv run ruff check ./x.py
+        run: uvx -vv ruff check
+        env:
+          UV_NO_CACHE: false
 
   test:
     needs: lint
