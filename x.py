@@ -3,15 +3,19 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #    "junitparser>=4.0.2",
-#    "click>=8.3.0",
+#    "click>=8.3.1",
 #    "py-markdown-table>=1.3.0",
 # ]
 # ///
 
 import os
-import click
 import enum
-from junitparser import JUnitXml
+import sys
+import subprocess
+import typing as t
+
+import click
+from junitparser import JUnitXml, TestSuite
 from py_markdown_table.markdown_table import markdown_table
 
 
@@ -26,6 +30,10 @@ class Year(enum.IntEnum):
     TwentyTwentyTwo = 2022
     TwentyTwentyThree = 2023
     TwentyTwentyFour = 2024
+
+    @staticmethod
+    def from_test_suite(suite: TestSuite):
+        return Year(int(suite.name.removeprefix("aoc-").removesuffix("::integration")))
 
 
 class Day(enum.IntEnum):
@@ -56,6 +64,11 @@ class Day(enum.IntEnum):
     Day25 = 25
 
 
+class Part(enum.IntEnum):
+    Part1 = 1
+    Part2 = 2
+
+
 class ProblemState(enum.Enum):
     Unsolved = enum.auto()
     PartiallySolved = enum.auto()
@@ -63,7 +76,7 @@ class ProblemState(enum.Enum):
 
 
 class Completion(dict[Year, dict[Day, ProblemState]]):
-    def __init__(self):
+    def __init__(self, junit: JUnitXml):
         super().__init__()
 
         for year in Year:
@@ -74,22 +87,11 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
 
                 self[year][day] = ProblemState.Unsolved
 
-        junit_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            "target",
-            "nextest",
-            "ci",
-            "junit.xml",
-        )
-
-        xml = JUnitXml.fromfile(junit_file)
-        for suite in xml:
+        for suite in junit:
             if not suite.name.endswith("::integration"):
                 continue
 
-            year = Year(
-                int(suite.name.removeprefix("aoc-").removesuffix("::integration"))
-            )
+            year = Year.from_test_suite(suite)
 
             for case in suite:
                 name_parts = case.name.split("::")
@@ -100,7 +102,7 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
 
                 [daystr, partstr] = name_parts
                 day = Day(int(daystr.removeprefix("day")))
-                part = int(partstr.removeprefix("part"))
+                part = Part(int(partstr.removeprefix("part")))
 
                 if part == 1 and self[year][day] == ProblemState.Unsolved:
                     self[year][day] = ProblemState.PartiallySolved
@@ -138,12 +140,24 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
 
 @click.group()
 def x():
-    return
+    pass
 
 
 @x.command()
-def completion():
-    completion = Completion()
+@click.pass_context
+def completion(ctx: click.Context):
+    t.cast(Context, ctx.obj).extra_args = ["--profile=ci", "--test=integration"]
+    ctx.invoke(test)
+
+    junit_file = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        "target",
+        "nextest",
+        "ci",
+        "junit.xml",
+    )
+
+    completion = Completion(JUnitXml.fromfile(junit_file))
     readme_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "README.md")
 
     with open(readme_path, "r") as readme:
@@ -190,5 +204,85 @@ def decrypt():
     return
 
 
+def validate[T](
+    ty: t.Callable[[int], T],
+) -> t.Callable[[click.Context, click.Parameter, int | None], T | None]:
+    def _validate_impl(ctx: click.Context, param: click.Parameter, value: int | None):
+        if value is None:
+            return None
+
+        try:
+            return ty(value)
+        except ValueError as err:
+            raise click.BadParameter(str(err), ctx=ctx, param=param)
+
+    return _validate_impl
+
+
+@x.command()
+@click.argument("year", type=int, required=False, callback=validate(Year))
+@click.argument("day", type=int, required=False, callback=validate(Day))
+@click.argument("part", type=int, required=False, callback=validate(Part))
+@click.pass_context
+def test(
+    ctx: click.Context,
+    year: Year | None = None,
+    day: Day | None = None,
+    part: Part | None = None,
+):
+    if year is None and (day is not None or part is not None):
+        raise click.UsageError(
+            ctx=ctx,
+            message="cannot specify day or part without specifying year",
+        )
+    if day is None and part is not None:
+        raise click.UsageError(
+            ctx=ctx,
+            message="cannot specify part without specifying year and day",
+        )
+
+    args = [
+        "cargo",
+        "nextest",
+        "run",
+        "--no-tests=fail",
+        "--cargo-profile=fast-test",
+    ] + t.cast(Context, ctx.obj).extra_args
+
+    if year is None:
+        args.append("--workspace")
+    else:
+        args.append(f"--package=aoc-{year}")
+
+        if day is not None:
+            args.append("--")
+            args.append(f"day{day:02d}")
+
+            if part is not None:
+                args[len(args) - 1] += f"::part{part}"
+
+    click.echo(" ".join(args))
+    return subprocess.run(
+        args=args,
+        stdin=sys.stdin,
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+    ).returncode
+
+
+class Context:
+    extra_args: list[str]
+
+    def __init__(self, extra_args: list[str] = []):
+        self.extra_args = extra_args
+
+
 if __name__ == "__main__":
-    x()
+    args = sys.argv
+    extra_args = []
+
+    if "--" in args:
+        extra_args = args[args.index("--") + 1 :]
+        args = args[: args.index("--")]
+
+    x(args[1:], obj=Context(extra_args=extra_args))

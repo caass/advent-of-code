@@ -20,10 +20,10 @@ profile year day part: decrypt-inputs
 
 # Test solutions
 test *ARGS: decrypt-inputs
-    cargo nextest run --workspace --no-tests=fail --cargo-profile=fast-test {{ARGS}}
+    ./x.py test {{ARGS}}
 
 # Print solve status
-completion: (test "--profile=ci")
+completion:
     ./x.py completion
 
 # Download and encrypt puzzle inputs from https://adventofcode.com

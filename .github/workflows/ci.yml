@@ -19,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
       - name: Install ${{ matrix.channel }} toolchain
         run: rustup install ${{ matrix.channel }}
       - name: Set ${{ matrix.channel }} toolchain as default
@@ -37,10 +39,12 @@ jobs:
         run: cargo clippy
       - name: Check formatting
         run: cargo fmt --check
+      - name: Lint python
+        run: uv run ruff check ./x.py
 
-  test-integration:
+  test:
     needs: lint
-    name: Test (Integration)
+    name: Test
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -49,6 +53,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
       - name: Install ${{ matrix.channel }} toolchain
         run: rustup install ${{ matrix.channel }}
       - name: Set ${{ matrix.channel }} toolchain as default
@@ -71,7 +77,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
-        run: just test --test=integration
+        run: just test
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 
