@@ -3,6 +3,7 @@ use std::ops::Index;
 use crate::{Day, Problem};
 
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 pub struct ProblemSet([Option<Problem>; 25]);
 
 impl ProblemSet {

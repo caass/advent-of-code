@@ -1,11 +1,10 @@
 [package]
-name = "aoc"
 edition.workspace = true
-version.workspace = true
 license.workspace = true
+name              = "aoc"
+version.workspace = true
 
 [dependencies]
-aoc-meta.workspace = true
 aoc-2015.workspace = true
 aoc-2016.workspace = true
 aoc-2017.workspace = true
@@ -16,7 +15,9 @@ aoc-2021.workspace = true
 aoc-2022.workspace = true
 aoc-2023.workspace = true
 aoc-2024.workspace = true
+aoc-2025.workspace = true
+aoc-meta.workspace = true
 
-clap.workspace = true
+clap.workspace       = true
 clap-stdin.workspace = true
-eyre.workspace = true
+eyre.workspace       = true

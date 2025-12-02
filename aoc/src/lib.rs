@@ -10,4 +10,5 @@ pub const AOC: AdventOfCode = AdventOfCode::new()
     .with_year(Year::TwentyOne, aoc_2021::PROBLEMS)
     .with_year(Year::TwentyTwo, aoc_2022::PROBLEMS)
     .with_year(Year::TwentyThree, aoc_2023::PROBLEMS)
-    .with_year(Year::TwentyFour, aoc_2024::PROBLEMS);
+    .with_year(Year::TwentyFour, aoc_2024::PROBLEMS)
+    .with_year(Year::TwentyFive, aoc_2025::PROBLEMS);

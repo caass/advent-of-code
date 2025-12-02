@@ -21,6 +21,7 @@ pub enum Year {
     TwentyTwo,
     TwentyThree,
     TwentyFour,
+    TwentyFive,
 }
 
 impl AsRef<Path> for Year {
@@ -36,13 +37,14 @@ impl AsRef<Path> for Year {
             Year::TwentyTwo => "2022",
             Year::TwentyThree => "2023",
             Year::TwentyFour => "2024",
+            Year::TwentyFive => "2025",
         })
     }
 }
 
 impl Year {
     pub const FIRST: u16 = Year::Fifteen.as_u16();
-    pub const LAST: u16 = Year::TwentyFour.as_u16();
+    pub const LAST: u16 = Year::TwentyFive.as_u16();
 
     /// Returns a u16 represenation of `Self` guaranteed to be between [`FIRST_YEAR`] and [`LAST_YEAR`].
     #[inline]

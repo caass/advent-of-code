@@ -35,7 +35,7 @@ impl AdventOfCode {
     }
 
     pub const fn new() -> Self {
-        Self([None, None, None, None, None, None, None, None, None, None])
+        Self([None; const { (Year::LAST - Year::FIRST + 1) as usize }])
     }
 }
 

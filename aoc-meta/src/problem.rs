@@ -6,6 +6,7 @@ use crate::Solution;
 use super::solution::ReturnValue;
 
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 pub struct Problem([Option<&'static dyn Solution>; 2]);
 
 impl Problem {
