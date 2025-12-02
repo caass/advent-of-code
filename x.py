@@ -30,6 +30,7 @@ class Year(enum.IntEnum):
     TwentyTwentyTwo = 2022
     TwentyTwentyThree = 2023
     TwentyTwentyFour = 2024
+    TwentyTwentyFive = 2025
 
     @staticmethod
     def from_test_suite(suite: TestSuite):

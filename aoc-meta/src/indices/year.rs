@@ -66,7 +66,8 @@ impl Year {
             2022 => Ok(Year::TwentyTwo),
             2023 => Ok(Year::TwentyThree),
             2024 => Ok(Year::TwentyFour),
-            2025.. => Err(FromU16Error::Late(year)),
+            2025 => Ok(Year::TwentyFive),
+            2026.. => Err(FromU16Error::Late(year)),
         }
     }
 

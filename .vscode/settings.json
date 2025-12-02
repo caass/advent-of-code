@@ -1,3 +1,6 @@
 {
-  "python.analysis.typeCheckingMode": "standard"
+  "python.analysis.typeCheckingMode": "standard",
+  "files.associations": {
+    "target/inputs/[2015-2099]/[01-25]": "plaintext"
+  }
 }
