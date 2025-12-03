@@ -33,13 +33,25 @@ impl Dial {
         }
     }
 
-    fn apply_v1(&mut self, Rotation(rotation): Rotation) {
-        self.pointing_to = (self.pointing_to + rotation).rem_euclid(100);
+    fn apply_v1(&mut self, Rotation(rot): Rotation) {
+        self.pointing_to = (self.pointing_to + rot).rem_euclid(100);
         self.zero_count += self.is_zero() as usize;
     }
 
-    fn apply_v2(&mut self, Rotation(_rotation): Rotation) {
-        todo!()
+    fn apply_v2(&mut self, Rotation(rot): Rotation) {
+        let current = self.pointing_to;
+        let next = current + rot;
+
+        let zero_crossings = if rot.is_positive() {
+            next.div_euclid(100) - current.div_euclid(100)
+        } else if rot.is_negative() {
+            (current - 1).div_euclid(100) - (next - 1).div_euclid(100)
+        } else {
+            0
+        } as usize;
+
+        self.zero_count += zero_crossings;
+        self.pointing_to = next.rem_euclid(100);
     }
 
     const fn is_zero(&self) -> bool {
