@@ -207,7 +207,9 @@ dependencies = [
  "aoc-meta",
  "aoc-test",
  "eyre",
+ "itoa",
  "pretty_assertions",
+ "rayon",
 ]
 
 [[package]]
