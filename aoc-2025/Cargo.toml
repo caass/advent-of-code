@@ -5,10 +5,11 @@ name              = "aoc-2025"
 version.workspace = true
 
 [dependencies]
-aoc-meta.workspace = true
-eyre.workspace     = true
-itoa.workspace     = true
-rayon.workspace    = true
+aoc-meta.workspace  = true
+eyre.workspace      = true
+itertools.workspace = true
+itoa.workspace      = true
+rayon.workspace     = true
 
 [dev-dependencies]
 aoc-test.workspace          = true

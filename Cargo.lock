@@ -207,6 +207,7 @@ dependencies = [
  "aoc-meta",
  "aoc-test",
  "eyre",
+ "itertools",
  "itoa",
  "pretty_assertions",
  "rayon",
