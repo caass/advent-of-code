@@ -1,12 +1,4 @@
-#!/usr/bin/env -S uv run --script
-# /// script
-# requires-python = ">=3.13"
-# dependencies = [
-#    "junitparser>=4.0.2",
-#    "click>=8.3.1",
-#    "py-markdown-table>=1.3.0",
-# ]
-# ///
+#!/usr/bin/env -S uv run
 
 import os
 import enum
@@ -146,7 +138,7 @@ def x():
 
 @x.command()
 @click.pass_context
-def completion(ctx: click.Context):
+def completion(ctx: click.Context) -> None:
     t.cast(Context, ctx.obj).extra_args = ["--profile=ci", "--test=integration"]
     ctx.invoke(test)
 
@@ -187,22 +179,22 @@ def completion(ctx: click.Context):
 
 @x.group()
 def inputs():
-    return
+    pass
 
 
 @inputs.command()
 def download():
-    return
+    pass
 
 
 @inputs.command()
 def encrypt():
-    return
+    pass
 
 
 @inputs.command()
 def decrypt():
-    return
+    pass
 
 
 def validate[T](
@@ -230,7 +222,7 @@ def test(
     year: Year | None = None,
     day: Day | None = None,
     part: Part | None = None,
-):
+) -> int:
     if year is None and (day is not None or part is not None):
         raise click.UsageError(
             ctx=ctx,
@@ -278,8 +270,7 @@ class Context:
         self.extra_args = extra_args
 
 
-if __name__ == "__main__":
-    args = sys.argv
+def main(args: list[str]) -> None:
     extra_args = []
 
     if "--" in args:
@@ -287,3 +278,7 @@ if __name__ == "__main__":
         args = args[: args.index("--")]
 
     x(args[1:], obj=Context(extra_args=extra_args))
+
+
+if __name__ == "__main__":
+    main(sys.argv)

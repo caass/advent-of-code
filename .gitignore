@@ -1,2 +1,3 @@
-/target
+/target/**
 profile.json.gz
+**/__pycache__/**
