@@ -22,10 +22,11 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
         )
 
         for suite in junit:
-            if not suite.name.endswith("::integration"):
+            year = Year.from_test_suite(suite)
+            if year is None:
                 continue
 
-            year = Year.from_test_suite(suite)
+            last_day = Day(year.num_days())
 
             for case in suite:
                 name_parts = case.name.split("::")
@@ -39,7 +40,11 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
                 part = Part(int(partstr.removeprefix("part")))
 
                 if part == 1 and self[year][day] == ProblemState.Unsolved:
-                    self[year][day] = ProblemState.PartiallySolved
+                    # Last day only has part 1, so completing it means fully solved
+                    if day == last_day:
+                        self[year][day] = ProblemState.Solved
+                    else:
+                        self[year][day] = ProblemState.PartiallySolved
                 elif part == 2:
                     self[year][day] = ProblemState.Solved
 
@@ -48,18 +53,27 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
         rows: list[dict[str, int | str]] = []
 
         for year, days in self.items():
-            # Last day of each year only has 1 part, so total stars = (days * 2) - 1
+            # Each day awards 2 stars, except the last day which only has 1 part.
+            # Completing all puzzles awards a bonus star, so total = days * 2.
             num_days = year.num_days()
-            available_stars = (num_days * 2) - 1
+            available_stars = num_days * 2
             attained_stars = 0
 
             last_day = Day(num_days)
+            all_solved = True
             for day, state in days.items():
                 if state == ProblemState.PartiallySolved:
                     attained_stars += 1
+                    all_solved = False
                 elif state == ProblemState.Solved:
                     # Last day only awards 1 star for "Solved" since it has no part 2
                     attained_stars += 1 if day == last_day else 2
+                else:
+                    all_solved = False
+
+            # Bonus star for completing all puzzles
+            if all_solved:
+                attained_stars += 1
 
             rows.append(
                 {
@@ -80,9 +94,9 @@ def update_completion_table() -> None:
     Runs tests with the completion profile to generate JUnit XML output, then
     parses the results to build a completion table showing stars earned per year.
     """
-    run_tests(extra_args=["--profile=completion", "--test=integration"])
+    run_tests(extra_args=["--profile=completion"])
 
-    comp = Completion(JUnitXml.fromfile(str(junit_path())))
+    comp = Completion(JUnitXml.fromfile(str(junit_path("completion"))))
 
     divider = "<!-- INSERT COMPLETION TABLE -->"
     readme_str = README.read_text()

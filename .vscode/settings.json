@@ -10,5 +10,6 @@
   },
   "[markdown]": {
     "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
-  }
+  },
+  "rust-analyzer.runnables.extraArgs": ["--profile=fast-test"]
 }

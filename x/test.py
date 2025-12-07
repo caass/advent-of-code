@@ -45,10 +45,11 @@ def run_tests(
         args.append(f"--package=aoc-{year}")
 
         if day is not None:
-            # Build the test filter: "day01" or "day01::part1"
-            test_filter = f"day{day:02d}"
+            # Build the test filter: "day1::" or "day1::part1"
+            # The trailing :: ensures we don't match day10-19 when filtering for day1
+            test_filter = f"day{day}::"
             if part is not None:
-                test_filter += f"::part{part}"
+                test_filter += f"part{part}"
             args.extend(["--", test_filter])
 
     click.echo(" ".join(args))

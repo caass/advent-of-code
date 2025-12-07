@@ -55,9 +55,28 @@ class Year(enum.IntEnum):
                 yield y
 
     @staticmethod
-    def from_test_suite(suite: TestSuite) -> "Year":
-        """Extract the year from a JUnit test suite name like 'aoc-2024::integration'."""
-        return Year(int(suite.name.removeprefix("aoc-").removesuffix("::integration")))
+    def from_test_suite(suite: TestSuite) -> "Year | None":
+        """Extract the year from a JUnit test suite name like 'aoc-2024::2024'.
+
+        Returns None if the suite name doesn't match the expected pattern.
+        """
+        # Expected format: "aoc-YYYY::YYYY"
+        parts = suite.name.split("::")
+        if len(parts) != 2:
+            return None
+
+        pkg, test_name = parts
+        if not pkg.startswith("aoc-"):
+            return None
+
+        year_str = pkg.removeprefix("aoc-")
+        if test_name != year_str:
+            return None
+
+        try:
+            return Year(int(year_str))
+        except ValueError:
+            return None
 
 
 class Day(enum.IntEnum):

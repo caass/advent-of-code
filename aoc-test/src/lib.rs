@@ -4,10 +4,18 @@
 pub use pastey::paste;
 
 /// Helper macro for more easily writing advent of code integration tests.
+///
+/// # Example
+///
+/// ```ignore
+/// aoc_test::tests!(2015, {
+///     1: [138, 1771],
+///     2: [1598415, 3812909],
+/// });
+/// ```
 #[macro_export]
 macro_rules! tests {
-    // Shorthand for constructing tests against years, days, and parts.
-    {$year:literal: {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*$(,)?}} => {
+    ($year:literal, {$($day:literal: [$($(#[$attrs:meta])* $part:literal),+]),*$(,)?}) => {
         $($crate::tests_impl!(year: $year, day: $day, parts: [$($(#[$attrs])* $part),+]);)*
     };
 }
