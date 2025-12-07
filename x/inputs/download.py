@@ -10,6 +10,7 @@ import httpx
 from ..paths import INPUTS_DIR, input_path
 from ..types import Day, Year
 from .browser import Browser, get_session_cookie
+from .encrypt import encrypt_inputs
 from .lockfile import Lockfile, hash_content
 
 
@@ -93,3 +94,6 @@ def download_inputs(browser: Browser | None = None, force: bool = False) -> None
     # Save lockfile
     lockfile.save()
     client.close()
+
+    # Auto-encrypt after download
+    encrypt_inputs()
