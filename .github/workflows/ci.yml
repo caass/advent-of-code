@@ -47,9 +47,9 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
       - name: Check formatting
-        run: uvx ruff -vv format --check
+        run: uvx ruff --verbose format --check
       - name: Lint
-        run: uvx ruff -vv check
+        run: uvx ruff --verbose check
 
   test-rust:
     needs: [lint-rust, lint-python]
