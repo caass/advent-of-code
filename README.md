@@ -11,10 +11,7 @@ This repo is a [Cargo workspace](https://doc.rust-lang.org/book/ch14-03-cargo-wo
 - [`aoc-common`](./aoc-common): types and traits common between multiple problems, such as [`TryFromStr`](aoc-common/src/from_str_ext.rs) (which allows parsing string slices into structs containing references to the original slice).
 - [`aoc-2015`](./aoc-2015), [`aoc-2016`](./aoc-2016), ..., [`aoc-2025`](./aoc-2025): contain implementations of the Advent of Code problems from each respective year.
 
-There are some additional files and folders that are useful for interacting with this repo:
-
-- [`Justfile`](./Justfile): contains common scripts (that are slowly being factored out into [`./x.py`](./x.py))
-- [`x.py`](./x.py): A more maintainable implementation of the features currently in the [`Justfile`](./Justfile)
+There is also [`x.py`](./x.py), a Python CLI for running, testing, and profiling solutions.
 
 ## Inputs & Descriptions
 
@@ -22,7 +19,7 @@ To comply with Eric's [rules about copying](https://adventofcode.com/about#faq_c
 
 ## Running
 
-To run the `aoc` binary, run `just run <YEAR> <DAY> <PART>`.
+To run the `aoc` binary, run `./x.py run <YEAR> <DAY> <PART>`.
 
 ## Status
 

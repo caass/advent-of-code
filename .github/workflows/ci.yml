@@ -10,8 +10,8 @@ env:
   NEXTEST_PROFILE: ci
 
 jobs:
-  lint:
-    name: Lint
+  lint-rust:
+    name: Lint (Rust)
     strategy:
       matrix:
         channel: [stable, beta, nightly]
@@ -19,10 +19,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      - name: Install uv
-        uses: astral-sh/setup-uv@v6
-        with:
-          cache-dependency-glob: ./x.py
       - name: Install ${{ matrix.channel }} toolchain
         run: rustup install ${{ matrix.channel }}
       - name: Set ${{ matrix.channel }} toolchain as default
@@ -41,12 +37,23 @@ jobs:
         run: cargo clippy
       - name: Check formatting
         run: cargo fmt --check
-      - name: Lint python
-        run: uvx -vv ruff check
 
-  test:
-    needs: lint
-    name: Test
+  lint-python:
+    name: Lint (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Check formatting
+        run: uvx ruff -vv format --check
+      - name: Lint
+        run: uvx ruff -vv check
+
+  test-rust:
+    needs: [lint-rust, lint-python]
+    name: Test (Rust)
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
@@ -76,84 +83,11 @@ jobs:
         uses: cargo-bins/cargo-binstall@v1.10.8
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install `cargo-nextest`, `rage`, `just`
-        run: cargo binstall cargo-nextest rage just --secure --no-confirm --force
+      - name: Install `cargo-nextest`, `rage`
+        run: cargo binstall cargo-nextest rage --secure --no-confirm --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
-        run: just test
+        run: ./x.py test
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
-
-  # test-bench:
-  #   name: Test (Benchmarks)
-  #   needs: lint
-  #   strategy:
-  #     matrix:
-  #       os: [ubuntu-latest, windows-latest, macos-latest]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #     - name: Install stable toolchain
-  #       run: rustup install stable
-  #     - name: Set stable toolchain as default
-  #       run: rustup default stable
-  #     - name: Populate Rust cache
-  #       uses: Swatinem/rust-cache@v2
-  #       with:
-  #         cache-all-crates: "true"
-  #     - name: Install `cargo-binstall`
-  #       uses: cargo-bins/cargo-binstall@v1.10.8
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Install `cargo-nextest`, `rage`, `just`
-  #       run: cargo binstall cargo-nextest rage just --secure --no-confirm --force
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Run tests
-  #       run: just test --bench=bench
-  #       env:
-  #         AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
-  # bench:
-  #   name: Bench
-  #   needs:
-  #     - test-bench
-  #     - test-integration
-  #   env:
-  #     CRITERION_OUTPUT_FILE: benchmarks.json
-  #   strategy:
-  #     matrix:
-  #       # windows-latest is broken, see https://github.com/bheisler/criterion.rs/issues/517
-  #       os: [ubuntu-latest, macos-latest]
-  #       year: [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
-  #   runs-on: ${{ matrix.os }}
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-  #     - name: Install stable toolchain
-  #       run: rustup install stable
-  #     - name: Set stable toolchain as default
-  #       run: rustup default stable
-  #     - name: Populate Rust cache
-  #       uses: Swatinem/rust-cache@v2
-  #       with:
-  #         cache-all-crates: "true"
-  #     - name: Install `cargo-binstall`
-  #       uses: cargo-bins/cargo-binstall@v1.10.8
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Install `cargo-nextest`, `rage`, `just`, `cargo-criterion`
-  #       run: cargo binstall cargo-nextest rage just cargo-criterion --secure --no-confirm --force
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #     - name: Run benchmarks
-  #       run: just bench --message-format=json --color=always > ${{ env.CRITERION_OUTPUT_FILE }} -- ${{ matrix.year }}
-  #       env:
-  #         AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
-  #     - name: Upload benchmarks
-  #       uses: actions/upload-artifact@v4.4.3
-  #       with:
-  #         name: benchmark-results-${{ github.sha }}-${{ matrix.os }}-${{ matrix.year }}
-  #         path: ${{ env.CRITERION_OUTPUT_FILE }}
-  #         if-no-files-found: error
