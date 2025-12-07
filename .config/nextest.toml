@@ -1,7 +1,12 @@
-[profile.ci]
+# Used by `./x.py completion` to generate JUnit XML for parsing test results
+[profile.completion]
 fail-fast = false
 
-[profile.ci.junit]
+[profile.completion.junit]
 path                 = "junit.xml"
 store-failure-output = false
 store-success-output = false
+
+# Used by CI to run all tests without stopping at the first failure
+[profile.ci]
+fail-fast = false

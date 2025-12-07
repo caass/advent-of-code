@@ -11,7 +11,9 @@ from .paths import ROOT_DIR, input_path
 from .types import Day, Part, Year, validate_int
 
 
-def profile_solution(year: Year, day: Day, part: Part) -> int:
+def profile_solution(
+    year: Year, day: Day, part: Part
+) -> subprocess.CompletedProcess[bytes]:
     """
     Profile a specific AoC solution using samply.
 
@@ -33,7 +35,7 @@ def profile_solution(year: Year, day: Day, part: Part) -> int:
     )
 
     if build_result.returncode != 0:
-        return build_result.returncode
+        raise click.ClickException("Build process failed")
 
     # Run with samply
     binary_path = ROOT_DIR / "target" / "profiling" / "aoc"
@@ -52,7 +54,7 @@ def profile_solution(year: Year, day: Day, part: Part) -> int:
         stdin=sys.stdin,
         stdout=sys.stdout,
         stderr=sys.stderr,
-    ).returncode
+    )
 
 
 def register(cli: click.Group) -> None:
@@ -70,4 +72,4 @@ def register(cli: click.Group) -> None:
         Requires YEAR, DAY, and PART arguments.
         """
         decrypt_inputs()
-        ctx.exit(profile_solution(year, day, part))
+        ctx.exit(profile_solution(year, day, part).returncode)

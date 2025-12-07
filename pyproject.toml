@@ -9,6 +9,7 @@ dependencies = [
     "pyobjc-framework-LaunchServices>=11.0; sys_platform == 'darwin'",
     "tomli>=2.3.0",
     "tomli-w>=1.2.0",
+    "yaspin>=3.4.0",
 ]
 description = "Utility CLI for interacting with Advent of Code"
 name = "x"

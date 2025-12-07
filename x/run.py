@@ -11,7 +11,9 @@ from .paths import input_path
 from .types import Day, Part, Year, validate_int
 
 
-def run_solution(year: Year, day: Day, part: Part) -> int:
+def run_solution(
+    year: Year, day: Day, part: Part
+) -> subprocess.CompletedProcess[bytes]:
     """
     Run a specific AoC solution.
 
@@ -42,7 +44,7 @@ def run_solution(year: Year, day: Day, part: Part) -> int:
         stdout=sys.stdout,
         stderr=sys.stderr,
         env={**os.environ, "RUSTFLAGS": "-C target-cpu=native"},
-    ).returncode
+    )
 
 
 def register(cli: click.Group) -> None:
@@ -60,4 +62,4 @@ def register(cli: click.Group) -> None:
         Requires YEAR, DAY, and PART arguments.
         """
         decrypt_inputs()
-        ctx.exit(run_solution(year, day, part))
+        ctx.exit(run_solution(year, day, part).returncode)

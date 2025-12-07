@@ -1,13 +1,16 @@
 """Browser detection and session cookie retrieval for AoC."""
 
+import logging
 import platform
 import subprocess
+import typing as t
 from enum import StrEnum
-from typing import Callable
 
 import browser_cookie3
 import click
 from http.cookiejar import CookieJar
+
+logger = logging.getLogger(__name__)
 
 
 class Browser(StrEnum):
@@ -24,7 +27,7 @@ class Browser(StrEnum):
     EDGE = "edge"
     SAFARI = "safari"
 
-    def _cookie_function(self) -> Callable[..., CookieJar]:
+    def _cookie_function(self) -> t.Callable[..., CookieJar]:
         """Get the browser_cookie3 function for this browser."""
         return {
             Browser.FIREFOX: browser_cookie3.firefox,
@@ -49,17 +52,24 @@ class Browser(StrEnum):
             for cookie in cookies:
                 if cookie.name == "session":
                     return cookie.value
-        except Exception:
-            pass
+        except (OSError, browser_cookie3.BrowserCookieError) as e:
+            # Expected errors: browser not installed, cookies inaccessible, etc.
+            logger.debug("Could not get cookies from %s: %s", self.value, e)
+        except Exception as e:
+            # Unexpected errors: log them for debugging but don't crash
+            logger.warning(
+                "Unexpected error getting cookies from %s: %s", self.value, e
+            )
         return None
 
     @staticmethod
-    def default() -> "Browser | None":
+    def default() -> Browser | None:
         """
         Detect the system's default browser.
 
         On macOS, uses LaunchServices to query the default HTTPS handler.
         On Linux, uses xdg-settings to query the default web browser.
+        On Windows, queries the registry for the default HTTP handler.
 
         Returns:
             The Browser enum value if detected, None otherwise.
@@ -70,6 +80,8 @@ class Browser(StrEnum):
             return Browser._default_macos()
         elif system == "Linux":
             return Browser._default_linux()
+        elif system == "Windows":
+            return Browser._default_windows()
 
         return None
 
@@ -116,6 +128,33 @@ class Browser(StrEnum):
                 elif "edge" in browser:
                     return Browser.EDGE
         except FileNotFoundError:
+            pass
+        return None
+
+    @staticmethod
+    def _default_windows() -> "Browser | None":
+        """Detect default browser on Windows using the registry."""
+        try:
+            import winreg
+
+            # Query the ProgId for the default HTTP handler
+            with winreg.OpenKey(  # pyright: ignore[reportAttributeAccessIssue]
+                winreg.HKEY_CURRENT_USER,  # pyright: ignore[reportAttributeAccessIssue]
+                r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\http\UserChoice",
+            ) as key:
+                prog_id, _ = winreg.QueryValueEx(key, "ProgId")  # pyright: ignore[reportAttributeAccessIssue]
+                prog_id = prog_id.lower()
+
+                if "firefox" in prog_id:
+                    return Browser.FIREFOX
+                elif "chrome" in prog_id and "chromium" not in prog_id:
+                    return Browser.CHROME
+                elif "chromium" in prog_id:
+                    return Browser.CHROMIUM
+                elif "edge" in prog_id:
+                    return Browser.EDGE
+        except (ImportError, OSError):
+            # winreg not available or registry key doesn't exist
             pass
         return None
 

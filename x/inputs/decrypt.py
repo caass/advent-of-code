@@ -24,6 +24,12 @@ def decrypt_inputs() -> None:
             "Need AOC_INPUTS_SECRET to be set to decrypt puzzle inputs."
         )
 
+    if not INPUTS_ARCHIVE.exists():
+        raise click.ClickException(
+            f"Encrypted inputs archive not found at {INPUTS_ARCHIVE}. "
+            "Run './x.py inputs download' first to download and encrypt inputs."
+        )
+
     # Parse the identity from the secret
     identity = pyrage.x25519.Identity.from_str(secret.strip())
 

@@ -14,7 +14,7 @@ def run_tests(
     day: Day | None = None,
     part: Part | None = None,
     extra_args: list[str] | None = None,
-) -> int:
+) -> subprocess.CompletedProcess[bytes]:
     """
     Run tests using cargo nextest.
 
@@ -56,7 +56,7 @@ def run_tests(
         stdin=sys.stdin,
         stdout=sys.stdout,
         stderr=sys.stderr,
-    ).returncode
+    )
 
 
 def register(cli: click.Group) -> None:
@@ -92,4 +92,6 @@ def register(cli: click.Group) -> None:
         decrypt_inputs()
 
         extra_args = getattr(ctx.obj, "extra_args", []) if ctx.obj else []
-        ctx.exit(run_tests(year=year, day=day, part=part, extra_args=extra_args))
+        ctx.exit(
+            run_tests(year=year, day=day, part=part, extra_args=extra_args).returncode
+        )

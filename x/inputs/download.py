@@ -1,17 +1,43 @@
 """Download AoC puzzle inputs from adventofcode.com."""
 
 import time
-import typing as t
 from datetime import datetime
 
 import click
 import httpx
+from yaspin import yaspin
+from yaspin.spinners import Spinners
 
 from ..paths import INPUTS_DIR, input_path
 from ..types import Day, Year
 from .browser import Browser, get_session_cookie
 from .encrypt import encrypt_inputs
 from .lockfile import Lockfile, hash_content
+
+# Minimum delay between requests (in seconds) to be nice to the AoC server
+REQUEST_DELAY = 0.5
+
+
+class RateLimitedTransport(httpx.HTTPTransport):
+    """
+    HTTP transport that enforces a minimum delay between requests.
+
+    This prevents hammering the AoC server and getting rate-limited or banned.
+    """
+
+    def __init__(self, delay: float = REQUEST_DELAY, **kwargs):
+        super().__init__(**kwargs)
+        self._delay = delay
+        self._last_request: float = 0
+
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        # Enforce minimum delay since last request
+        elapsed = time.monotonic() - self._last_request
+        if elapsed < self._delay:
+            time.sleep(self._delay - elapsed)
+
+        self._last_request = time.monotonic()
+        return super().handle_request(request)
 
 
 def download_inputs(browser: Browser | None = None, force: bool = False) -> None:
@@ -40,60 +66,83 @@ def download_inputs(browser: Browser | None = None, force: bool = False) -> None
     current_month = now.month
     today = now.day
 
-    client = httpx.Client(
-        cookies={"session": session_cookie},
-        headers={"User-Agent": "github.com/caass/advent-of-code x.py"},
-    )
-
-    def fetch_input(year: Year, day: Day) -> str:
+    def fetch_input(client: httpx.Client, year: Year, day: Day) -> str:
         """Fetch a single puzzle input from adventofcode.com."""
-        time.sleep(0.5)  # Be nice to the server
-        response = client.get(f"https://adventofcode.com/{year}/day/{day}/input")
-        response.raise_for_status()
-        return response.text
+        url = f"https://adventofcode.com/{year}/day/{day}/input"
+        try:
+            response = client.get(url)
+            response.raise_for_status()
+            return response.text
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                raise click.ClickException(
+                    f"Puzzle input not found for {year} day {day}. "
+                    "The puzzle may not be released yet."
+                )
+            elif e.response.status_code == 400:
+                raise click.ClickException(
+                    f"Bad request for {year} day {day}. "
+                    "Your session cookie may be invalid or expired."
+                )
+            else:
+                raise click.ClickException(
+                    f"HTTP error {e.response.status_code} fetching {url}: {e}"
+                )
+        except httpx.RequestError as e:
+            raise click.ClickException(
+                f"Network error fetching {year} day {day}: {e}. "
+                "Check your internet connection and try again."
+            )
 
-    def download_year(year: Year, days: t.Iterator[Day]) -> None:
+    def download_year(client: httpx.Client, year: Year, days: list[Day]) -> None:
         """Download inputs for a specific year."""
         year_path = INPUTS_DIR / str(year)
         year_path.mkdir(exist_ok=True)
 
-        click.echo(f"{year}: ", nl=False)
+        total_days = len(days)
         downloaded = 0
-        skipped = 0
 
-        for day in days:
-            if not force and not lockfile.needs_download(year, day):
-                skipped += 1
-                continue
+        with yaspin(
+            Spinners.dots, text=f"{year} Downloading [00/{total_days:02d}]"
+        ) as sp:
+            current = 0
+            for day in days:
+                if not force and not lockfile.needs_download(year, day):
+                    current += 1
+                    sp.text = f"{year} Downloading [{current:02d}/{total_days:02d}]"
+                    continue
 
-            click.echo(f"{day}, ", nl=False)
-            content = fetch_input(year, day)
-            input_path(year, day).write_text(content)
+                sp.text = f"{year} Downloading [{current:02d}/{total_days:02d}]"
+                content = fetch_input(client, year, day)
+                input_path(year, day).write_text(content)
 
-            # Update lockfile with new hash
-            lockfile.set(year, day, hash_content(content))
-            downloaded += 1
+                # Update lockfile with new hash
+                lockfile.set(year, day, hash_content(content))
+                current += 1
+                downloaded += 1
+                sp.text = f"{year} Downloading [{current:02d}/{total_days:02d}]"
 
-        if downloaded == 0 and skipped > 0:
-            click.echo(f"all {skipped} inputs cached")
-        elif skipped > 0:
-            click.echo(f"Done! ({skipped} cached)")
-        else:
-            click.echo("Done!")
+            cached_suffix = " (cached)" if downloaded == 0 else ""
+            sp.text = f"{year} Done!{cached_suffix}"
+            sp.ok("✔")
 
-    click.echo("Downloading inputs...")
+    with httpx.Client(
+        transport=RateLimitedTransport(),
+        cookies={"session": session_cookie},
+        headers={"User-Agent": "github.com/caass/advent-of-code x.py"},
+    ) as client:
+        # Download all past years (all days for each year)
+        for year in Year.before(current_year):
+            download_year(client, year, list(year.days()))
 
-    # Download all past years (all days for each year)
-    for year in Year.before(current_year):
-        download_year(year, year.days())
-
-    # Download current year if it's December (only up to today)
-    if current_month == 12:
-        download_year(current_year, Day.up_to(today))
+        # Download current year if it's December (only up to available days)
+        if current_month == 12:
+            # Cap at the number of days available for this year's event
+            max_day = min(today, current_year.num_days())
+            download_year(client, current_year, list(Day.up_to(max_day)))
 
     # Save lockfile
     lockfile.save()
-    client.close()
 
     # Auto-encrypt after download
     encrypt_inputs()

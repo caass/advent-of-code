@@ -29,9 +29,9 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
 
             for case in suite:
                 name_parts = case.name.split("::")
-                if not len(name_parts) == 2:
-                    raise IndexError(
-                        f"expected test in {suite.name} to be named day::part, found {case.name}"
+                if len(name_parts) != 2:
+                    raise click.ClickException(
+                        f"Expected test in {suite.name} to be named day::part, found {case.name}"
                     )
 
                 [daystr, partstr] = name_parts
@@ -48,18 +48,18 @@ class Completion(dict[Year, dict[Day, ProblemState]]):
         rows: list[dict[str, int | str]] = []
 
         for year, days in self.items():
-            available_stars = len(days) * 2
+            # Last day of each year only has 1 part, so total stars = (days * 2) - 1
+            num_days = year.num_days()
+            available_stars = (num_days * 2) - 1
             attained_stars = 0
 
-            for state in days.values():
+            last_day = Day(num_days)
+            for day, state in days.items():
                 if state == ProblemState.PartiallySolved:
                     attained_stars += 1
                 elif state == ProblemState.Solved:
-                    attained_stars += 2
-
-            # bump for the last day, which has only one part
-            if attained_stars == available_stars - 1:
-                attained_stars += 1
+                    # Last day only awards 1 star for "Solved" since it has no part 2
+                    attained_stars += 1 if day == last_day else 2
 
             rows.append(
                 {
@@ -77,10 +77,10 @@ def update_completion_table() -> None:
     """
     Run all integration tests and update the README completion table.
 
-    Runs tests with the CI profile to generate JUnit XML output, then parses
-    the results to build a completion table showing stars earned per year.
+    Runs tests with the completion profile to generate JUnit XML output, then
+    parses the results to build a completion table showing stars earned per year.
     """
-    run_tests(extra_args=["--profile=ci", "--test=integration"])
+    run_tests(extra_args=["--profile=completion", "--test=integration"])
 
     comp = Completion(JUnitXml.fromfile(str(junit_path())))
 
@@ -88,7 +88,9 @@ def update_completion_table() -> None:
     readme_str = README.read_text()
     readme_parts = readme_str.split(divider)
     if len(readme_parts) != 3:
-        raise IndexError("expected readme to have exactly two completion comments")
+        raise click.ClickException(
+            f"Expected README to have exactly two '{divider}' comments, found {len(readme_parts) - 1}"
+        )
 
     [prefix, _, suffix] = readme_parts
     readme_str = (

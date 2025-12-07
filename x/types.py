@@ -141,7 +141,7 @@ class Context:
     Holds extra arguments passed after '--' which are forwarded to underlying tools.
     """
 
-    extra_args: list[str] = field(default_factory=list[str])
+    extra_args: list[str] = field(default_factory=list)
 
 
 def validate_int[T](
