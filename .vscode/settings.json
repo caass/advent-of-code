@@ -3,5 +3,12 @@
   "files.associations": {
     "target/inputs/[2015-2099]/[01-25]": "plaintext",
     "aoc.lock": "toml"
+  },
+
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
   }
 }
