@@ -7,6 +7,7 @@ import sys
 import click
 
 from .inputs.decrypt import decrypt_inputs
+from .inputs.download import ensure_input
 from .paths import input_path
 from .types import Day, Part, Year, validate_int
 
@@ -61,5 +62,7 @@ def register(cli: click.Group) -> None:
 
         Requires YEAR, DAY, and PART arguments.
         """
+        ensure_input(year, day)
         decrypt_inputs()
-        ctx.exit(run_solution(year, day, part).returncode)
+        exitcode = run_solution(year, day, part).returncode
+        ctx.exit(exitcode)

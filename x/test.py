@@ -6,6 +6,7 @@ import sys
 import click
 
 from .inputs.decrypt import decrypt_inputs
+from .inputs.download import ensure_input
 from .types import Day, Part, Year, validate_int
 
 
@@ -88,6 +89,10 @@ def register(cli: click.Group) -> None:
                 ctx=ctx,
                 message="cannot specify part without specifying year and day",
             )
+
+        # Auto-download input if testing a specific day
+        if year is not None and day is not None:
+            ensure_input(year, day)
 
         decrypt_inputs()
 

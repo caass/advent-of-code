@@ -18,7 +18,7 @@ from .lockfile import Lockfile, hash_content
 REQUEST_DELAY = 0.5
 
 
-class RateLimitedTransport(httpx.HTTPTransport):
+class _RateLimitedTransport(httpx.HTTPTransport):
     """
     HTTP transport that enforces a minimum delay between requests.
 
@@ -40,37 +40,51 @@ class RateLimitedTransport(httpx.HTTPTransport):
         return super().handle_request(request)
 
 
-def download_inputs(browser: Browser | None = None, force: bool = False) -> None:
+class AocClient(httpx.Client):
     """
-    Download puzzle inputs from adventofcode.com.
+    HTTP client for downloading Advent of Code puzzle inputs.
 
-    Retrieves the session cookie from your browser automatically.
-    Downloads all inputs for past years plus the current year (if it's December).
-
-    Uses a lockfile (aoc.lock) to track which inputs have been downloaded and
-    their SHA-256 hashes. Inputs that already exist with matching hashes are
-    skipped unless --force is used.
-
-    Args:
-        browser: Specific browser to get cookies from. If None, auto-detects.
-        force: If True, re-download all inputs regardless of lockfile state.
+    Features:
+    - Rate limiting to avoid hammering the AoC server
+    - Session cookie authentication (auto-fetched from browser if not provided)
+    - Methods for fetching inputs by year/day
     """
-    session_cookie = get_session_cookie(browser)
-    lockfile = Lockfile()
 
-    # Ensure inputs directory exists
-    INPUTS_DIR.mkdir(parents=True, exist_ok=True)
+    def __init__(
+        self,
+        lockfile: Lockfile | None = None,
+        session_cookie: str | None = None,
+        browser: Browser | None = None,
+        **kwargs,
+    ):
+        if session_cookie is None:
+            session_cookie = get_session_cookie(browser)
 
-    now = datetime.now()
-    current_year = Year(now.year)
-    current_month = now.month
-    today = now.day
+        super().__init__(
+            transport=_RateLimitedTransport(),
+            cookies={"session": session_cookie},
+            headers={"User-Agent": "github.com/caass/advent-of-code x.py"},
+            **kwargs,
+        )
+        self._lockfile = lockfile if lockfile is not None else Lockfile()
 
-    def fetch_input(client: httpx.Client, year: Year, day: Day) -> str:
-        """Fetch a single puzzle input from adventofcode.com."""
+    def input(self, year: Year, day: Day) -> str:
+        """
+        Fetch a single puzzle input from adventofcode.com.
+
+        Args:
+            year: The year of the puzzle
+            day: The day of the puzzle
+
+        Returns:
+            The puzzle input as a string
+
+        Raises:
+            click.ClickException: If the request fails
+        """
         url = f"https://adventofcode.com/{year}/day/{day}/input"
         try:
-            response = client.get(url)
+            response = self.get(url)
             response.raise_for_status()
             return response.text
         except httpx.HTTPStatusError as e:
@@ -94,8 +108,15 @@ def download_inputs(browser: Browser | None = None, force: bool = False) -> None
                 "Check your internet connection and try again."
             )
 
-    def download_year(client: httpx.Client, year: Year, days: list[Day]) -> None:
-        """Download inputs for a specific year."""
+    def year(self, year: Year, days: list[Day], force: bool = False) -> None:
+        """
+        Download inputs for a specific year with progress spinner.
+
+        Args:
+            year: The year to download inputs for
+            days: List of days to download
+            force: If True, re-download even if cached
+        """
         year_path = INPUTS_DIR / str(year)
         year_path.mkdir(exist_ok=True)
 
@@ -107,17 +128,17 @@ def download_inputs(browser: Browser | None = None, force: bool = False) -> None
         ) as sp:
             current = 0
             for day in days:
-                if not force and not lockfile.needs_download(year, day):
+                if not force and not self._lockfile.needs_download(year, day):
                     current += 1
                     sp.text = f"{year} Downloading [{current:02d}/{total_days:02d}]"
                     continue
 
                 sp.text = f"{year} Downloading [{current:02d}/{total_days:02d}]"
-                content = fetch_input(client, year, day)
+                content = self.input(year, day)
                 input_path(year, day).write_text(content)
 
                 # Update lockfile with new hash
-                lockfile.set(year, day, hash_content(content))
+                self._lockfile.set(year, day, hash_content(content))
                 current += 1
                 downloaded += 1
                 sp.text = f"{year} Downloading [{current:02d}/{total_days:02d}]"
@@ -126,20 +147,83 @@ def download_inputs(browser: Browser | None = None, force: bool = False) -> None
             sp.text = f"{year} Done!{cached_suffix}"
             sp.ok("✔")
 
-    with httpx.Client(
-        transport=RateLimitedTransport(),
-        cookies={"session": session_cookie},
-        headers={"User-Agent": "github.com/caass/advent-of-code x.py"},
-    ) as client:
+
+def ensure_input(year: Year, day: Day, browser: Browser | None = None) -> bool:
+    """
+    Ensure a specific input is downloaded.
+
+    Downloads the input if it's missing from the lockfile, then encrypts inputs.
+
+    Args:
+        year: The year of the puzzle
+        day: The day of the puzzle
+        browser: Specific browser to get cookies from. If None, auto-detects.
+
+    Returns:
+        True if the input was downloaded, False if it was already cached.
+    """
+    lockfile = Lockfile()
+
+    if not lockfile.needs_download(year, day):
+        return False
+
+    # Ensure inputs directory exists
+    year_path = INPUTS_DIR / str(year)
+    year_path.mkdir(parents=True, exist_ok=True)
+
+    with yaspin(Spinners.dots, text=f"Downloading {year} day {day}...") as sp:
+        with AocClient(lockfile=lockfile, browser=browser) as client:
+            content = client.input(year, day)
+            input_path(year, day).write_text(content)
+
+            # Update lockfile with new hash
+            lockfile.set(year, day, hash_content(content))
+            lockfile.save()
+
+        sp.text = f"Downloaded {year} day {day}"
+        sp.ok("✔")
+
+    # Auto-encrypt after download
+    encrypt_inputs()
+
+    return True
+
+
+def download_inputs(browser: Browser | None = None, force: bool = False) -> None:
+    """
+    Download puzzle inputs from adventofcode.com.
+
+    Retrieves the session cookie from your browser automatically.
+    Downloads all inputs for past years plus the current year (if it's December).
+
+    Uses a lockfile (aoc.lock) to track which inputs have been downloaded and
+    their SHA-256 hashes. Inputs that already exist with matching hashes are
+    skipped unless --force is used.
+
+    Args:
+        browser: Specific browser to get cookies from. If None, auto-detects.
+        force: If True, re-download all inputs regardless of lockfile state.
+    """
+    lockfile = Lockfile()
+
+    # Ensure inputs directory exists
+    INPUTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    now = datetime.now()
+    current_year = Year(now.year)
+    current_month = now.month
+    today = now.day
+
+    with AocClient(lockfile=lockfile, browser=browser) as client:
         # Download all past years (all days for each year)
         for year in Year.before(current_year):
-            download_year(client, year, list(year.days()))
+            client.year(year, list(year.days()), force=force)
 
         # Download current year if it's December (only up to available days)
         if current_month == 12:
             # Cap at the number of days available for this year's event
             max_day = min(today, current_year.num_days())
-            download_year(client, current_year, list(Day.up_to(max_day)))
+            client.year(current_year, list(Day.up_to(max_day)), force=force)
 
     # Save lockfile
     lockfile.save()
