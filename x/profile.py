@@ -62,11 +62,12 @@ def register(cli: click.Group) -> None:
     @click.argument("year", type=int, callback=validate_int(Year))
     @click.argument("day", type=int, callback=validate_int(Day))
     @click.argument("part", type=int, callback=validate_int(Part))
-    def profile(year: Year, day: Day, part: Part) -> int:
+    @click.pass_context
+    def profile(ctx: click.Context, year: Year, day: Day, part: Part) -> None:
         """
         Profile an AoC solution with samply.
 
         Requires YEAR, DAY, and PART arguments.
         """
         decrypt_inputs()
-        return profile_solution(year, day, part)
+        ctx.exit(profile_solution(year, day, part))

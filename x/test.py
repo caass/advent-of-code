@@ -5,6 +5,7 @@ import sys
 
 import click
 
+from .inputs.decrypt import decrypt_inputs
 from .types import Day, Part, Year, validate_int
 
 
@@ -88,5 +89,7 @@ def register(cli: click.Group) -> None:
                 message="cannot specify part without specifying year and day",
             )
 
+        decrypt_inputs()
+
         extra_args = getattr(ctx.obj, "extra_args", []) if ctx.obj else []
-        return run_tests(year=year, day=day, part=part, extra_args=extra_args)
+        ctx.exit(run_tests(year=year, day=day, part=part, extra_args=extra_args))

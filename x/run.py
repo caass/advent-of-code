@@ -52,11 +52,12 @@ def register(cli: click.Group) -> None:
     @click.argument("year", type=int, callback=validate_int(Year))
     @click.argument("day", type=int, callback=validate_int(Day))
     @click.argument("part", type=int, callback=validate_int(Part))
-    def run(year: Year, day: Day, part: Part) -> int:
+    @click.pass_context
+    def run(ctx: click.Context, year: Year, day: Day, part: Part) -> None:
         """
         Run an AoC solution.
 
         Requires YEAR, DAY, and PART arguments.
         """
         decrypt_inputs()
-        return run_solution(year, day, part)
+        ctx.exit(run_solution(year, day, part))
