@@ -41,10 +41,11 @@ aoc-meta   = { path = "aoc-meta" }
 aoc-test   = { path = "aoc-test" }
 
 bitvec            = "1.0.1"
-clap              = { version = "4.5.51", features = ["derive"] }
+clap              = { version = "4.5.53", features = ["derive"] }
 clap-stdin        = "0.8.0"
 dashmap           = "7.0.0-rc2"
 deranged          = "0.5.5"
+divan             = "0.1.21"
 either            = "1.15.0"
 enum-iterator     = "2.3.0"
 enum-map          = "2.7.3"
@@ -55,7 +56,7 @@ itoa              = "1.0"
 md-5              = "0.11.0-rc.3"
 memchr            = "2.7.6"
 nohash-hasher     = "0.2.0"
-pastey            = "0.1.1"
+pastey            = "0.2.0"
 pathsep           = "0.1.1"
 petgraph          = { version = "0.8.3", features = ["rayon"] }
 pretty_assertions = "1.4.1"
@@ -67,5 +68,5 @@ thiserror         = "2.0.17"
 tinystr           = { version = "0.8.2", features = ["std"] }
 tinyvec           = { version = "1.10.0", features = ["latest_stable_rust"] }
 void              = "1.0.2"
-wide              = "0.8.3"
-winnow            = { version = "0.7.13", features = ["simd"] }
+wide              = "1.0.2"
+winnow            = { version = "0.7.14", features = ["simd"] }

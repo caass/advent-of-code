@@ -2,7 +2,7 @@
 
 import click
 
-from . import completion, inputs, profile, run, test
+from . import bench, completion, inputs, profile, run, test
 from .types import Context
 
 
@@ -13,11 +13,12 @@ def cli() -> None:
 
 
 # Register all commands
-test.register(cli)
+bench.register(cli)
 completion.register(cli)
 inputs.register(cli)
-run.register(cli)
 profile.register(cli)
+run.register(cli)
+test.register(cli)
 
 
 def main(args: list[str]) -> None:

@@ -89,3 +89,75 @@ jobs:
         run: uv run ./x.py test
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
+  bench-check:
+    needs: [lint-rust, lint-python]
+    name: Benchmark Check
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        channel: [stable, beta, nightly]
+        threads: [0, 1, 4]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install ${{ matrix.channel }} toolchain
+        run: rustup install ${{ matrix.channel }}
+      - name: Set ${{ matrix.channel }} toolchain as default
+        run: rustup default ${{ matrix.channel }}
+
+      - name: Get `target_cpu=native` checksum
+        id: get-target-cpu-eq-native-checksum
+        run: echo "checksum=$(rustc --print cfg -C target-cpu=native | md5sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Populate Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+          key: ${{ steps.get-target-cpu-eq-native-checksum.outputs.checksum }}
+
+      - name: Print available CPUs
+        run: python -c "import os; print(f'Available CPUs {os.cpu_count()}')"
+      - name: Run benchmark check (${{ matrix.threads }} threads)
+        run: uv run ./x.py bench -- --test --threads=${{ matrix.threads }}
+        env:
+          AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
+
+  bench-run:
+    needs: [test-rust, bench-check]
+    name: Benchmark Run
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        channel: [stable, beta, nightly]
+        threads: [0, 1, 4]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Install ${{ matrix.channel }} toolchain
+        run: rustup install ${{ matrix.channel }}
+      - name: Set ${{ matrix.channel }} toolchain as default
+        run: rustup default ${{ matrix.channel }}
+      - name: Get `target_cpu=native` checksum
+        id: get-target-cpu-eq-native-checksum
+        run: echo "checksum=$(rustc --print cfg -C target-cpu=native | md5sum | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+      - name: Populate Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-all-crates: "true"
+          key: ${{ steps.get-target-cpu-eq-native-checksum.outputs.checksum }}
+      - name: Print available CPUs
+        run: python -c "import os; print(f'Available CPUs {os.cpu_count()}')"
+      - name: Run benchmarks (${{ matrix.threads }} threads)
+        run: uv run ./x.py bench -- --threads=${{ matrix.threads }} | tee bench-results.txt
+        env:
+          AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ matrix.os }}-${{ matrix.channel }}-threads-${{ matrix.threads }}
+          path: bench-results.txt

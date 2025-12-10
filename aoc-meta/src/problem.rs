@@ -28,7 +28,7 @@ impl Problem {
     #[inline]
     pub const fn partially_solved<F, R>(part_one: &'static F) -> Self
     where
-        F: Fn(&str) -> R,
+        F: Fn(&str) -> R + Sync,
         R: ReturnValue,
     {
         Self([Some(part_one as &dyn Solution), None])
@@ -37,9 +37,9 @@ impl Problem {
     #[inline]
     pub const fn solved<F1, R1, F2, R2>(part_one: &'static F1, part_two: &'static F2) -> Self
     where
-        F1: Fn(&str) -> R1,
+        F1: Fn(&str) -> R1 + Sync,
         R1: ReturnValue,
-        F2: Fn(&str) -> R2,
+        F2: Fn(&str) -> R2 + Sync,
         R2: ReturnValue,
     {
         Self([

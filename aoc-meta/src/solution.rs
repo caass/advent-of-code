@@ -1,12 +1,12 @@
 use eyre::Report;
 
-pub trait Solution {
+pub trait Solution: Sync {
     fn solve(&self, input: &str) -> Result<String, Report>;
 }
 
 impl<F, R> Solution for F
 where
-    F: Fn(&str) -> R,
+    F: Fn(&str) -> R + Sync,
     R: ReturnValue,
 {
     fn solve(&self, input: &str) -> Result<String, Report> {

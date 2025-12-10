@@ -4,6 +4,10 @@ license.workspace = true
 name              = "aoc"
 version.workspace = true
 
+[[bench]]
+harness = false
+name    = "aoc"
+
 [dependencies]
 aoc-2015.workspace = true
 aoc-2016.workspace = true
@@ -21,3 +25,7 @@ aoc-meta.workspace = true
 clap.workspace       = true
 clap-stdin.workspace = true
 eyre.workspace       = true
+
+[dev-dependencies]
+divan.workspace  = true
+pastey.workspace = true
