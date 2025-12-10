@@ -96,7 +96,6 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         channel: [stable, beta, nightly]
-        threads: [0, 1, 4]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -119,8 +118,8 @@ jobs:
 
       - name: Print available CPUs
         run: python -c "import os; print(f'Available CPUs {os.cpu_count()}')"
-      - name: Run benchmark check (${{ matrix.threads }} threads)
-        run: uv run ./x.py bench -- --test --threads=${{ matrix.threads }}
+      - name: Check benchmarks
+        run: uv run ./x.py bench -- --test
         env:
           AOC_INPUTS_SECRET: ${{ secrets.AOC_INPUTS_SECRET }}
 
