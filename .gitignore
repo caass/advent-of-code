@@ -1,3 +1,5 @@
 /target/**
 profile.json.gz
 **/__pycache__/**
+.direnv/**
+
