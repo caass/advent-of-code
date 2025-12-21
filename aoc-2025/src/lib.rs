@@ -5,4 +5,6 @@ PROBLEMS! {
     02 => GIFT_SHOP,
     03 => LOBBY,
     04 => PRINTING_DEPARTMENT,
+    05 => CAFETERIA,
+    06 => TRASH_COMPACTOR,
 }
