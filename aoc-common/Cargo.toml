@@ -1,10 +1,10 @@
 [package]
-name = "aoc-common"
-version.workspace = true
 edition.workspace = true
 license.workspace = true
+name              = "aoc-common"
+version.workspace = true
 
 [dependencies]
-either.workspace = true
+either.workspace    = true
 itertools.workspace = true
-rayon.workspace = true
+rayon.workspace     = true
