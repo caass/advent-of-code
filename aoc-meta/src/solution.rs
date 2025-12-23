@@ -10,7 +10,7 @@ where
     R: ReturnValue,
 {
     fn solve(&self, input: &str) -> Result<String, Report> {
-        (self)(input).into_result()
+        (self)(input.trim_end()).into_result()
     }
 }
 

@@ -52,21 +52,21 @@ enum-map          = "2.7.3"
 eyre              = "0.6.12"
 fnv               = "1.0.7"
 itertools         = "0.14.0"
-itoa              = "1.0"
+itoa              = "1.0.16"
 md-5              = "0.11.0-rc.3"
 memchr            = "2.7.6"
 nohash-hasher     = "0.2.0"
-pastey            = "0.2.0"
+pastey            = "0.2.1"
 pathsep           = "0.1.1"
 petgraph          = { version = "0.8.3", features = ["rayon"] }
 pretty_assertions = "1.4.1"
 rayon             = "1.11.0"
 regex             = "1.12.2"
 reqwest           = { version = "0.12.24", features = ["cookies"] }
-serde_json        = "1.0.145"
+serde_json        = "1.0.146"
 thiserror         = "2.0.17"
 tinystr           = { version = "0.8.2", features = ["std"] }
 tinyvec           = { version = "1.10.0", features = ["latest_stable_rust"] }
 void              = "1.0.2"
-wide              = "1.0.2"
+wide              = "1.1.1"
 winnow            = { version = "0.7.14", features = ["simd"] }

@@ -82,7 +82,7 @@ macro_rules! tests_impl {
                 let part =
                     <::aoc_meta::Part as ::std::convert::TryFrom<u8>>::try_from($part).unwrap();
 
-                let output = ::[<aoc_ $year>]::PROBLEMS[day][part].solve(input.trim_end()).unwrap();
+                let output = ::[<aoc_ $year>]::PROBLEMS[day][part].solve(&input).unwrap();
 
                 ::pretty_assertions::assert_eq!(output, $solution.to_string());
             }

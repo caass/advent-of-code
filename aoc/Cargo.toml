@@ -8,6 +8,8 @@ version.workspace = true
 harness = false
 name    = "aoc"
 
+[features]
+
 [dependencies]
 aoc-2015.workspace = true
 aoc-2016.workspace = true
