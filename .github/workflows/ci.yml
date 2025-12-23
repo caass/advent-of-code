@@ -77,12 +77,10 @@ jobs:
         with:
           cache-all-crates: "true"
           key: ${{ steps.get-target-cpu-eq-native-checksum.outputs.checksum }}
-      - name: Install `cargo-binstall`
-        uses: cargo-bins/cargo-binstall@v1.10.8
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install `cargo-nextest`, `rage`
-        run: cargo binstall cargo-nextest rage --secure --no-confirm --force
+      - name: Install `cargo-nextest`
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Run tests
