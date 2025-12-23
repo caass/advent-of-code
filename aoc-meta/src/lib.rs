@@ -14,7 +14,7 @@ pub use solution::Solution;
 pub use pastey::paste;
 
 #[repr(transparent)]
-pub struct AdventOfCode([Option<ProblemSet>; const { (Year::LAST - Year::FIRST + 1) as usize }]);
+pub struct AdventOfCode([Option<ProblemSet>; (Year::LAST - Year::FIRST + 1) as usize]);
 
 impl AdventOfCode {
     #[inline]
@@ -35,7 +35,7 @@ impl AdventOfCode {
     }
 
     pub const fn new() -> Self {
-        Self([None; const { (Year::LAST - Year::FIRST + 1) as usize }])
+        Self([None; (Year::LAST - Year::FIRST + 1) as usize])
     }
 }
 
