@@ -56,15 +56,13 @@ macro_rules! bench_part {
         ::pastey::paste! {
             $(#[$attrs])+
             fn [<part $part>](bencher: divan::Bencher) {
-                let input = INPUT.trim();
-
                 let year = ::aoc_meta::Year::from_u16($year).unwrap();
                 let day = ::aoc_meta::Day::from_u8($day).unwrap();
                 let part = ::aoc_meta::Part::try_from($part as u8).unwrap();
 
                 let f = &::aoc::AOC[year][day][part];
 
-                bencher.bench(|| f.solve(divan::black_box(input)));
+                bencher.bench(|| f.solve(divan::black_box(INPUT.trim_end())));
             }
         }
     };
