@@ -6,11 +6,13 @@ version.workspace = true
 
 [dependencies]
 aoc-meta.workspace  = true
+dashmap.workspace   = true
 deranged.workspace  = true
 eyre.workspace      = true
 itertools.workspace = true
 itoa.workspace      = true
 rayon.workspace     = true
+seahash.workspace   = true
 
 [dev-dependencies]
 aoc-test.workspace          = true
