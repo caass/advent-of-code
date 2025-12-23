@@ -11,7 +11,7 @@ pub struct Part(bool);
 
 impl Part {
     pub fn iter() -> impl Iterator<Item = Self> {
-        [Part::ONE, Part::TWO].into_iter()
+        [Part::_1, Part::_2].into_iter()
     }
 }
 
@@ -19,8 +19,8 @@ impl Debug for Part {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         f.debug_tuple("Part")
             .field(match *self {
-                Part::ONE => &1u8,
-                Part::TWO => &2u8,
+                Part::_1 => &1u8,
+                Part::_2 => &2u8,
             })
             .finish()
     }
@@ -29,20 +29,20 @@ impl Debug for Part {
 impl Display for Part {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match *self {
-            Part::ONE => Display::fmt(&1u8, f),
-            Part::TWO => Display::fmt(&2u8, f),
+            Part::_1 => Display::fmt(&1u8, f),
+            Part::_2 => Display::fmt(&2u8, f),
         }
     }
 }
 
 impl Part {
-    pub const ONE: Part = Part(true);
-    pub const TWO: Part = Part(false);
+    pub const _1: Part = Part(true);
+    pub const _2: Part = Part(false);
 
     pub const fn as_u8(self) -> u8 {
         match self {
-            Part::ONE => 1,
-            Part::TWO => 2,
+            Part::_1 => 1,
+            Part::_2 => 2,
         }
     }
 }
@@ -62,8 +62,8 @@ impl TryFrom<u8> for Part {
     fn try_from(value: u8) -> Result<Self, Self::Error> {
         match value {
             0 => Err(FromU8Error::Zero),
-            1 => Ok(Part::ONE),
-            2 => Ok(Part::TWO),
+            1 => Ok(Part::_1),
+            2 => Ok(Part::_2),
             3.. => Err(FromU8Error::TooHigh(value)),
         }
     }

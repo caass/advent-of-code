@@ -11,40 +11,40 @@ use thiserror::Error;
 #[derive(Debug, Clone, Copy, Sequence, PartialEq, Eq, Enum)]
 #[repr(u16)]
 pub enum Year {
-    Fifteen = 2015,
-    Sixteen,
-    Seventeen,
-    Eighteen,
-    Nineteen,
-    Twenty,
-    TwentyOne,
-    TwentyTwo,
-    TwentyThree,
-    TwentyFour,
-    TwentyFive,
+    _2015 = 2015,
+    _2016,
+    _2017,
+    _2018,
+    _2019,
+    _2020,
+    _2021,
+    _2022,
+    _2023,
+    _2024,
+    _2025,
 }
 
 impl AsRef<Path> for Year {
     fn as_ref(&self) -> &Path {
         Path::new(match self {
-            Year::Fifteen => "2015",
-            Year::Sixteen => "2016",
-            Year::Seventeen => "2017",
-            Year::Eighteen => "2018",
-            Year::Nineteen => "2019",
-            Year::Twenty => "2020",
-            Year::TwentyOne => "2021",
-            Year::TwentyTwo => "2022",
-            Year::TwentyThree => "2023",
-            Year::TwentyFour => "2024",
-            Year::TwentyFive => "2025",
+            Year::_2015 => "2015",
+            Year::_2016 => "2016",
+            Year::_2017 => "2017",
+            Year::_2018 => "2018",
+            Year::_2019 => "2019",
+            Year::_2020 => "2020",
+            Year::_2021 => "2021",
+            Year::_2022 => "2022",
+            Year::_2023 => "2023",
+            Year::_2024 => "2024",
+            Year::_2025 => "2025",
         })
     }
 }
 
 impl Year {
-    pub const FIRST: u16 = Year::Fifteen.as_u16();
-    pub const LAST: u16 = Year::TwentyFive.as_u16();
+    pub const FIRST: u16 = Year::_2015.as_u16();
+    pub const LAST: u16 = Year::_2025.as_u16();
 
     /// Returns a u16 represenation of `Self` guaranteed to be between [`FIRST_YEAR`] and [`LAST_YEAR`].
     #[inline]
@@ -56,17 +56,17 @@ impl Year {
     pub const fn from_u16(year: u16) -> Result<Self, FromU16Error> {
         match year {
             ..=2014 => Err(FromU16Error::Early(year)),
-            2015 => Ok(Year::Fifteen),
-            2016 => Ok(Year::Sixteen),
-            2017 => Ok(Year::Seventeen),
-            2018 => Ok(Year::Eighteen),
-            2019 => Ok(Year::Nineteen),
-            2020 => Ok(Year::Twenty),
-            2021 => Ok(Year::TwentyOne),
-            2022 => Ok(Year::TwentyTwo),
-            2023 => Ok(Year::TwentyThree),
-            2024 => Ok(Year::TwentyFour),
-            2025 => Ok(Year::TwentyFive),
+            2015 => Ok(Year::_2015),
+            2016 => Ok(Year::_2016),
+            2017 => Ok(Year::_2017),
+            2018 => Ok(Year::_2018),
+            2019 => Ok(Year::_2019),
+            2020 => Ok(Year::_2020),
+            2021 => Ok(Year::_2021),
+            2022 => Ok(Year::_2022),
+            2023 => Ok(Year::_2023),
+            2024 => Ok(Year::_2024),
+            2025 => Ok(Year::_2025),
             2026.. => Err(FromU16Error::Late(year)),
         }
     }
