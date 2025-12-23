@@ -206,6 +206,7 @@ version = "0.1.0"
 dependencies = [
  "aoc-meta",
  "aoc-test",
+ "deranged",
  "eyre",
  "itertools",
  "itoa",
