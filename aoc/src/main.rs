@@ -28,7 +28,7 @@ fn main() -> Result<()> {
         input,
     } = Args::parse();
 
-    let output = AOC[year][day][part].solve(input.contents()?.trim())?;
+    let output = AOC[year][day][part].solve(input.contents()?.trim_end())?;
 
     println!("{}", output);
 
