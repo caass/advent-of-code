@@ -164,13 +164,11 @@ impl FromStr for Homework {
             bail!("expected string to be ascii");
         }
 
-        let mut lines = s.lines().collect_vec();
+        let mut lines = s.lines();
 
-        let Some(op_line) = lines.pop() else {
+        let Some(op_line) = lines.next_back() else {
             return Ok(Homework::default());
         };
-
-        let max_width = lines.iter().copied().map(str::len).max().unwrap_or(0);
 
         // Collect all operators with their positions
         let operators = op_line
@@ -185,15 +183,15 @@ impl FromStr for Homework {
             })
             .collect_vec();
 
-        // Build problems with correct ranges
-        let mut problems: Vec<Problem> = vec![];
-        let mut problem_indices = vec![];
+        // Build problems with ranges (use usize::MAX for last; clamped to line.len() below)
+        let mut problems = Vec::with_capacity(operators.len());
+        let mut problem_indices = Vec::with_capacity(operators.len());
 
         for (idx, &(pos, op)) in operators.iter().enumerate() {
             let end = operators
                 .get(idx + 1)
                 .map(|(next_pos, _)| next_pos - 1) // Exclude separator column
-                .unwrap_or(max_width);
+                .unwrap_or(usize::MAX);
 
             problem_indices.push(pos..end);
             problems.push(Problem { grid: vec![], op });
