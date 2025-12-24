@@ -44,6 +44,7 @@ clap              = { version = "4.5.53", features = ["derive"] }
 clap-stdin        = "0.8.0"
 dashmap           = "7.0.0-rc2"
 deranged          = "0.5.5"
+disjoint-sets     = "0.4.2"
 divan             = "0.1.21"
 either            = "1.15.0"
 enum-iterator     = "2.3.0"

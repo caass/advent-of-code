@@ -5,15 +5,16 @@ name              = "aoc-2025"
 version.workspace = true
 
 [dependencies]
-aoc-meta.workspace  = true
-dashmap.workspace   = true
-deranged.workspace  = true
-eyre.workspace      = true
-itertools.workspace = true
-itoa.workspace      = true
-petgraph.workspace  = true
-rayon.workspace     = true
-seahash.workspace   = true
+aoc-meta.workspace      = true
+dashmap.workspace       = true
+deranged.workspace      = true
+disjoint-sets.workspace = true
+eyre.workspace          = true
+itertools.workspace     = true
+itoa.workspace          = true
+nohash-hasher.workspace = true
+rayon.workspace         = true
+seahash.workspace       = true
 
 [dev-dependencies]
 aoc-test.workspace          = true

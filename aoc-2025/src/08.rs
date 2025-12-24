@@ -1,87 +1,101 @@
-use std::collections::{HashMap, hash_map::Entry};
-use std::hash::BuildHasherDefault;
+use std::cmp::Reverse;
+use std::collections::HashMap;
 use std::str::FromStr;
 
-use eyre::{Report, Result, bail, eyre};
+use disjoint_sets::UnionFind;
+use eyre::{OptionExt, Report, Result, bail};
 use itertools::Itertools;
-use petgraph::{Graph, Undirected, algo::tarjan_scc, graph::NodeIndex};
-use rayon::prelude::*;
+use nohash_hasher::BuildNoHashHasher;
 
 use aoc_meta::Problem;
-use seahash::SeaHasher;
 
-pub const PLAYGROUND: Problem = Problem::partially_solved(&|input| {
-    input
-        .parse()
-        .and_then(Playground::three_largest_circuits_product::<1000>)
-});
+pub const PLAYGROUND: Problem = Problem::solved(
+    &|input| input.parse().and_then(Playground::connect_n::<1000>),
+    &|input| input.parse().and_then(Playground::unify),
+);
 
 #[derive(Debug, Clone)]
 struct Playground {
-    disconnected: Vec<(NodeIndex<u16>, NodeIndex<u16>)>,
-    connected: Graph<Coordinate, (), Undirected, u16>,
+    circuits: UnionFind<u16>,
+    junction_pairs: Vec<(u16, u16)>,
+    coords: HashMap<u16, Coordinate, BuildNoHashHasher<u16>>,
 }
 
 impl Playground {
-    fn three_largest_circuits_product<const N: usize>(mut self) -> Result<u64> {
+    // Returns the product of the size of the three largest circuits after making N connections
+    fn connect_n<const N: usize>(mut self) -> Result<u64> {
         for _ in 0..N {
-            let Some((a, b)) = self.disconnected.pop() else {
+            let Some((a, b)) = self.junction_pairs.pop() else {
                 bail!("fewer than {N} possible connections")
             };
 
-            self.connected.add_edge(a, b, ());
+            self.circuits.union(a, b);
         }
 
-        let mut subgraphs = tarjan_scc(&self.connected);
-        if subgraphs.len() < 3 {
-            bail!("fewer than three subgraphs!");
-        };
+        let mut circuit_sizes: HashMap<u16, u64, BuildNoHashHasher<u16>> = HashMap::default();
 
-        subgraphs.par_sort_by_key(|sg| sg.len());
+        for k in self.coords.into_keys() {
+            let root = self.circuits.find(k);
+            *circuit_sizes.entry(root).or_default() += 1;
+        }
 
-        subgraphs
-            .into_iter()
+        Ok(circuit_sizes
+            .into_values()
+            .sorted_unstable()
             .rev()
             .take(3)
-            .try_fold(1, |a, sg| sg.len().try_into().map(|b: u64| a * b))
-            .map_err(|e| eyre!(e))
+            .product())
+    }
+
+    // Returns the product of the X coordinates of the final two junction boxes needed to make a single circuit.
+    fn unify(mut self) -> Result<u64> {
+        let mut num_independent_circuits = self.coords.len();
+        let (mut a, mut b) = (0, 0);
+
+        while num_independent_circuits > 1 {
+            (a, b) = self
+                .junction_pairs
+                .pop()
+                .ok_or_eyre("impossible to make a complete circuit")?;
+
+            if self.circuits.union(a, b) {
+                num_independent_circuits -= 1;
+            }
+        }
+
+        u64::checked_mul(self.coords[&a].x.into(), self.coords[&b].x.into())
+            .ok_or_eyre("answer would overflow")
     }
 }
 
 impl FromStr for Playground {
     type Err = Report;
+
     fn from_str(s: &str) -> Result<Self> {
-        let mut node_pairs: Vec<(Coordinate, Coordinate)> = s
+        let parsed_coordinates = s
             .lines()
-            .tuple_combinations()
-            .map(|(a, b)| Ok::<_, Report>((a.parse()?, b.parse()?)))
-            .try_collect()?;
+            .map(Coordinate::from_str)
+            .collect::<Result<Vec<_>>>()?;
 
-        node_pairs.par_sort_unstable_by_key(|(a, b)| a.distance_squared(b));
+        let mut circuits = UnionFind::new(parsed_coordinates.len());
+        let mut coords = HashMap::with_capacity_and_hasher(
+            parsed_coordinates.len(),
+            BuildNoHashHasher::default(),
+        );
 
-        let mut g = Graph::default();
-        let mut cache = HashMap::with_hasher(BuildHasherDefault::<SeaHasher>::default());
+        for coord in parsed_coordinates {
+            coords.insert(circuits.alloc(), coord);
+        }
 
-        let node_pair_indices = node_pairs
-            .into_iter()
-            .rev()
-            .map(|(a, b)| {
-                let i = match cache.entry(a) {
-                    Entry::Occupied(occ) => *occ.get(),
-                    Entry::Vacant(vac) => *vac.insert(g.add_node(a)),
-                };
-                let j = match cache.entry(b) {
-                    Entry::Occupied(occ) => *occ.get(),
-                    Entry::Vacant(vac) => *vac.insert(g.add_node(b)),
-                };
+        let mut junction_pairs = coords.keys().copied().tuple_combinations().collect_vec();
 
-                (i, j)
-            })
-            .collect();
+        junction_pairs
+            .sort_unstable_by_key(|(a, b)| Reverse(coords[a].distance_squared(&coords[b])));
 
         Ok(Self {
-            disconnected: node_pair_indices,
-            connected: g,
+            circuits,
+            junction_pairs,
+            coords,
         })
     }
 }
@@ -143,6 +157,7 @@ fn example() {
 425,690,689";
 
     let playground: Playground = input.parse().unwrap();
-    let result = playground.three_largest_circuits_product::<10>().unwrap();
-    assert_eq!(result, 40);
+
+    assert_eq!(playground.clone().connect_n::<10>().unwrap(), 40);
+    assert_eq!(playground.unify().unwrap(), 25272);
 }
