@@ -211,6 +211,7 @@ dependencies = [
  "eyre",
  "itertools",
  "itoa",
+ "petgraph",
  "pretty_assertions",
  "rayon",
  "seahash",

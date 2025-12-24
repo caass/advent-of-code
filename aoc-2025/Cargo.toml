@@ -11,6 +11,7 @@ deranged.workspace  = true
 eyre.workspace      = true
 itertools.workspace = true
 itoa.workspace      = true
+petgraph.workspace  = true
 rayon.workspace     = true
 seahash.workspace   = true
 
