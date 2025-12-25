@@ -9,6 +9,7 @@ aoc-meta.workspace      = true
 dashmap.workspace       = true
 deranged.workspace      = true
 disjoint-sets.workspace = true
+either.workspace        = true
 eyre.workspace          = true
 itertools.workspace     = true
 itoa.workspace          = true

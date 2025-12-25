@@ -209,6 +209,7 @@ dependencies = [
  "dashmap",
  "deranged",
  "disjoint-sets",
+ "either",
  "eyre",
  "itertools",
  "itoa",
