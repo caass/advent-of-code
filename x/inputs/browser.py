@@ -153,7 +153,7 @@ class Browser(StrEnum):
                     return Browser.CHROMIUM
                 elif "edge" in prog_id:
                     return Browser.EDGE
-        except (ImportError, OSError):
+        except ImportError, OSError:
             # winreg not available or registry key doesn't exist
             pass
         return None
